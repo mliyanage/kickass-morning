@@ -42,7 +42,7 @@ export function Footer() {
           </a>
         </div>
         <p className="mt-8 text-center text-base text-neutral-400">
-          &copy; 2023 WakeUp Buddy. All rights reserved.
+          &copy; 2023 KickAss Morning. All rights reserved.
         </p>
       </div>
     </footer>

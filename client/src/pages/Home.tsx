@@ -14,7 +14,7 @@ export default function Home() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="ml-2 text-xl font-bold text-primary-700">WakeUp Buddy</span>
+              <span className="ml-2 text-xl font-bold text-primary-700">KickAss Morning</span>
             </div>
             <div className="flex space-x-4">
               <Button variant="outline" onClick={() => setLocation("/login")}>
@@ -84,7 +84,7 @@ export default function Home() {
       <footer className="bg-white">
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <p className="text-center text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} WakeUp Buddy. All rights reserved.
+            &copy; {new Date().getFullYear()} KickAss Morning. All rights reserved.
           </p>
         </div>
       </footer>

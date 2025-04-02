@@ -98,29 +98,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication Routes
-  app.post("/api/auth/signup", async (req: Request, res: Response) => {
+  // Send OTP to email for signup/login
+  app.post("/api/auth/request-email-otp", async (req: Request, res: Response) => {
     try {
-      const validatedData = insertUserSchema.parse(req.body);
+      const { email } = req.body;
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return res.status(400).json({ message: "Valid email is required." });
+      }
       
-      // Check if email is already in use
-      const existingUser = await storage.getUserByEmail(validatedData.email);
+      // Check if user exists to determine OTP type
+      const existingUser = await storage.getUserByEmail(email);
+      const otpType = existingUser ? 'login' : 'register';
+
+      // Generate OTP
+      const otp = generateOTP();
+      
+      // Store OTP with type (login or register)
+      await storage.createEmailOtp({
+        email,
+        code: otp,
+        type: otpType,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes expiry
+      });
+      
+      // In a real app, we would send the OTP via email here
+      // For demo purposes, we'll just log it to console
+      console.log(`OTP for ${email} (${otpType}): ${otp}`);
+      
+      // Return success message depending on type
+      const message = otpType === 'login' 
+        ? "Login code sent to your email." 
+        : "Registration code sent to your email.";
+        
+      res.status(200).json({ 
+        message, 
+        type: otpType
+      });
+    } catch (error) {
+      console.error("Email OTP request error:", error);
+      res.status(500).json({ message: "An error occurred while sending verification code." });
+    }
+  });
+
+  // Verify email OTP and register new user if needed
+  app.post("/api/auth/verify-email-otp", async (req: Request, res: Response) => {
+    try {
+      const { email, otp, name } = req.body;
+      
+      if (!email || !otp) {
+        return res.status(400).json({ message: "Email and OTP are required." });
+      }
+      
+      // Verify OTP
+      const userId = await storage.verifyEmailOtp(email, otp, 'register');
+      
+      // If userId is not -1, this means it's not a valid registration OTP
+      if (userId !== -1) {
+        return res.status(400).json({ message: "Invalid or expired registration code." });
+      }
+      
+      // Check if email is already in use (double-check)
+      const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
         return res.status(400).json({ message: "Email already in use." });
       }
       
-      // Hash the password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(validatedData.password, salt);
-      
-      // Create username from email
-      const username = validatedData.email.split('@')[0];
-      
       // Create user
       const user = await storage.createUser({
-        username,
-        email: validatedData.email,
-        name: validatedData.name,
-        password: hashedPassword
+        email,
+        name: name || null
       });
       
       // Set session
@@ -128,44 +174,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Return success
       res.status(201).json({
-        message: "User created successfully.",
+        message: "Account created successfully.",
         user: {
           id: user.id,
-          username: user.username,
           email: user.email,
-          name: user.name
+          name: user.name,
+          phoneVerified: user.phoneVerified,
+          isPersonalized: user.isPersonalized
         }
       });
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input data.", errors: error.errors });
-      }
-      console.error("Signup error:", error);
-      res.status(500).json({ message: "An error occurred during signup." });
+      console.error("Email OTP verification error:", error);
+      res.status(500).json({ message: "An error occurred during verification." });
     }
   });
 
+  // Login with email OTP
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
-      const validatedData = loginUserSchema.parse(req.body);
+      const { email, otp, rememberMe } = req.body;
       
-      // Find user by email
-      const user = await storage.getUserByEmail(validatedData.email);
-      if (!user) {
-        return res.status(401).json({ message: "Invalid email or password." });
+      if (!email || !otp) {
+        return res.status(400).json({ message: "Email and verification code are required." });
       }
       
-      // Check password
-      const isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
-      if (!isPasswordValid) {
-        return res.status(401).json({ message: "Invalid email or password." });
+      // Verify OTP and get userId
+      const userId = await storage.verifyEmailOtp(email, otp, 'login');
+      
+      if (!userId || userId < 0) {
+        return res.status(401).json({ message: "Invalid or expired verification code." });
+      }
+      
+      // Get user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found." });
       }
       
       // Set session
       req.session.userId = user.id;
       
       // Set session duration based on rememberMe
-      if (validatedData.rememberMe) {
+      if (rememberMe) {
         req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
       }
       
@@ -174,7 +224,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Login successful.",
         user: {
           id: user.id,
-          username: user.username,
           email: user.email,
           name: user.name,
           phoneVerified: user.phoneVerified,
@@ -182,9 +231,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input data.", errors: error.errors });
-      }
       console.error("Login error:", error);
       res.status(500).json({ message: "An error occurred during login." });
     }
@@ -214,7 +260,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         authenticated: true,
         user: {
           id: user.id,
-          username: user.username,
           email: user.email,
           name: user.name,
           phoneVerified: user.phoneVerified,
@@ -245,7 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send OTP via SMS
       try {
-        await sendSMS(validatedData.phone, `Your WakeUp Buddy verification code is: ${otp}`);
+        await sendSMS(validatedData.phone, `Your KickAss Morning verification code is: ${otp}`);
       } catch (smsError) {
         console.error("SMS sending error:", smsError);
         return res.status(500).json({ message: "Failed to send verification SMS." });
@@ -376,7 +421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const message = await generateVoiceMessage(
                 scheduleData.goalType as GoalType,
                 scheduleData.struggleType as StruggleType,
-                user.name
+                user.name || "there"
               );
               
               // Make the call
@@ -489,7 +534,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const message = await generateVoiceMessage(
         personalization.goal as GoalType,
         personalization.struggle as StruggleType,
-        user.name
+        user.name || "there"
       );
       
       // Make the sample call

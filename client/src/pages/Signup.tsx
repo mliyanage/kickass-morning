@@ -14,11 +14,44 @@ export default function Signup() {
   const [, setLocation] = useLocation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
 
-  const signupMutation = useMutation({
+  // Request email OTP for registration
+  const requestOtpMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/auth/signup", { name, email, password });
+      return await apiRequest("POST", "/api/auth/request-email-otp", { email });
+    },
+    onSuccess: (data: any) => {
+      // Check if the response indicates this email is already registered
+      if (data?.type === 'login') {
+        toast({
+          title: "Email already registered",
+          description: "This email is already registered. Please login instead.",
+        });
+        setTimeout(() => setLocation('/login'), 2000);
+        return;
+      }
+      
+      setOtpSent(true);
+      toast({
+        title: "Verification code sent",
+        description: "Please check your email for a verification code.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to send code",
+        description: error.message || "Could not send verification code. Please try again.",
+      });
+    }
+  });
+
+  // Verify OTP and create account
+  const verifyAndCreateAccountMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/auth/verify-email-otp", { email, otp, name });
     },
     onSuccess: () => {
       toast({
@@ -30,33 +63,36 @@ export default function Signup() {
     onError: (error) => {
       toast({
         variant: "destructive",
-        title: "Signup failed",
-        description: error.message || "Could not create your account. Please try again.",
+        title: "Verification failed",
+        description: error.message || "Could not verify your email or create account. Please try again.",
       });
     }
   });
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !password) {
+    if (!email) {
       toast({
         variant: "destructive",
-        title: "Validation error",
-        description: "Please fill in all fields.",
+        title: "Email required",
+        description: "Please enter your email address.",
       });
       return;
     }
-    
-    if (password.length < 6) {
+    requestOtpMutation.mutate();
+  };
+
+  const handleVerifyAndCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp) {
       toast({
         variant: "destructive",
-        title: "Password too short",
-        description: "Password must be at least 6 characters long.",
+        title: "Verification code required",
+        description: "Please enter the verification code sent to your email.",
       });
       return;
     }
-    
-    signupMutation.mutate();
+    verifyAndCreateAccountMutation.mutate();
   };
 
   return (
@@ -68,55 +104,104 @@ export default function Signup() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="ml-2 text-xl font-bold text-primary-700">WakeUp Buddy</span>
+              <span className="ml-2 text-xl font-bold text-primary-700">KickAss Morning</span>
             </div>
             <h2 className="text-2xl font-bold text-gray-900">Create your account</h2>
             <p className="mt-2 text-sm text-gray-600">Get wakeup calls from your favorite personalities</p>
           </div>
           
-          <form onSubmit={handleSignup} className="space-y-6">
-            <div>
-              <Label htmlFor="name">Full name</Label>
-              <Input 
-                id="name" 
-                type="text" 
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
+          {!otpSent ? (
+            <form onSubmit={handleRequestOtp} className="space-y-6">
+              <div>
+                <Label htmlFor="name">Full name</Label>
+                <Input 
+                  id="name" 
+                  type="text" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  disabled={requestOtpMutation.isPending}
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="signup-email">Email address</Label>
-              <Input 
-                id="signup-email" 
-                type="email" 
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+              <div>
+                <Label htmlFor="signup-email">Email address</Label>
+                <Input 
+                  id="signup-email" 
+                  type="email" 
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={requestOtpMutation.isPending}
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="signup-password">Password</Label>
-              <Input 
-                id="signup-password" 
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={requestOtpMutation.isPending}
+              >
+                {requestOtpMutation.isPending ? "Sending code..." : "Continue with email"}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyAndCreate} className="space-y-6">
+              <div className="text-center mb-4">
+                <p className="text-sm text-gray-600">
+                  We've sent a verification code to <span className="font-medium">{email}</span>
+                </p>
+              </div>
+              
+              <div>
+                <Label htmlFor="otp">Verification code</Label>
+                <Input 
+                  id="otp" 
+                  type="text"
+                  placeholder="Enter 6-digit code"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  required
+                  maxLength={6}
+                  className="text-center tracking-widest font-medium"
+                />
+              </div>
 
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={signupMutation.isPending}
-            >
-              {signupMutation.isPending ? "Creating account..." : "Create account"}
-            </Button>
+              <div className="text-center">
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setOtpSent(false);
+                    setOtp("");
+                  }}
+                  className="text-sm font-medium text-primary hover:text-primary/80"
+                >
+                  Use a different email
+                </button>
+              </div>
 
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={verifyAndCreateAccountMutation.isPending}
+              >
+                {verifyAndCreateAccountMutation.isPending ? "Creating account..." : "Create account"}
+              </Button>
+              
+              <div className="text-center">
+                <button 
+                  type="button"
+                  onClick={() => requestOtpMutation.mutate()}
+                  disabled={requestOtpMutation.isPending}
+                  className="text-sm font-medium text-primary hover:text-primary/80"
+                >
+                  {requestOtpMutation.isPending ? "Sending..." : "Resend verification code"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          <div className="space-y-6 mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <Separator />
@@ -160,7 +245,7 @@ export default function Signup() {
                 </a>
               </p>
             </div>
-          </form>
+          </div>
         </CardContent>
       </Card>
     </div>

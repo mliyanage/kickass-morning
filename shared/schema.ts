@@ -30,10 +30,8 @@ export enum CallStatus {
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
-  name: text("name").notNull(),
-  password: text("password").notNull(),
+  name: text("name"),
   phone: text("phone"),
   phoneVerified: boolean("phone_verified").default(false),
   isPersonalized: boolean("is_personalized").default(false),
@@ -107,25 +105,30 @@ export const callHistory = pgTable("call_history", {
 export const otpCodes = pgTable("otp_codes", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
-  phone: text("phone").notNull(),
+  email: text("email"),
+  phone: text("phone"),
   code: text("code").notNull(),
+  type: text("type").notNull(), // 'email', 'phone', or 'login'
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Schema for inserting new users
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  email: true,
-  name: true,
-  password: true,
+export const insertUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string().optional(),
 });
 
-// Schema for user login
+// Schema for user login (passwordless)
 export const loginUserSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
   rememberMe: z.boolean().optional(),
+});
+
+// Schema for email OTP verification
+export const emailOtpSchema = z.object({
+  email: z.string().email(),
+  otp: z.string().length(6),
 });
 
 // Schema for phone verification
@@ -177,6 +180,7 @@ export const scheduleSchema = z.object({
 // Export types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type LoginUser = z.infer<typeof loginUserSchema>;
+export type EmailOtpVerification = z.infer<typeof emailOtpSchema>;
 export type PhoneVerification = z.infer<typeof phoneVerificationSchema>;
 export type OtpVerification = z.infer<typeof otpVerificationSchema>;
 export type PersonalizationData = z.infer<typeof personalizationSchema>;

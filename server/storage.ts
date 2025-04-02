@@ -13,15 +13,16 @@ import {
 export interface IStorage {
   // User related
   getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserPhone(userId: number, phone: string, verified: boolean): Promise<User | undefined>;
   updateUserPersonalizationStatus(userId: number, isPersonalized: boolean): Promise<User | undefined>;
   
   // OTP related
-  createOtpCode(data: { userId: number, phone: string, code: string, expiresAt: Date }): Promise<any>;
-  verifyOtpCode(userId: number, phone: string, code: string): Promise<boolean>;
+  createEmailOtp(data: { email: string, code: string, type: string, expiresAt: Date }): Promise<any>;
+  verifyEmailOtp(email: string, code: string, type: string): Promise<number | null>; // Returns userId if found
+  createPhoneOtp(data: { userId: number, phone: string, code: string, expiresAt: Date }): Promise<any>;
+  verifyPhoneOtp(userId: number, phone: string, code: string): Promise<boolean>;
   
   // Personalization related
   savePersonalization(userId: number, data: PersonalizationData): Promise<any>;
@@ -71,10 +72,18 @@ export class MemStorage implements IStorage {
     return this.users.get(id);
   }
 
+  // This method is kept for backward compatibility but deprecated
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    return undefined;
+  }
+  
+  // Backward compatibility methods for OTP
+  async createOtpCode(data: { userId: number, phone: string, code: string, expiresAt: Date }): Promise<any> {
+    return this.createPhoneOtp(data);
+  }
+  
+  async verifyOtpCode(userId: number, phone: string, code: string): Promise<boolean> {
+    return this.verifyPhoneOtp(userId, phone, code);
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -87,8 +96,9 @@ export class MemStorage implements IStorage {
     const id = this.currentId++;
     const now = new Date();
     const user: User = { 
-      ...insertUser, 
       id,
+      email: insertUser.email,
+      name: insertUser.name || null,
       phone: null,
       phoneVerified: false,
       isPersonalized: false,
@@ -123,7 +133,66 @@ export class MemStorage implements IStorage {
   }
 
   // OTP related methods
-  async createOtpCode(data: { userId: number, phone: string, code: string, expiresAt: Date }): Promise<any> {
+  // Email OTP methods
+  async createEmailOtp(data: { email: string, code: string, type: string, expiresAt: Date }): Promise<any> {
+    const id = this.currentOtpId++;
+    const otpCode = { id, ...data, createdAt: new Date() };
+    
+    // Store email OTPs with a special key for users not yet registered
+    const emailKey = `email:${data.email}`;
+    if (!this.otpCodes.has(this.emailToKey(data.email))) {
+      this.otpCodes.set(this.emailToKey(data.email), []);
+    }
+    
+    const emailOtpCodes = this.otpCodes.get(this.emailToKey(data.email)) || [];
+    emailOtpCodes.push(otpCode);
+    this.otpCodes.set(this.emailToKey(data.email), emailOtpCodes);
+    
+    return otpCode;
+  }
+
+  async verifyEmailOtp(email: string, code: string, type: string): Promise<number | null> {
+    const emailOtpCodes = this.otpCodes.get(this.emailToKey(email)) || [];
+    
+    // Find the latest OTP code for the email and type
+    const otpCodes = emailOtpCodes.filter(otp => otp.email === email && otp.type === type);
+    if (otpCodes.length === 0) return null;
+    
+    // Sort by creation date (descending)
+    otpCodes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    const latestOtp = otpCodes[0];
+    
+    // Check if OTP is valid and not expired
+    const now = new Date();
+    if (latestOtp.code !== code || now > new Date(latestOtp.expiresAt)) {
+      return null;
+    }
+    
+    // For login type, check if user exists
+    if (type === 'login') {
+      const user = await this.getUserByEmail(email);
+      return user ? user.id : null;
+    }
+    
+    // For registration, we'll create a user in the routes
+    return -1;
+  }
+  
+  // Helper method to create a consistent key for email OTPs
+  private emailToKey(email: string): number {
+    // Hash the email to a consistent number for use as a key
+    let hash = 0;
+    for (let i = 0; i < email.length; i++) {
+      const char = email.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash;
+  }
+
+  // Phone OTP methods
+  async createPhoneOtp(data: { userId: number, phone: string, code: string, expiresAt: Date }): Promise<any> {
     const id = this.currentOtpId++;
     const otpCode = { id, ...data, createdAt: new Date() };
     
@@ -138,7 +207,7 @@ export class MemStorage implements IStorage {
     return otpCode;
   }
 
-  async verifyOtpCode(userId: number, phone: string, code: string): Promise<boolean> {
+  async verifyPhoneOtp(userId: number, phone: string, code: string): Promise<boolean> {
     const userOtpCodes = this.otpCodes.get(userId) || [];
     
     // Find the latest OTP code for the phone number

@@ -17,7 +17,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         <div className="container mx-auto px-4">
           <Link href="/" className="flex items-center">
             <Clock className="h-8 w-8 text-primary-600" />
-            <span className="ml-2 text-xl font-bold text-primary-700">WakeUp Buddy</span>
+            <span className="ml-2 text-xl font-bold text-primary-700">KickAss Morning</span>
           </Link>
         </div>
       </header>

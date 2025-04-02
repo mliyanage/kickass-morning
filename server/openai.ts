@@ -10,8 +10,10 @@ const openai = new OpenAI({
 export async function generateVoiceMessage(
   goalType: GoalType,
   struggleType: StruggleType,
-  userName: string
+  userName: string | null
 ): Promise<string> {
+  // Default to "there" if name is null
+  const formattedName = userName || "there";
   // Format goal and struggle for prompt
   const goalTypeMap: Record<GoalType, string> = {
     [GoalType.EXERCISE]: "morning exercise",
@@ -48,7 +50,7 @@ export async function generateVoiceMessage(
         },
         {
           role: "user",
-          content: `Create a motivational wakeup call message for ${userName}. 
+          content: `Create a motivational wakeup call message for ${formattedName}. 
           Their goal is focused on ${goal} and they struggle with ${struggle}. 
           Make it sound conversational and natural, as if a motivational figure is personally calling them.`
         }
@@ -65,9 +67,10 @@ export async function generateVoiceMessage(
 }
 
 // Fallback message in case OpenAI API fails
-function fallbackMessage(userName: string, goal: string): string {
+function fallbackMessage(userName: string | null, goal: string): string {
+  const name = userName || "there";
   return `
-    Good morning, ${userName}! It's time to wake up and start your day.
+    Good morning, ${name}! It's time to wake up and start your day.
     Remember why you set this alarm - your commitment to ${goal} is important.
     Take a deep breath, get up, and take that first step toward your goal.
     Today is a new opportunity to make progress. You've got this!
