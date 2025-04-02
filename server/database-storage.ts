@@ -275,6 +275,7 @@ export class DatabaseStorage implements IStorage {
     // Convert database null values to undefined for the PersonalizationData interface
     const result: PersonalizationData = {
       goal: personalization.goal as any,
+      struggle: personalization.struggle as any,
       voice: personalization.voice
     };
     

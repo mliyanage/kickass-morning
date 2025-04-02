@@ -74,12 +74,12 @@ function App() {
   // Personalization guard
   const PersonalizedGuard = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
-      if (!isPersonalized && isAuthenticated && isPhoneVerified) {
+      if (!isPersonalized && isAuthenticated) {
         setLocation("/personalization");
       }
-    }, [isPersonalized, isAuthenticated, isPhoneVerified]);
+    }, [isPersonalized, isAuthenticated]);
 
-    return isAuthenticated && isPhoneVerified && isPersonalized ? <>{children}</> : null;
+    return isAuthenticated && isPersonalized ? <>{children}</> : null;
   };
 
   return (
@@ -88,9 +88,7 @@ function App() {
         <Route path="/" component={Home} />
         <Route path="/login">
           {isAuthenticated ? (
-            !isPhoneVerified ? (
-              <PhoneVerification />
-            ) : !isPersonalized ? (
+            !isPersonalized ? (
               <Personalization />
             ) : (
               <Dashboard />
@@ -111,9 +109,9 @@ function App() {
           </AuthGuard>
         </Route>
         <Route path="/personalization">
-          <PhoneVerifiedGuard>
+          <AuthGuard>
             <Personalization />
-          </PhoneVerifiedGuard>
+          </AuthGuard>
         </Route>
         <Route path="/schedule-call">
           <PersonalizedGuard>

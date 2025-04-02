@@ -401,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Personalization Routes
-  app.post("/api/user/personalization", isAuthenticated, isPhoneVerified, async (req: Request, res: Response) => {
+  app.post("/api/user/personalization", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const validatedData = personalizationSchema.parse(req.body);
       
@@ -588,11 +588,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Call-related Routes
-  app.post("/api/call/sample", isAuthenticated, isPhoneVerified, isPersonalized, async (req: Request, res: Response) => {
+  app.post("/api/call/sample", isAuthenticated, isPersonalized, async (req: Request, res: Response) => {
     try {
+      // Check if user has verified phone number
       const user = await storage.getUser(req.session.userId!);
-      if (!user || !user.phone) {
-        return res.status(400).json({ message: "User phone number not found." });
+      if (!user) {
+        return res.status(400).json({ message: "User not found." });
+      }
+      
+      // Check if phone is verified when trying to make a call
+      if (!user.phoneVerified || !user.phone) {
+        return res.status(403).json({ 
+          message: "Phone verification required", 
+          phoneVerificationRequired: true 
+        });
       }
       
       // Get personalization data
