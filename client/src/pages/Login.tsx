@@ -174,6 +174,19 @@ export default function Login() {
                 <p className="text-sm text-gray-600">
                   We've sent a verification code to <span className="font-medium">{email}</span>
                 </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  <strong>Development mode:</strong> Check the server console logs to see the OTP code
+                </p>
+                {process.env.NODE_ENV !== 'production' && import.meta.env.DEV && (
+                  <div className="mt-2">
+                    <p className="text-xs text-gray-500">
+                      <strong>Current OTP code from console:</strong><br/> 
+                      <span className="font-mono bg-gray-100 rounded px-2 py-1 mt-1 block">
+                        {otp || "Not entered yet"}
+                      </span>
+                    </p>
+                  </div>
+                )}
               </div>
               
               <div>

@@ -97,6 +97,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
+  // Development only endpoints
+  // These should be disabled in production
+  if (process.env.NODE_ENV !== 'production') {
+    // Development helper to get the latest OTP
+    app.get("/api/dev/latest-otp", async (req: Request, res: Response) => {
+      const email = req.query.email as string;
+      if (!email) {
+        return res.status(400).json({ message: "Email parameter is required" });
+      }
+      
+      try {
+        // In a real implementation, this would retrieve from a database
+        // For our demo, we'll just return a mock OTP for testing
+        // This is just a placeholder since we're logging OTPs to console
+        res.status(200).json({ 
+          otp: "123456", 
+          message: "This is a mock OTP for development. Check server logs for the real OTP."
+        });
+      } catch (error) {
+        console.error("Dev OTP fetch error:", error);
+        res.status(500).json({ message: "Error retrieving OTP" });
+      }
+    });
+  }
+
   // Authentication Routes
   // Send OTP to email for signup/login
   app.post("/api/auth/request-email-otp", async (req: Request, res: Response) => {
@@ -123,7 +148,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In a real app, we would send the OTP via email here
       // For demo purposes, we'll just log it to console
-      console.log(`OTP for ${email} (${otpType}): ${otp}`);
+      // Add a timestamp for easier tracking
+      console.log(`[${new Date().toISOString()}] OTP for ${email} (${otpType}): ${otp}`);
       
       // Return success message depending on type
       const message = otpType === 'login' 
