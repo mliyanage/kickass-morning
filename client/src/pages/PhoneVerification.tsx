@@ -25,7 +25,11 @@ export default function PhoneVerification() {
       });
       // Store phone number in localStorage for the OTP verification page
       localStorage.setItem("verificationPhone", phone);
-      setLocation("/otp-verification");
+      
+      // Force a short delay to ensure better transition
+      setTimeout(() => {
+        window.location.href = "/otp-verification";
+      }, 500);
     },
     onError: (error) => {
       toast({

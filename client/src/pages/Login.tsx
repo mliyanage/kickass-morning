@@ -51,37 +51,55 @@ export default function Login() {
       try {
         const userData = response.user;
         
-        if (!userData.phoneVerified) {
-          console.log("Redirecting to phone verification");
-          setLocation("/phone-verification");
-        } else if (!userData.isPersonalized) {
-          console.log("Redirecting to personalization");
-          setLocation("/personalization");
-        } else {
-          console.log("Redirecting to dashboard");
-          setLocation("/dashboard");
-        }
+        toast({
+          title: "Login successful",
+          description: "Redirecting you to the appropriate page...",
+        });
+        
+        // Force a short delay to ensure the session is set
+        setTimeout(() => {
+          if (!userData.phoneVerified) {
+            console.log("Redirecting to phone verification");
+            window.location.href = "/phone-verification";
+          } else if (!userData.isPersonalized) {
+            console.log("Redirecting to personalization");
+            window.location.href = "/personalization";
+          } else {
+            console.log("Redirecting to dashboard");
+            window.location.href = "/dashboard";
+          }
+        }, 500);
       } catch (error) {
         console.error("Error processing login response:", error);
         // Fallback to auth check if response processing fails
-        try {
-          const res = await fetch('/api/auth/check', {
-            credentials: 'include'
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (!data.user.phoneVerified) {
-              setLocation("/phone-verification");
-            } else if (!data.user.isPersonalized) {
-              setLocation("/personalization");
+        toast({
+          title: "Login successful",
+          description: "Checking your profile status...",
+        });
+        
+        setTimeout(async () => {
+          try {
+            const res = await fetch('/api/auth/check', {
+              credentials: 'include'
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (!data.user.phoneVerified) {
+                window.location.href = "/phone-verification";
+              } else if (!data.user.isPersonalized) {
+                window.location.href = "/personalization";
+              } else {
+                window.location.href = "/dashboard";
+              }
             } else {
-              setLocation("/dashboard");
+              // If all else fails, just go to the root
+              window.location.href = "/";
             }
+          } catch (secondError) {
+            console.error("Error checking auth status:", secondError);
+            window.location.href = "/";
           }
-        } catch (secondError) {
-          console.error("Error checking auth status:", secondError);
-          setLocation("/dashboard");
-        }
+        }, 1000);
       }
     },
     onError: (error) => {

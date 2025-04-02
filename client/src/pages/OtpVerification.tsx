@@ -35,7 +35,11 @@ export default function OtpVerification() {
         description: "Your phone number has been verified successfully.",
       });
       localStorage.removeItem("verificationPhone");
-      setLocation("/personalization");
+      
+      // Force a short delay to ensure the session is updated
+      setTimeout(() => {
+        window.location.href = "/personalization";
+      }, 500);
     },
     onError: (error) => {
       toast({
@@ -123,8 +127,9 @@ export default function OtpVerification() {
                 onChange={setOtp}
                 render={({ slots }) => (
                   <InputOTPGroup>
-                    {slots.map((slot, index) => (
-                      <InputOTPSlot key={index} {...slot} />
+                    {/* The InputOTPSlot requires an index prop */}
+                    {slots.map((_, i) => (
+                      <InputOTPSlot key={i} index={i} />
                     ))}
                   </InputOTPGroup>
                 )}

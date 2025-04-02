@@ -59,7 +59,11 @@ export default function Signup() {
         title: "Account created successfully",
         description: "Please verify your phone number to continue.",
       });
-      setLocation("/phone-verification");
+      
+      // Force a short delay to ensure the session is set
+      setTimeout(() => {
+        window.location.href = "/phone-verification";
+      }, 500);
     },
     onError: (error) => {
       toast({
