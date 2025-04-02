@@ -206,32 +206,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email and OTP are required." });
       }
       
-      // Verify OTP
-      const userId = await storage.verifyEmailOtp(email, otp, 'register');
+      // First check if the OTP is valid, regardless of type
+      const isOtpValid = await storage.verifyAnyEmailOtp(email, otp);
       
-      // If userId is not -1, this means it's not a valid registration OTP
-      if (userId !== -1) {
-        return res.status(400).json({ message: "Invalid or expired registration code." });
+      if (!isOtpValid) {
+        console.error(`Verification failed: Invalid OTP ${otp} for ${email}`);
+        return res.status(401).json({ message: "Invalid or expired verification code." });
       }
       
-      // Check if email is already in use (double-check)
+      // OTP is valid, now check if user exists
       const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ message: "Email already in use." });
-      }
+      let user;
       
-      // Create user
-      const user = await storage.createUser({
-        email,
-        name: name || null
-      });
+      if (existingUser) {
+        // User exists, this is a login
+        console.log(`Existing user ${existingUser.id} logged in with email ${email}`);
+        user = existingUser;
+      } else {
+        // User doesn't exist, this is a registration
+        if (!name) {
+          return res.status(400).json({ message: "Name is required for registration." });
+        }
+        
+        // Create new user
+        user = await storage.createUser({
+          email,
+          name
+        });
+        console.log(`New user ${user.id} registered with email ${email}`);
+      }
       
       // Set session
       req.session.userId = user.id;
       
       // Return success
-      res.status(201).json({
-        message: "Account created successfully.",
+      res.status(existingUser ? 200 : 201).json({
+        message: existingUser ? "Login successful." : "Registration successful.",
         user: {
           id: user.id,
           email: user.email,
@@ -255,54 +265,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email and verification code are required." });
       }
       
-      // First try to verify as login OTP
-      let userId = await storage.verifyEmailOtp(email, otp, 'login');
-      
-      // If that fails, try to verify as registration OTP for existing users
-      if (!userId || userId < 0) {
-        // Check if this is a registered user trying to login
-        const existingUser = await storage.getUserByEmail(email);
-        if (existingUser) {
-          // Try to verify as a registration OTP
-          const registrationResult = await storage.verifyEmailOtp(email, otp, 'register');
-          if (registrationResult === -1) {
-            // Valid registration OTP for existing account
-            userId = existingUser.id;
-          }
-        }
+      // Step 1: Check if the user exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (!existingUser) {
+        return res.status(401).json({ message: "No account found with this email. Please sign up instead." });
       }
       
-      // Still invalid after all attempts
-      if (!userId || userId < 0) {
+      // Step 2: Verify the OTP is valid for this email (regardless of type)
+      // This is a simpler approach that just checks if any valid OTP exists for this email
+      const isOtpValid = await storage.verifyAnyEmailOtp(email, otp);
+      
+      if (!isOtpValid) {
         console.error(`Login failed: Invalid OTP ${otp} for ${email}`);
         return res.status(401).json({ message: "Invalid or expired verification code." });
       }
       
-      // Get user
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(401).json({ message: "User not found." });
-      }
-      
       // Set session
-      req.session.userId = user.id;
+      req.session.userId = existingUser.id;
       
       // Set session duration based on rememberMe
       if (rememberMe) {
         req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
       }
       
-      console.log(`User ${userId} logged in successfully`);
+      console.log(`User ${existingUser.id} logged in successfully`);
       
       // Return success
       res.status(200).json({
         message: "Login successful.",
         user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          phoneVerified: user.phoneVerified,
-          isPersonalized: user.isPersonalized
+          id: existingUser.id,
+          email: existingUser.email,
+          name: existingUser.name,
+          phoneVerified: existingUser.phoneVerified,
+          isPersonalized: existingUser.isPersonalized
         }
       });
     } catch (error) {

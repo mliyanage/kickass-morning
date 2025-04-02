@@ -21,6 +21,7 @@ export interface IStorage {
   // OTP related
   createEmailOtp(data: { email: string, code: string, type: string, expiresAt: Date }): Promise<any>;
   verifyEmailOtp(email: string, code: string, type: string): Promise<number | null>; // Returns userId if found
+  verifyAnyEmailOtp(email: string, code: string): Promise<boolean>; // Verifies OTP regardless of type
   createPhoneOtp(data: { userId: number, phone: string, code: string, expiresAt: Date }): Promise<any>;
   verifyPhoneOtp(userId: number, phone: string, code: string): Promise<boolean>;
   
@@ -247,6 +248,40 @@ export class MemStorage implements IStorage {
     return otpCode;
   }
 
+  async verifyAnyEmailOtp(email: string, code: string): Promise<boolean> {
+    const emailOtpCodes = this.otpCodes.get(this.emailToKey(email)) || [];
+    
+    console.log(`[OTP Debug] Verifying any OTP ${code} for ${email}`);
+    console.log(`[OTP Debug] Found ${emailOtpCodes.length} OTP codes for this email`);
+    
+    // Find any valid OTP for this email, regardless of type
+    const validOtp = emailOtpCodes.find(otp => 
+      otp.email === email && 
+      otp.code === code && 
+      new Date() < new Date(otp.expiresAt)
+    );
+    
+    if (validOtp) {
+      console.log(`[OTP Debug] Found valid OTP with code ${code}, type ${validOtp.type}`);
+      
+      // Remove the verified OTP from storage
+      this.otpCodes.set(
+        this.emailToKey(email),
+        emailOtpCodes.filter(otp => otp !== validOtp)
+      );
+      
+      return true;
+    }
+    
+    // Log some debugging info
+    console.log(`[OTP Debug] No valid OTP found for ${email} with code ${code}`);
+    emailOtpCodes.forEach((otp, i) => {
+      console.log(`[OTP Debug] OTP #${i + 1}: code=${otp.code}, type=${otp.type}, expired=${new Date() > new Date(otp.expiresAt)}`);
+    });
+    
+    return false;
+  }
+
   async verifyPhoneOtp(userId: number, phone: string, code: string): Promise<boolean> {
     const userOtpCodes = this.otpCodes.get(userId) || [];
     
@@ -353,4 +388,5 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { DatabaseStorage } from "./database-storage";
+export const storage = new DatabaseStorage();
