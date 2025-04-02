@@ -1,0 +1,125 @@
+import { Switch, Route } from "wouter";
+import { Toaster } from "@/components/ui/toaster";
+import NotFound from "@/pages/not-found";
+import Home from "@/pages/Home";
+import Login from "@/pages/Login";
+import Signup from "@/pages/Signup";
+import PhoneVerification from "@/pages/PhoneVerification";
+import OtpVerification from "@/pages/OtpVerification";
+import Personalization from "@/pages/Personalization";
+import ScheduleCall from "@/pages/ScheduleCall";
+import Dashboard from "@/pages/Dashboard";
+import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
+
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isPhoneVerified, setIsPhoneVerified] = useState<boolean>(false);
+  const [isPersonalized, setIsPersonalized] = useState<boolean>(false);
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    // Check if user is authenticated
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/check', {
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setIsAuthenticated(true);
+          setIsPhoneVerified(data.phoneVerified || false);
+          setIsPersonalized(data.isPersonalized || false);
+        }
+      } catch (error) {
+        console.error("Auth check error:", error);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // Authentication guard for protected routes
+  const AuthGuard = ({ children }: { children: React.ReactNode }) => {
+    useEffect(() => {
+      if (!isAuthenticated) {
+        setLocation("/login");
+      }
+    }, [isAuthenticated]);
+
+    return isAuthenticated ? <>{children}</> : null;
+  };
+
+  // Phone verification guard
+  const PhoneVerifiedGuard = ({ children }: { children: React.ReactNode }) => {
+    useEffect(() => {
+      if (!isPhoneVerified && isAuthenticated) {
+        setLocation("/phone-verification");
+      }
+    }, [isPhoneVerified, isAuthenticated]);
+
+    return isAuthenticated && isPhoneVerified ? <>{children}</> : null;
+  };
+
+  // Personalization guard
+  const PersonalizedGuard = ({ children }: { children: React.ReactNode }) => {
+    useEffect(() => {
+      if (!isPersonalized && isAuthenticated && isPhoneVerified) {
+        setLocation("/personalization");
+      }
+    }, [isPersonalized, isAuthenticated, isPhoneVerified]);
+
+    return isAuthenticated && isPhoneVerified && isPersonalized ? <>{children}</> : null;
+  };
+
+  return (
+    <>
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/login">
+          {isAuthenticated ? (
+            !isPhoneVerified ? (
+              <PhoneVerification />
+            ) : !isPersonalized ? (
+              <Personalization />
+            ) : (
+              <Dashboard />
+            )
+          ) : (
+            <Login />
+          )}
+        </Route>
+        <Route path="/signup" component={Signup} />
+        <Route path="/phone-verification">
+          <AuthGuard>
+            <PhoneVerification />
+          </AuthGuard>
+        </Route>
+        <Route path="/otp-verification">
+          <AuthGuard>
+            <OtpVerification />
+          </AuthGuard>
+        </Route>
+        <Route path="/personalization">
+          <PhoneVerifiedGuard>
+            <Personalization />
+          </PhoneVerifiedGuard>
+        </Route>
+        <Route path="/schedule-call">
+          <PersonalizedGuard>
+            <ScheduleCall />
+          </PersonalizedGuard>
+        </Route>
+        <Route path="/dashboard">
+          <PersonalizedGuard>
+            <Dashboard />
+          </PersonalizedGuard>
+        </Route>
+        <Route component={NotFound} />
+      </Switch>
+      <Toaster />
+    </>
+  );
+}
+
+export default App;

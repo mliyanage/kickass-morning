@@ -1,0 +1,190 @@
+import { pgTable, text, serial, integer, boolean, timestamp, unique } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+// Define enum types for goals and struggles
+export enum GoalType {
+  EXERCISE = "exercise",
+  PRODUCTIVITY = "productivity",
+  STUDY = "study",
+  MEDITATION = "meditation",
+  CREATIVE = "creative",
+  OTHER = "other"
+}
+
+export enum StruggleType {
+  TIRED = "tired",
+  LACK_OF_MOTIVATION = "lack_of_motivation",
+  SNOOZE = "snooze",
+  STAY_UP_LATE = "stay_up_late",
+  OTHER = "other"
+}
+
+export enum CallStatus {
+  PENDING = "pending",
+  ANSWERED = "answered",
+  MISSED = "missed",
+  FAILED = "failed"
+}
+
+// Users table
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  password: text("password").notNull(),
+  phone: text("phone"),
+  phoneVerified: boolean("phone_verified").default(false),
+  isPersonalized: boolean("is_personalized").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// User personalization preferences
+export const personalizations = pgTable("personalizations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  goal: text("goal").notNull(),
+  otherGoal: text("other_goal"),
+  goalDescription: text("goal_description"),
+  struggle: text("struggle").notNull(),
+  otherStruggle: text("other_struggle"),
+  voice: text("voice").notNull(),
+  customVoice: text("custom_voice"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdUnique: unique("personalizations_user_id_unique").on(table.userId),
+  };
+});
+
+// Voice options
+export const voices = pgTable("voices", {
+  id: serial("id").primaryKey(),
+  voiceId: text("voice_id").notNull().unique(),
+  name: text("name").notNull(),
+  category: text("category").notNull(),
+  imageUrl: text("image_url").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Schedule for wakeup calls
+export const schedules = pgTable("schedules", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  wakeupTime: text("wakeup_time").notNull(),
+  timezone: text("timezone").notNull(),
+  weekdays: text("weekdays").notNull(),
+  isRecurring: boolean("is_recurring").default(true),
+  date: text("date"),
+  callRetry: boolean("call_retry").default(true),
+  advanceNotice: boolean("advance_notice").default(false),
+  goalType: text("goal_type").notNull(),
+  struggleType: text("struggle_type").notNull(),
+  voiceId: text("voice_id").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Call history
+export const callHistory = pgTable("call_history", {
+  id: serial("id").primaryKey(),
+  scheduleId: integer("schedule_id").references(() => schedules.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  callTime: timestamp("call_time").notNull(),
+  voice: text("voice").notNull(),
+  status: text("status").notNull(),
+  duration: integer("duration"),
+  recordingUrl: text("recording_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// OTP verification codes
+export const otpCodes = pgTable("otp_codes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  phone: text("phone").notNull(),
+  code: text("code").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Schema for inserting new users
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  email: true,
+  name: true,
+  password: true,
+});
+
+// Schema for user login
+export const loginUserSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  rememberMe: z.boolean().optional(),
+});
+
+// Schema for phone verification
+export const phoneVerificationSchema = z.object({
+  phone: z.string().min(10),
+});
+
+// Schema for OTP verification
+export const otpVerificationSchema = z.object({
+  phone: z.string().min(10),
+  otp: z.string().length(6),
+});
+
+// Schema for personalization
+export const personalizationSchema = z.object({
+  goal: z.enum([
+    GoalType.EXERCISE,
+    GoalType.PRODUCTIVITY,
+    GoalType.STUDY,
+    GoalType.MEDITATION,
+    GoalType.CREATIVE,
+    GoalType.OTHER
+  ]),
+  otherGoal: z.string().optional(),
+  goalDescription: z.string().optional(),
+  struggle: z.enum([
+    StruggleType.TIRED,
+    StruggleType.LACK_OF_MOTIVATION,
+    StruggleType.SNOOZE,
+    StruggleType.STAY_UP_LATE,
+    StruggleType.OTHER
+  ]),
+  otherStruggle: z.string().optional(),
+  voice: z.string(),
+  customVoice: z.string().optional(),
+});
+
+// Schema for schedule
+export const scheduleSchema = z.object({
+  wakeupTime: z.string(),
+  timezone: z.string(),
+  weekdays: z.array(z.string()),
+  isRecurring: z.boolean(),
+  date: z.string().optional(),
+  callRetry: z.boolean(),
+  advanceNotice: z.boolean(),
+});
+
+// Export types
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type LoginUser = z.infer<typeof loginUserSchema>;
+export type PhoneVerification = z.infer<typeof phoneVerificationSchema>;
+export type OtpVerification = z.infer<typeof otpVerificationSchema>;
+export type PersonalizationData = z.infer<typeof personalizationSchema>;
+export type ScheduleData = z.infer<typeof scheduleSchema>;
+
+export type User = typeof users.$inferSelect;
+export type Personalization = typeof personalizations.$inferSelect;
+export type Voice = typeof voices.$inferSelect;
+export type Schedule = typeof schedules.$inferSelect;
+export type CallHistoryEntry = typeof callHistory.$inferSelect;
+export type OtpCode = typeof otpCodes.$inferSelect;
