@@ -46,7 +46,7 @@ export default function ScheduleCall() {
   const [, setLocation] = useLocation();
   
   // Fetch user data to check phone verification status
-  const { data: userData } = useQuery({
+  const { data: userData } = useQuery<{ authenticated: boolean, user: { phoneVerified: boolean } }>({
     queryKey: ['/api/auth/check'],
     retry: false,
     refetchOnWindowFocus: false

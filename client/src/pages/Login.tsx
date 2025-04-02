@@ -59,7 +59,7 @@ export default function Login() {
         
         // Force a short delay to ensure the session is set
         setTimeout(() => {
-          if (!userData.isPersonalized) {
+          if (!userData.isPersonalized && userData.isPersonalized !== undefined) {
             console.log("Redirecting to personalization");
             window.location.href = "/personalization";
           } else {
@@ -82,7 +82,7 @@ export default function Login() {
             });
             if (res.ok) {
               const data = await res.json();
-              if (!data.user.isPersonalized) {
+              if (data.user && !data.user.isPersonalized) {
                 window.location.href = "/personalization";
               } else {
                 window.location.href = "/dashboard";
