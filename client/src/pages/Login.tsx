@@ -9,6 +9,7 @@ import { useLocation } from "wouter";
 import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
+import { DevOtpHelper } from "@/components/DevOtpHelper";
 
 export default function Login() {
   const { toast } = useToast();
@@ -197,8 +198,9 @@ export default function Login() {
                 </p>
                 {process.env.NODE_ENV !== 'production' && import.meta.env.DEV && (
                   <div className="mt-2">
-                    <p className="text-xs text-gray-500">
-                      <strong>Current OTP code from console:</strong><br/> 
+                    <DevOtpHelper email={email} />
+                    <p className="text-xs text-gray-500 mt-2">
+                      <strong>Current entered code:</strong><br/> 
                       <span className="font-mono bg-gray-100 rounded px-2 py-1 mt-1 block">
                         {otp || "Not entered yet"}
                       </span>

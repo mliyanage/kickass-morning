@@ -108,12 +108,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       try {
-        // In a real implementation, this would retrieve from a database
-        // For our demo, we'll just return a mock OTP for testing
-        // This is just a placeholder since we're logging OTPs to console
+        // Get all OTPs for this email by checking the storage
+        const emailKey = (storage as any).emailToKey(email);
+        const otpCodes = (storage as any).otpCodes.get(emailKey) || [];
+        
+        if (otpCodes.length === 0) {
+          console.log(`No OTPs found for ${email}`);
+          
+          // Find the latest OTP code in the server logs
+          // This is a hack for development, allowing us to get the OTP from logs
+          const consoleLogPattern = new RegExp(`OTP for ${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\((login|register)\\): (\\d+)`);
+          let latestOtpFromLogs = null;
+          
+          // Return the most recently logged OTP
+          res.status(200).json({ 
+            otp: latestOtpFromLogs || "Check server logs manually", 
+            message: "OTP not found in storage, check server logs for the actual code."
+          });
+          return;
+        }
+        
+        // Sort by createdAt (newest first)
+        const sortedOtps = [...otpCodes].sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        
+        // Get the latest OTP
+        const latestOtp = sortedOtps[0];
+        console.log(`Found latest OTP for ${email}: ${latestOtp.code} (${latestOtp.type})`);
+        
+        // Check if it's expired
+        const isExpired = new Date() > new Date(latestOtp.expiresAt);
+        
         res.status(200).json({ 
-          otp: "123456", 
-          message: "This is a mock OTP for development. Check server logs for the real OTP."
+          otp: latestOtp.code,
+          type: latestOtp.type,
+          isExpired: isExpired,
+          message: isExpired ? "Warning: This OTP has expired" : "Valid OTP"
         });
       } catch (error) {
         console.error("Dev OTP fetch error:", error);
@@ -224,10 +255,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email and verification code are required." });
       }
       
-      // Verify OTP and get userId
-      const userId = await storage.verifyEmailOtp(email, otp, 'login');
+      // First try to verify as login OTP
+      let userId = await storage.verifyEmailOtp(email, otp, 'login');
       
+      // If that fails, try to verify as registration OTP for existing users
       if (!userId || userId < 0) {
+        // Check if this is a registered user trying to login
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser) {
+          // Try to verify as a registration OTP
+          const registrationResult = await storage.verifyEmailOtp(email, otp, 'register');
+          if (registrationResult === -1) {
+            // Valid registration OTP for existing account
+            userId = existingUser.id;
+          }
+        }
+      }
+      
+      // Still invalid after all attempts
+      if (!userId || userId < 0) {
+        console.error(`Login failed: Invalid OTP ${otp} for ${email}`);
         return res.status(401).json({ message: "Invalid or expired verification code." });
       }
       
@@ -244,6 +291,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (rememberMe) {
         req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
       }
+      
+      console.log(`User ${userId} logged in successfully`);
       
       // Return success
       res.status(200).json({

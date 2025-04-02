@@ -1,13 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+
+interface OtpData {
+  otp: string;
+  type?: string;
+  isExpired?: boolean;
+  message?: string;
+}
 
 /**
  * A development-only component to fetch and display the latest OTP code
  * from the server logs.
  */
 export function DevOtpHelper({ email }: { email: string }) {
-  const [latestOtp, setLatestOtp] = useState<string | null>(null);
+  const [otpData, setOtpData] = useState<OtpData | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -33,20 +40,22 @@ export function DevOtpHelper({ email }: { email: string }) {
       
       const data = await response.json();
       if (data.otp) {
-        setLatestOtp(data.otp);
+        setOtpData(data);
+        
         // Auto-copy to clipboard for convenience
         navigator.clipboard.writeText(data.otp).catch(() => {
           // Clipboard write failed, but it's not critical
         });
+        
         toast({
           title: "OTP retrieved",
-          description: "OTP has been copied to clipboard"
+          description: data.message || "OTP has been copied to clipboard"
         });
       } else {
         toast({
           variant: "destructive",
           title: "No OTP found",
-          description: "No recent OTP was found for this email"
+          description: data.message || "No recent OTP was found for this email"
         });
       }
     } catch (error) {
@@ -67,11 +76,17 @@ export function DevOtpHelper({ email }: { email: string }) {
         <strong>Development Helper:</strong> Check server logs or use this helper to find your OTP
       </p>
       
-      {latestOtp && (
-        <div className="bg-green-50 border border-green-200 rounded p-2 mb-2">
+      {otpData?.otp && (
+        <div className={`${otpData.isExpired ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'} border rounded p-2 mb-2`}>
           <p className="text-xs text-center font-mono tracking-widest">
-            {latestOtp}
+            {otpData.otp}
           </p>
+          {otpData.type && (
+            <p className="text-xs text-center mt-1">
+              Type: <span className="font-semibold">{otpData.type}</span>
+              {otpData.isExpired && <span className="text-red-500 ml-2">(Expired)</span>}
+            </p>
+          )}
         </div>
       )}
       
@@ -84,6 +99,10 @@ export function DevOtpHelper({ email }: { email: string }) {
       >
         {loading ? "Finding OTP..." : "Find my OTP"}
       </Button>
+      
+      <p className="text-xs text-gray-400 mt-2 text-center">
+        If the button doesn't work, check the server console logs for a recently generated OTP
+      </p>
     </div>
   );
 }

@@ -152,31 +152,71 @@ export class MemStorage implements IStorage {
   }
 
   async verifyEmailOtp(email: string, code: string, type: string): Promise<number | null> {
+    const user = await this.getUserByEmail(email);
     const emailOtpCodes = this.otpCodes.get(this.emailToKey(email)) || [];
     
-    // Find the latest OTP code for the email and type
-    const otpCodes = emailOtpCodes.filter(otp => otp.email === email && otp.type === type);
-    if (otpCodes.length === 0) return null;
+    console.log(`[OTP Debug] Verifying ${code} for ${email} (type: ${type})`);
+    console.log(`[OTP Debug] Found ${emailOtpCodes.length} OTP codes for this email`);
     
-    // Sort by creation date (descending)
-    otpCodes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // First try with the exact type requested
+    const matchingOtps = emailOtpCodes.filter(otp => 
+      otp.email === email && 
+      otp.type === type && 
+      otp.code === code &&
+      new Date() < new Date(otp.expiresAt)
+    );
     
-    const latestOtp = otpCodes[0];
-    
-    // Check if OTP is valid and not expired
-    const now = new Date();
-    if (latestOtp.code !== code || now > new Date(latestOtp.expiresAt)) {
-      return null;
+    if (matchingOtps.length > 0) {
+      console.log(`[OTP Debug] Found matching OTP with type ${type}`);
+      
+      // Remove the verified OTP from storage
+      this.otpCodes.set(
+        this.emailToKey(email),
+        emailOtpCodes.filter(otp => otp !== matchingOtps[0])
+      );
+      
+      // For login type, check if user exists
+      if (type === 'login') {
+        if (!user) {
+          console.log(`[OTP Debug] Login OTP valid but user doesn't exist`);
+          return null;
+        }
+        return user.id;
+      }
+      
+      // For registration
+      return -1;
     }
     
-    // For login type, check if user exists
-    if (type === 'login') {
-      const user = await this.getUserByEmail(email);
-      return user ? user.id : null;
+    // If we're trying to login and have a valid user, also check for registration OTPs
+    if (type === 'login' && user) {
+      const registrationOtps = emailOtpCodes.filter(otp => 
+        otp.email === email && 
+        otp.type === 'register' && 
+        otp.code === code &&
+        new Date() < new Date(otp.expiresAt)
+      );
+      
+      if (registrationOtps.length > 0) {
+        console.log(`[OTP Debug] Found valid registration OTP, using for login`);
+        
+        // Remove the verified OTP from storage
+        this.otpCodes.set(
+          this.emailToKey(email),
+          emailOtpCodes.filter(otp => otp !== registrationOtps[0])
+        );
+        
+        return user.id;
+      }
     }
     
-    // For registration, we'll create a user in the routes
-    return -1;
+    // Log some debugging info
+    console.log(`[OTP Debug] No valid OTP found for ${email}`);
+    emailOtpCodes.forEach((otp, i) => {
+      console.log(`[OTP Debug] OTP #${i + 1}: code=${otp.code}, type=${otp.type}, expired=${new Date() > new Date(otp.expiresAt)}`);
+    });
+    
+    return null;
   }
   
   // Helper method to create a consistent key for email OTPs
