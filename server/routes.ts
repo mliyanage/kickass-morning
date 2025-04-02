@@ -1,4 +1,5 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import express from "express";
+import type { Express, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
@@ -17,7 +18,22 @@ import {
 import { generateOTP, getNextCallTime } from "./utils";
 import { sendSMS, makeCall } from "./twilio";
 import { generateVoiceMessage } from "./openai";
-import schedule from "node-schedule";
+import * as nodeSchedule from "node-schedule";
+import session from "express-session";
+
+// Extend express-session's SessionData interface
+declare module "express-session" {
+  interface SessionData {
+    userId: number | null;
+  }
+}
+
+// Custom Request type with session
+interface Request extends express.Request {
+  session: session.Session & {
+    userId?: number | null;
+  };
+}
 
 // Simple session-based authentication middleware
 const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -64,10 +80,18 @@ const isPersonalized = async (req: Request, res: Response, next: NextFunction) =
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup session storage
+  // Setup express-session middleware
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'wakeup-buddy-secret',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+  }));
+  
+  // Initialize session variables
   app.use((req: Request, _res: Response, next: NextFunction) => {
     // Initialize session variables if needed
-    if (!req.session.userId) {
+    if (req.session.userId === undefined) {
       req.session.userId = null;
     }
     next();
@@ -167,7 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/auth/logout", (req: Request, res: Response) => {
-    req.session.destroy((err) => {
+    req.session.destroy((err: any) => {
       if (err) {
         return res.status(500).json({ message: "Failed to logout." });
       }
@@ -341,8 +365,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       if (nextCallTime) {
-        // Schedule the job
-        const job = schedule.scheduleJob(nextCallTime, async function() {
+        // Schedule the job using node-schedule library
+        const job = nodeSchedule.scheduleJob(nextCallTime, async function() {
           try {
             const user = await storage.getUser(req.session.userId!);
             const scheduleData = await storage.getSchedule(schedule.id);
@@ -435,7 +459,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Schedule to reactivate after 24 hours
       const reactivateTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      schedule.scheduleJob(reactivateTime, async function() {
+      // Use node-schedule directly
+      const reactivationJob = nodeSchedule.scheduleJob(reactivateTime, async function() {
         await storage.updateScheduleStatus(scheduleId, true);
       });
       
