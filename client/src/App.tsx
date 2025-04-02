@@ -28,11 +28,21 @@ function App() {
         if (res.ok) {
           const data = await res.json();
           setIsAuthenticated(true);
-          setIsPhoneVerified(data.phoneVerified || false);
-          setIsPersonalized(data.isPersonalized || false);
+          setIsPhoneVerified(data.user.phoneVerified || false);
+          setIsPersonalized(data.user.isPersonalized || false);
+          
+          console.log("Auth check successful:", {
+            isAuthenticated: true,
+            isPhoneVerified: data.user.phoneVerified,
+            isPersonalized: data.user.isPersonalized
+          });
+        } else {
+          console.log("Not authenticated");
+          setIsAuthenticated(false);
         }
       } catch (error) {
         console.error("Auth check error:", error);
+        setIsAuthenticated(false);
       }
     };
 
