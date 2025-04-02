@@ -53,7 +53,8 @@ export default function Signup() {
     mutationFn: async () => {
       return await apiRequest("POST", "/api/auth/verify-email-otp", { email, otp, name });
     },
-    onSuccess: () => {
+    onSuccess: (response: any) => {
+      console.log("Account created successfully, redirecting to phone verification", response);
       toast({
         title: "Account created successfully",
         description: "Please verify your phone number to continue.",

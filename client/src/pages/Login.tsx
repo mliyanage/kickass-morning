@@ -44,25 +44,44 @@ export default function Login() {
     mutationFn: async () => {
       return await apiRequest("POST", "/api/auth/login", { email, otp, rememberMe });
     },
-    onSuccess: async () => {
-      // Redirect based on the user's verification status
+    onSuccess: async (response: any) => {
+      // Use the user data directly from the login response
+      console.log("Login successful, redirecting based on user status", response);
+      
       try {
-        const res = await fetch('/api/auth/check', {
-          credentials: 'include'
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (!data.user.phoneVerified) {
-            setLocation("/phone-verification");
-          } else if (!data.user.isPersonalized) {
-            setLocation("/personalization");
-          } else {
-            setLocation("/dashboard");
-          }
+        const userData = response.user;
+        
+        if (!userData.phoneVerified) {
+          console.log("Redirecting to phone verification");
+          setLocation("/phone-verification");
+        } else if (!userData.isPersonalized) {
+          console.log("Redirecting to personalization");
+          setLocation("/personalization");
+        } else {
+          console.log("Redirecting to dashboard");
+          setLocation("/dashboard");
         }
       } catch (error) {
-        console.error("Error checking auth status:", error);
-        setLocation("/dashboard");
+        console.error("Error processing login response:", error);
+        // Fallback to auth check if response processing fails
+        try {
+          const res = await fetch('/api/auth/check', {
+            credentials: 'include'
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (!data.user.phoneVerified) {
+              setLocation("/phone-verification");
+            } else if (!data.user.isPersonalized) {
+              setLocation("/personalization");
+            } else {
+              setLocation("/dashboard");
+            }
+          }
+        } catch (secondError) {
+          console.error("Error checking auth status:", secondError);
+          setLocation("/dashboard");
+        }
       }
     },
     onError: (error) => {
