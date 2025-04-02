@@ -55,15 +55,15 @@ export default function Signup() {
       return await apiRequest("POST", "/api/auth/verify-email-otp", { email, otp, name });
     },
     onSuccess: (response: any) => {
-      console.log("Account created successfully, redirecting to phone verification", response);
+      console.log("Account created successfully, redirecting to personalization", response);
       toast({
         title: "Account created successfully",
-        description: "Please verify your phone number to continue.",
+        description: "Please tell us about your goals and preferences.",
       });
       
       // Force a short delay to ensure the session is set
       setTimeout(() => {
-        window.location.href = "/phone-verification";
+        window.location.href = "/personalization";
       }, 500);
     },
     onError: (error) => {

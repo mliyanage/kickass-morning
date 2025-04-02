@@ -449,6 +449,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = scheduleSchema.parse(req.body);
       
+      // Check if user has verified phone number
+      const user = await storage.getUser(req.session.userId!);
+      if (!user) {
+        return res.status(400).json({ message: "User not found." });
+      }
+      
+      // Check if phone is verified when trying to schedule a call
+      if (!user.phoneVerified || !user.phone) {
+        return res.status(403).json({ 
+          message: "Phone verification required", 
+          phoneVerificationRequired: true 
+        });
+      }
+      
       // Get user's personalization data
       const personalization = await storage.getPersonalization(req.session.userId!);
       if (!personalization) {

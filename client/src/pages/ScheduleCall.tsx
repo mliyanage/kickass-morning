@@ -4,9 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ScheduleData } from "@/types";
 import { 
   Select, 
@@ -44,6 +44,24 @@ const weekdays = [
 export default function ScheduleCall() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  
+  // Fetch user data to check phone verification status
+  const { data: userData } = useQuery({
+    queryKey: ['/api/auth/check'],
+    retry: false,
+    refetchOnWindowFocus: false
+  });
+
+  // Redirect to phone verification if phone is not verified
+  useEffect(() => {
+    if (userData && userData.authenticated && !userData.user.phoneVerified) {
+      toast({
+        title: "Phone verification required",
+        description: "You need to verify your phone number before scheduling calls.",
+      });
+      setLocation("/phone-verification");
+    }
+  }, [userData, toast, setLocation]);
   
   // Schedule state
   const [wakeupTime, setWakeupTime] = useState("06:30");

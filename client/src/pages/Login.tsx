@@ -59,10 +59,7 @@ export default function Login() {
         
         // Force a short delay to ensure the session is set
         setTimeout(() => {
-          if (!userData.phoneVerified) {
-            console.log("Redirecting to phone verification");
-            window.location.href = "/phone-verification";
-          } else if (!userData.isPersonalized) {
+          if (!userData.isPersonalized) {
             console.log("Redirecting to personalization");
             window.location.href = "/personalization";
           } else {
@@ -85,9 +82,7 @@ export default function Login() {
             });
             if (res.ok) {
               const data = await res.json();
-              if (!data.user.phoneVerified) {
-                window.location.href = "/phone-verification";
-              } else if (!data.user.isPersonalized) {
+              if (!data.user.isPersonalized) {
                 window.location.href = "/personalization";
               } else {
                 window.location.href = "/dashboard";
