@@ -59,7 +59,7 @@ export default function Login() {
         
         // Force a short delay to ensure the session is set
         setTimeout(() => {
-          if (!userData.isPersonalized && userData.isPersonalized !== undefined) {
+          if (userData && 'isPersonalized' in userData && userData.isPersonalized === false) {
             console.log("Redirecting to personalization");
             window.location.href = "/personalization";
           } else {
