@@ -9,8 +9,8 @@ import Sidebar from "@/components/Sidebar";
 import ScheduleItem from "@/components/ScheduleItem";
 import CallHistoryItem from "@/components/CallHistoryItem";
 import { Button } from "@/components/ui/button";
-import { AlertCircle } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { AlertCircle, Phone, Play } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface UserData {
   authenticated: boolean;
@@ -52,6 +52,42 @@ export default function Dashboard() {
   } = useQuery<CallHistory[]>({
     queryKey: ['/api/call/history'],
   });
+
+  // Sample call mutation
+  const sampleCallMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/call/sample", {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sample call initiated",
+        description: "A sample wakeup call will be sent to your phone shortly.",
+      });
+      // Refresh call history after a short delay to show the new call
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/call/history'] });
+      }, 2000);
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to start sample call",
+        description: error.message || "Please try again later.",
+      });
+    }
+  });
+
+  const handleSampleCall = () => {
+    // Check if user has verified phone
+    const { user } = userData || {};
+    if (user && !user.phoneVerified) {
+      localStorage.setItem("phoneVerificationReturnUrl", "/dashboard");
+      setLocation("/phone-verification");
+      return;
+    }
+    
+    sampleCallMutation.mutate();
+  };
 
   // Next scheduled call
   const nextCall = schedules.find((schedule: Schedule) => schedule.isActive);
@@ -172,6 +208,46 @@ export default function Dashboard() {
 
           {/* Main content */}
           <div className="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
+            {/* Sample Call Section */}
+            <div className="shadow sm:rounded-md sm:overflow-hidden">
+              <div className="bg-gradient-to-r from-primary-50 to-primary-100 py-6 px-4 sm:p-6">
+                <Card className="bg-white border-0 shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium text-gray-900">Try a Sample Call</CardTitle>
+                    <CardDescription>
+                      Experience how our motivational wakeup calls work before scheduling your first call
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600 mb-4">
+                          Get a sample wakeup call immediately to your verified phone number. 
+                          Hear how our AI-generated voices deliver personalized motivational messages.
+                        </p>
+                        <div className="flex items-center text-sm text-gray-500 mb-1">
+                          <Phone className="h-4 w-4 mr-2 text-primary" />
+                          <span>Sent to your verified phone number</span>
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <Button 
+                          size="lg"
+                          className="w-full md:w-auto"
+                          onClick={handleSampleCall}
+                          disabled={sampleCallMutation.isPending}
+                        >
+                          <Play className="mr-2 h-4 w-4" />
+                          {sampleCallMutation.isPending ? "Initiating call..." : "Try it Now"}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Wakeup Schedule Section */}
             <div className="shadow sm:rounded-md sm:overflow-hidden">
               <div className="bg-white py-6 px-4 sm:p-6">
                 <div className="flex items-center justify-between mb-6">
