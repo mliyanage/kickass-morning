@@ -12,17 +12,35 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
+interface UserData {
+  authenticated: boolean;
+  user: {
+    id: number;
+    email: string;
+    name: string;
+    phoneVerified: boolean;
+    isPersonalized: boolean;
+  };
+}
+
 export default function Dashboard() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+
+  // Get user data for phone verification check
+  const {
+    data: userData
+  } = useQuery<UserData>({
+    queryKey: ['/api/auth/check'],
+  });
 
   // Get user schedules
   const { 
     data: schedules, 
     isLoading: isLoadingSchedules,
     error: schedulesError
-  } = useQuery({
+  } = useQuery<Schedule[]>({
     queryKey: ['/api/schedule'],
   });
 
@@ -31,7 +49,7 @@ export default function Dashboard() {
     data: callHistory, 
     isLoading: isLoadingHistory,
     error: historyError
-  } = useQuery({
+  } = useQuery<CallHistory[]>({
     queryKey: ['/api/call/history'],
   });
 
@@ -48,7 +66,7 @@ export default function Dashboard() {
 
     if (nextCall.isRecurring) {
       // Find the next occurrence
-      const dayIndices = nextCall.weekdays.map(day => {
+      const dayIndices = nextCall.weekdays.map((day: string) => {
         switch(day) {
           case 'sun': return 0;
           case 'mon': return 1;
@@ -59,10 +77,10 @@ export default function Dashboard() {
           case 'sat': return 6;
           default: return -1;
         }
-      }).filter(index => index !== -1);
+      }).filter((index: number) => index !== -1);
 
       // Find the next day index that's >= today
-      let nextDayIndex = dayIndices.find(day => day >= todayDay);
+      let nextDayIndex = dayIndices.find((day: number) => day >= todayDay);
       
       // If not found, wrap around to the first day of next week
       if (nextDayIndex === undefined && dayIndices.length > 0) {
@@ -158,7 +176,15 @@ export default function Dashboard() {
               <div className="bg-white py-6 px-4 sm:p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg leading-6 font-medium text-gray-900">Your Wakeup Schedule</h2>
-                  <Button onClick={() => setLocation("/schedule-call")}>
+                  <Button onClick={() => {
+                    const { user } = userData || {};
+                    if (user && !user.phoneVerified) {
+                      localStorage.setItem("phoneVerificationReturnUrl", "/schedule-call");
+                      setLocation("/phone-verification");
+                    } else {
+                      setLocation("/schedule-call");
+                    }
+                  }}>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
@@ -183,7 +209,7 @@ export default function Dashboard() {
                 )}
                 
                 {/* Active wakeup schedule */}
-                {schedules?.length > 0 ? (
+                {schedules && schedules.length > 0 ? (
                   schedules.map((schedule: Schedule) => (
                     <ScheduleItem 
                       key={schedule.id}
@@ -195,7 +221,15 @@ export default function Dashboard() {
                 ) : (
                   <div className="text-center py-6 bg-gray-50 rounded-md">
                     <p className="text-gray-500">No schedules found. Create your first wakeup call schedule.</p>
-                    <Button className="mt-4" onClick={() => setLocation("/schedule-call")}>
+                    <Button className="mt-4" onClick={() => {
+                      const { user } = userData || {};
+                      if (user && !user.phoneVerified) {
+                        localStorage.setItem("phoneVerificationReturnUrl", "/schedule-call");
+                        setLocation("/phone-verification");
+                      } else {
+                        setLocation("/schedule-call");
+                      }
+                    }}>
                       Schedule a Call
                     </Button>
                   </div>
@@ -208,7 +242,7 @@ export default function Dashboard() {
               <div className="bg-white py-6 px-4 sm:p-6">
                 <h2 className="text-lg leading-6 font-medium text-gray-900 mb-6">Recent Call History</h2>
                 
-                {callHistory?.length > 0 ? (
+                {callHistory && callHistory.length > 0 ? (
                   <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
                     <table className="min-w-full divide-y divide-gray-300">
                       <thead className="bg-gray-50">
@@ -235,7 +269,7 @@ export default function Dashboard() {
                   </div>
                 )}
                 
-                {callHistory?.length > 5 && (
+                {callHistory && callHistory.length > 5 && (
                   <div className="mt-4 text-center">
                     <a href="#" className="text-sm font-medium text-primary hover:text-primary/80">
                       View all call history <span aria-hidden="true">→</span>

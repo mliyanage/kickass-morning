@@ -11,17 +11,24 @@ import {
   InputOTPGroup, 
   InputOTPSlot 
 } from "@/components/ui/input-otp";
+import PhoneVerificationLayout from "@/components/PhoneVerificationLayout";
 
 export default function OtpVerification() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [otp, setOtp] = useState("");
   const [phone, setPhone] = useState<string>("");
+  const [returnUrl, setReturnUrl] = useState("/dashboard");
   
   useEffect(() => {
     const savedPhone = localStorage.getItem("verificationPhone");
     if (savedPhone) {
       setPhone(savedPhone);
+    }
+    
+    const savedReturnUrl = localStorage.getItem("otpVerificationReturnUrl");
+    if (savedReturnUrl) {
+      setReturnUrl(savedReturnUrl);
     }
   }, []);
 
@@ -35,11 +42,11 @@ export default function OtpVerification() {
         description: "Your phone number has been verified successfully.",
       });
       localStorage.removeItem("verificationPhone");
+      localStorage.removeItem("otpVerificationReturnUrl");
+      localStorage.removeItem("phoneVerificationReturnUrl");
       
-      // Force a short delay to ensure the session is updated
-      setTimeout(() => {
-        window.location.href = "/personalization";
-      }, 500);
+      // Navigate to the stored return URL or dashboard as fallback
+      setLocation(returnUrl);
     },
     onError: (error) => {
       toast({
@@ -106,60 +113,68 @@ export default function OtpVerification() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 px-4 sm:px-6">
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h2 className="mt-2 text-lg font-medium text-gray-900">Enter verification code</h2>
-            <p className="mt-1 text-sm text-gray-500">
-              We've sent a code to <span className="font-medium">{phone || "your phone"}</span>
-            </p>
-          </div>
+    <PhoneVerificationLayout>
+      <div className="shadow sm:rounded-md sm:overflow-hidden">
+        <div className="bg-white py-6 px-4 sm:p-6">
+          <h2 className="text-lg leading-6 font-medium text-gray-900 mb-4">Complete Phone Verification</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Enter the verification code sent to your phone number to complete verification.
+          </p>
+          
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h2 className="mt-2 text-lg font-medium text-gray-900">Enter verification code</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  We've sent a code to <span className="font-medium">{phone || "your phone"}</span>
+                </p>
+              </div>
 
-          <form onSubmit={handleVerifyOtp} className="space-y-6">
-            <div className="flex items-center justify-center">
-              <InputOTP 
-                maxLength={6} 
-                value={otp} 
-                onChange={setOtp}
-                render={({ slots }) => (
-                  <InputOTPGroup>
-                    {/* The InputOTPSlot requires an index prop */}
-                    {slots.map((_, i) => (
-                      <InputOTPSlot key={i} index={i} />
-                    ))}
-                  </InputOTPGroup>
-                )}
-              />
-            </div>
+              <form onSubmit={handleVerifyOtp} className="space-y-6">
+                <div className="flex items-center justify-center">
+                  <InputOTP 
+                    maxLength={6} 
+                    value={otp} 
+                    onChange={setOtp}
+                    render={({ slots }) => (
+                      <InputOTPGroup>
+                        {slots.map((_, i) => (
+                          <InputOTPSlot key={i} index={i} />
+                        ))}
+                      </InputOTPGroup>
+                    )}
+                  />
+                </div>
 
-            <div className="text-center">
-              <p className="text-sm text-gray-500">
-                Didn't receive the code? {' '}
-                <button 
-                  type="button" 
-                  className="font-medium text-primary hover:text-primary/80"
-                  onClick={handleResendOtp}
-                  disabled={resendOtpMutation.isPending}
+                <div className="text-center">
+                  <p className="text-sm text-gray-500">
+                    Didn't receive the code? {' '}
+                    <button 
+                      type="button" 
+                      className="font-medium text-primary hover:text-primary/80"
+                      onClick={handleResendOtp}
+                      disabled={resendOtpMutation.isPending}
+                    >
+                      {resendOtpMutation.isPending ? "Resending..." : "Resend code"}
+                    </button>
+                  </p>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={verifyOtpMutation.isPending}
                 >
-                  {resendOtpMutation.isPending ? "Resending..." : "Resend code"}
-                </button>
-              </p>
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={verifyOtpMutation.isPending}
-            >
-              {verifyOtpMutation.isPending ? "Verifying..." : "Verify code"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+                  {verifyOtpMutation.isPending ? "Verifying..." : "Verify code"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </PhoneVerificationLayout>
   );
 }
