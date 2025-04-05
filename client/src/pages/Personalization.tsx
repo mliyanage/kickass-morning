@@ -234,21 +234,6 @@ export default function Personalization() {
       <Header />
       
       <div className="max-w-7xl mx-auto pt-10 pb-12 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center mb-6">
-          {hasExistingData && (
-            <div className="ml-auto">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setStep(1)}
-                className="flex items-center text-xs"
-              >
-                <Settings className="mr-1 h-3 w-3" />
-                Edit Preferences
-              </Button>
-            </div>
-          )}
-        </div>
         
         <div className="lg:grid lg:grid-cols-12 lg:gap-x-5">
           {/* Sidebar */}

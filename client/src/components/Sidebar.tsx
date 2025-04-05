@@ -9,6 +9,7 @@ export default function Sidebar() {
   return (
     <aside className="py-6 px-2 sm:px-6 lg:col-span-3 lg:py-0 lg:px-0">
       <nav className="space-y-1">
+        {/* Dashboard */}
         <a 
           href="#" 
           className={`${isActive('/dashboard') ? 'bg-gray-50 text-primary' : 'text-gray-700 hover:text-primary hover:bg-gray-50'} group rounded-md px-3 py-2 flex items-center text-sm font-medium`}
@@ -29,26 +30,7 @@ export default function Sidebar() {
           Dashboard
         </a>
 
-        <a 
-          href="#" 
-          className={`${isActive('/schedule-call') ? 'bg-gray-50 text-primary' : 'text-gray-700 hover:text-primary hover:bg-gray-50'} group rounded-md px-3 py-2 flex items-center text-sm font-medium`}
-          onClick={(e) => {
-            e.preventDefault();
-            setLocation('/schedule-call');
-          }}
-        >
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className={`${isActive('/schedule-call') ? 'text-primary' : 'text-gray-400 group-hover:text-primary'} mr-3 flex-shrink-0 h-6 w-6`} 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Schedule Call
-        </a>
-
+        {/* Preferences */}
         <a 
           href="#" 
           className={`${isActive('/personalization') ? 'bg-gray-50 text-primary' : 'text-gray-700 hover:text-primary hover:bg-gray-50'} group rounded-md px-3 py-2 flex items-center text-sm font-medium`}
@@ -70,6 +52,28 @@ export default function Sidebar() {
           Preferences
         </a>
 
+        {/* Schedule Call */}
+        <a 
+          href="#" 
+          className={`${isActive('/schedule-call') ? 'bg-gray-50 text-primary' : 'text-gray-700 hover:text-primary hover:bg-gray-50'} group rounded-md px-3 py-2 flex items-center text-sm font-medium`}
+          onClick={(e) => {
+            e.preventDefault();
+            setLocation('/schedule-call');
+          }}
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className={`${isActive('/schedule-call') ? 'text-primary' : 'text-gray-400 group-hover:text-primary'} mr-3 flex-shrink-0 h-6 w-6`} 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Schedule Call
+        </a>
+
+        {/* Call History */}
         <a 
           href="#" 
           className="text-gray-700 hover:text-primary hover:bg-gray-50 group rounded-md px-3 py-2 flex items-center text-sm font-medium"
@@ -90,6 +94,7 @@ export default function Sidebar() {
           Call History
         </a>
 
+        {/* Account */}
         <a 
           href="#" 
           className="text-gray-700 hover:text-primary hover:bg-gray-50 group rounded-md px-3 py-2 flex items-center text-sm font-medium"
@@ -110,6 +115,7 @@ export default function Sidebar() {
           Account
         </a>
 
+        {/* Help */}
         <a 
           href="#" 
           className="text-gray-700 hover:text-primary hover:bg-gray-50 group rounded-md px-3 py-2 flex items-center text-sm font-medium"
