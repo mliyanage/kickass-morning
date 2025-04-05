@@ -37,7 +37,7 @@ export default function Dashboard() {
 
   // Get user schedules
   const { 
-    data: schedules, 
+    data: schedules = [], 
     isLoading: isLoadingSchedules,
     error: schedulesError
   } = useQuery<Schedule[]>({
@@ -46,7 +46,7 @@ export default function Dashboard() {
 
   // Get call history
   const { 
-    data: callHistory, 
+    data: callHistory = [], 
     isLoading: isLoadingHistory,
     error: historyError
   } = useQuery<CallHistory[]>({
@@ -54,7 +54,7 @@ export default function Dashboard() {
   });
 
   // Next scheduled call
-  const nextCall = schedules?.find((schedule: Schedule) => schedule.isActive);
+  const nextCall = schedules.find((schedule: Schedule) => schedule.isActive);
 
   // Format the next call time and date
   const getNextCallText = () => {
