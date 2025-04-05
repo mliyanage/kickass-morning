@@ -381,15 +381,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = otpVerificationSchema.parse(req.body);
       
+      // Add more detailed debug logging
+      console.log(`[OTP Debug] Verifying OTP for user ${req.session.userId}, phone ${validatedData.phone}, code ${validatedData.otp}`);
+      
       // Verify OTP
       const isValid = await storage.verifyOtpCode(req.session.userId!, validatedData.phone, validatedData.otp);
+      
       if (!isValid) {
-        return res.status(400).json({ message: "Invalid or expired OTP." });
+        // Get the user to check if the phone number matches what's stored
+        const user = await storage.getUser(req.session.userId!);
+        if (user && user.phone && user.phone !== validatedData.phone) {
+          console.log(`[OTP Debug] Phone number mismatch. User has ${user.phone} but verification attempted with ${validatedData.phone}`);
+          return res.status(400).json({ message: "Phone number doesn't match our records." });
+        }
+        
+        // Check if there are any active OTPs for this user and phone
+        if (await storage.hasActiveOtps(req.session.userId!, validatedData.phone)) {
+          console.log(`[OTP Debug] User has active OTPs but entered incorrect code`);
+          return res.status(400).json({ message: "Incorrect verification code. Please check and try again." });
+        }
+        
+        console.log(`[OTP Debug] OTP likely expired for ${validatedData.phone}`);
+        return res.status(400).json({ message: "Verification code has expired. Please request a new code." });
       }
       
       // Update user's phone number and verification status
       await storage.updateUserPhone(req.session.userId!, validatedData.phone, true);
       
+      console.log(`[OTP Debug] Phone verification successful for user ${req.session.userId}, phone ${validatedData.phone}`);
       res.status(200).json({ message: "Phone number verified successfully." });
     } catch (error) {
       if (error instanceof z.ZodError) {

@@ -48,12 +48,41 @@ export default function OtpVerification() {
       // Navigate to the stored return URL or dashboard as fallback
       setLocation(returnUrl);
     },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Verification failed",
-        description: error.message || "Please check your code and try again.",
-      });
+    onError: (error: any) => {
+      const errorMessage = error?.message || '';
+      
+      // Check if error message indicates expired OTP
+      if (errorMessage.includes("expired")) {
+        toast({
+          variant: "destructive",
+          title: "Code expired",
+          description: "Your verification code has expired. We'll send you a new one.",
+        });
+        
+        // Automatically trigger a resend of the OTP
+        setTimeout(() => {
+          handleResendOtp();
+        }, 500);
+      } 
+      // Check if it's an invalid OTP (wrong code)
+      else if (errorMessage.includes("invalid") || errorMessage.includes("incorrect")) {
+        toast({
+          variant: "destructive",
+          title: "Incorrect code",
+          description: "The verification code you entered doesn't match our records. Please check and try again.",
+        });
+        
+        // Clear the OTP field so they can enter a new one
+        setOtp("");
+      }
+      // Generic error fallback  
+      else {
+        toast({
+          variant: "destructive",
+          title: "Verification failed",
+          description: errorMessage || "Please check your code and try again.",
+        });
+      }
     }
   });
 
@@ -105,6 +134,16 @@ export default function OtpVerification() {
         variant: "destructive",
         title: "Error",
         description: "No phone number found. Please go back to the previous screen.",
+      });
+      return;
+    }
+    
+    // Validate that OTP only contains numbers
+    if (!/^\d+$/.test(otp)) {
+      toast({
+        variant: "destructive",
+        title: "Invalid code format",
+        description: "Verification code should only contain numbers.",
       });
       return;
     }

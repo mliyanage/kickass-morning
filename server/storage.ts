@@ -24,6 +24,8 @@ export interface IStorage {
   verifyAnyEmailOtp(email: string, code: string): Promise<boolean>; // Verifies OTP regardless of type
   createPhoneOtp(data: { userId: number, phone: string, code: string, expiresAt: Date }): Promise<any>;
   verifyPhoneOtp(userId: number, phone: string, code: string): Promise<boolean>;
+  hasActiveOtps(userId: number, phone: string): Promise<boolean>; // Checks if user has any active OTPs
+  getPhoneOtps(userId: number, phone: string): Promise<any[]>; // Gets all OTPs for a user+phone
   
   // Personalization related
   savePersonalization(userId: number, data: PersonalizationData): Promise<any>;
@@ -301,6 +303,28 @@ export class MemStorage implements IStorage {
     }
     
     return true;
+  }
+  
+  async hasActiveOtps(userId: number, phone: string): Promise<boolean> {
+    const userOtpCodes = this.otpCodes.get(userId) || [];
+    
+    // Find any active OTPs for this phone number
+    const now = new Date();
+    const activeOtps = userOtpCodes.filter(otp => 
+      otp.phone === phone && 
+      now < new Date(otp.expiresAt)
+    );
+    
+    return activeOtps.length > 0;
+  }
+  
+  async getPhoneOtps(userId: number, phone: string): Promise<any[]> {
+    const userOtpCodes = this.otpCodes.get(userId) || [];
+    
+    // Return all OTPs for this phone number, sorted by creation date (descending)
+    return userOtpCodes
+      .filter(otp => otp.phone === phone)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   // Personalization related methods

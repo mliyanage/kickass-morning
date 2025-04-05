@@ -12,7 +12,7 @@ import {
   callHistory
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, lt, desc } from "drizzle-orm";
+import { eq, and, lt, gt, desc, sql } from "drizzle-orm";
 import { IStorage } from "./storage";
 
 export class DatabaseStorage implements IStorage {
@@ -199,7 +199,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async verifyPhoneOtp(userId: number, phone: string, code: string): Promise<boolean> {
-    // Find the latest valid OTP for this user and phone
+    // Find the latest valid OTP using the Drizzle ORM query but with a custom date comparison
+    const currentDate = new Date().toISOString();
+    
     const [validOtp] = await db
       .select()
       .from(otpCodes)
@@ -208,20 +210,64 @@ export class DatabaseStorage implements IStorage {
           eq(otpCodes.userId, userId),
           eq(otpCodes.phone, phone),
           eq(otpCodes.code, code)
-          // check if OTP is not expired
-          // lt(new Date(), otpCodes.expiresAt)
         )
       )
       .orderBy(desc(otpCodes.createdAt))
       .limit(1);
     
-    if (validOtp) {
+    // Check expiration manually
+    const isValid = validOtp && new Date(validOtp.expiresAt) > new Date();
+    
+    if (validOtp && isValid) {
       // Remove the verified OTP from database
       await db.delete(otpCodes).where(eq(otpCodes.id, validOtp.id));
+      
+      // For debugging
+      console.log(`[OTP Debug] Valid OTP found and verified for user ${userId} and phone ${phone}`);
+      
       return true;
+    } else if (validOtp && !isValid) {
+      // For debugging
+      console.log(`[OTP Debug] Found expired OTP (expired at ${validOtp.expiresAt}, now is ${new Date()})`);
+      
+      // Clean up expired OTP
+      await db.delete(otpCodes).where(eq(otpCodes.id, validOtp.id));
     }
     
+    // For debugging
+    console.log(`[OTP Debug] No valid OTP found for user ${userId} and phone ${phone} with code ${code}`);
+    
     return false;
+  }
+  
+  async hasActiveOtps(userId: number, phone: string): Promise<boolean> {
+    // Find any active OTPs for this user and phone
+    const otps = await db
+      .select()
+      .from(otpCodes)
+      .where(
+        and(
+          eq(otpCodes.userId, userId),
+          eq(otpCodes.phone, phone),
+          sql`${otpCodes.expiresAt} > NOW()`
+        )
+      );
+    
+    return otps.length > 0;
+  }
+  
+  async getPhoneOtps(userId: number, phone: string): Promise<any[]> {
+    // Get all OTPs for this user and phone
+    return await db
+      .select()
+      .from(otpCodes)
+      .where(
+        and(
+          eq(otpCodes.userId, userId),
+          eq(otpCodes.phone, phone)
+        )
+      )
+      .orderBy(desc(otpCodes.createdAt));
   }
 
   // Personalization related methods
