@@ -14,7 +14,7 @@ import { PersonalizationData, GoalType, StruggleType } from "@/types";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
-import { ArrowLeft, Check, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 
 // Helper functions for displaying text values
 const getGoalText = (goal: GoalType | string): string => {
@@ -235,15 +235,6 @@ export default function Personalization() {
       
       <div className="max-w-7xl mx-auto pt-10 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            className="mr-2 flex items-center text-gray-500"
-            onClick={() => setLocation("/dashboard")}
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Dashboard
-          </Button>
-          
           {hasExistingData && (
             <div className="ml-auto">
               <Button 
