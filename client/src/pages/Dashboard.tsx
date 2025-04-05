@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Schedule, CallHistory } from "@/types";
-import Header from "@/components/Header";
-import Sidebar from "@/components/Sidebar";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
 import ScheduleItem from "@/components/ScheduleItem";
 import CallHistoryItem from "@/components/CallHistoryItem";
 import { PersonalizationSection } from "@/components/PersonalizationSection";
@@ -164,203 +163,186 @@ export default function Dashboard() {
 
   if (isLoadingSchedules || isLoadingHistory) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center py-16">
-            <p>Loading your dashboard...</p>
-          </div>
+      <DashboardLayout>
+        <div className="text-center py-16">
+          <p>Loading your dashboard...</p>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (schedulesError || historyError) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Card className="w-full max-w-md mx-auto">
-            <CardContent className="pt-6">
-              <div className="flex mb-4 gap-2">
-                <AlertCircle className="h-8 w-8 text-red-500" />
-                <h1 className="text-2xl font-bold text-gray-900">Error Loading Dashboard</h1>
-              </div>
-              <p className="mt-4 text-sm text-gray-600">
-                {schedulesError?.message || historyError?.message || "Failed to load your data. Please try again."}
-              </p>
-              <Button className="mt-4" onClick={() => window.location.reload()}>
-                Retry
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <DashboardLayout>
+        <Card className="w-full max-w-md mx-auto">
+          <CardContent className="pt-6">
+            <div className="flex mb-4 gap-2">
+              <AlertCircle className="h-8 w-8 text-red-500" />
+              <h1 className="text-2xl font-bold text-gray-900">Error Loading Dashboard</h1>
+            </div>
+            <p className="mt-4 text-sm text-gray-600">
+              {schedulesError?.message || historyError?.message || "Failed to load your data. Please try again."}
+            </p>
+            <Button className="mt-4" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="lg:grid lg:grid-cols-12 lg:gap-x-5">
-          {/* Sidebar */}
-          <Sidebar />
-
-          {/* Main content */}
-          <div className="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
-            {/* Personalization Section */}
-            <PersonalizationSection />
-            
-            {/* Sample Call Section */}
-            <div className="shadow sm:rounded-md sm:overflow-hidden">
-              <div className="bg-gradient-to-r from-primary-50 to-primary-100 py-6 px-4 sm:p-6">
-                <Card className="bg-white border-0 shadow-sm">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-medium text-gray-900">Try a Sample Call</CardTitle>
-                    <CardDescription>
-                      Experience how our motivational wakeup calls work before scheduling your first call
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-2">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-600 mb-4">
-                          Get a sample wakeup call immediately to your verified phone number. 
-                          Hear how our AI-generated voices deliver personalized motivational messages.
-                        </p>
-                        <div className="flex items-center text-sm text-gray-500 mb-1">
-                          <Phone className="h-4 w-4 mr-2 text-primary" />
-                          <span>Sent to your verified phone number</span>
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0">
-                        <Button 
-                          size="lg"
-                          className="w-full md:w-auto"
-                          onClick={handleSampleCall}
-                          disabled={sampleCallMutation.isPending}
-                        >
-                          <Play className="mr-2 h-4 w-4" />
-                          {sampleCallMutation.isPending ? "Initiating call..." : "Try it Now"}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-
-            {/* Wakeup Schedule Section */}
-            <div className="shadow sm:rounded-md sm:overflow-hidden">
-              <div className="bg-white py-6 px-4 sm:p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg leading-6 font-medium text-gray-900">Your Wakeup Schedule</h2>
-                  <Button onClick={() => {
-                    const { user } = userData || {};
-                    if (user && !user.phoneVerified) {
-                      localStorage.setItem("phoneVerificationReturnUrl", "/schedule-call");
-                      setLocation("/phone-verification");
-                    } else {
-                      setLocation("/schedule-call");
-                    }
-                  }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Add Call
+    <DashboardLayout>
+      {/* Personalization Section */}
+      <PersonalizationSection />
+      
+      {/* Sample Call Section */}
+      <div className="shadow sm:rounded-md sm:overflow-hidden">
+        <div className="bg-gradient-to-r from-primary-50 to-primary-100 py-6 px-4 sm:p-6">
+          <Card className="bg-white border-0 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-medium text-gray-900">Try a Sample Call</CardTitle>
+              <CardDescription>
+                Experience how our motivational wakeup calls work before scheduling your first call
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600 mb-4">
+                    Get a sample wakeup call immediately to your verified phone number. 
+                    Hear how our AI-generated voices deliver personalized motivational messages.
+                  </p>
+                  <div className="flex items-center text-sm text-gray-500 mb-1">
+                    <Phone className="h-4 w-4 mr-2 text-primary" />
+                    <span>Sent to your verified phone number</span>
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <Button 
+                    size="lg"
+                    className="w-full md:w-auto"
+                    onClick={handleSampleCall}
+                    disabled={sampleCallMutation.isPending}
+                  >
+                    <Play className="mr-2 h-4 w-4" />
+                    {sampleCallMutation.isPending ? "Initiating call..." : "Try it Now"}
                   </Button>
                 </div>
-                
-                {nextCall && (
-                  <div className="bg-primary-50 rounded-lg p-4 flex items-start mb-6">
-                    <div className="flex-shrink-0">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-primary-800">Your next wakeup call</h3>
-                      <div className="mt-2 text-sm text-primary-700">
-                        <p>{getNextCallText()}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Active wakeup schedule */}
-                {schedules && schedules.length > 0 ? (
-                  schedules.map((schedule: Schedule) => (
-                    <ScheduleItem 
-                      key={schedule.id}
-                      schedule={schedule}
-                      onSkipTomorrow={() => handleSkipTomorrow(schedule.id)}
-                      onEdit={() => setLocation(`/schedule-call?id=${schedule.id}`)}
-                    />
-                  ))
-                ) : (
-                  <div className="text-center py-6 bg-gray-50 rounded-md">
-                    <p className="text-gray-500">No schedules found. Create your first wakeup call schedule.</p>
-                    <Button className="mt-4" onClick={() => {
-                      const { user } = userData || {};
-                      if (user && !user.phoneVerified) {
-                        localStorage.setItem("phoneVerificationReturnUrl", "/schedule-call");
-                        setLocation("/phone-verification");
-                      } else {
-                        setLocation("/schedule-call");
-                      }
-                    }}>
-                      Schedule a Call
-                    </Button>
-                  </div>
-                )}
               </div>
-            </div>
-            
-            {/* Call History Section */}
-            <div className="shadow sm:rounded-md sm:overflow-hidden">
-              <div className="bg-white py-6 px-4 sm:p-6">
-                <h2 className="text-lg leading-6 font-medium text-gray-900 mb-6">Recent Call History</h2>
-                
-                {callHistory && callHistory.length > 0 ? (
-                  <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-                    <table className="min-w-full divide-y divide-gray-300">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th scope="col" className="py-3 pl-4 pr-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 sm:pl-6">Date & Time</th>
-                          <th scope="col" className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Voice</th>
-                          <th scope="col" className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
-                          <th scope="col" className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Duration</th>
-                          <th scope="col" className="relative py-3 pl-3 pr-4 sm:pr-6">
-                            <span className="sr-only">Actions</span>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 bg-white">
-                        {callHistory.slice(0, 5).map((call: CallHistory) => (
-                          <CallHistoryItem key={call.id} call={call} />
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center py-6 bg-gray-50 rounded-md">
-                    <p className="text-gray-500">No call history yet. Schedule a call to get started.</p>
-                  </div>
-                )}
-                
-                {callHistory && callHistory.length > 5 && (
-                  <div className="mt-4 text-center">
-                    <a href="#" className="text-sm font-medium text-primary hover:text-primary/80">
-                      View all call history <span aria-hidden="true">→</span>
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </div>
+
+      {/* Wakeup Schedule Section */}
+      <div className="shadow sm:rounded-md sm:overflow-hidden">
+        <div className="bg-white py-6 px-4 sm:p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg leading-6 font-medium text-gray-900">Your Wakeup Schedule</h2>
+            <Button onClick={() => {
+              const { user } = userData || {};
+              if (user && !user.phoneVerified) {
+                localStorage.setItem("phoneVerificationReturnUrl", "/schedule-call");
+                setLocation("/phone-verification");
+              } else {
+                setLocation("/schedule-call");
+              }
+            }}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Add Call
+            </Button>
+          </div>
+          
+          {nextCall && (
+            <div className="bg-primary-50 rounded-lg p-4 flex items-start mb-6">
+              <div className="flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-primary-800">Your next wakeup call</h3>
+                <div className="mt-2 text-sm text-primary-700">
+                  <p>{getNextCallText()}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Active wakeup schedule */}
+          {schedules && schedules.length > 0 ? (
+            schedules.map((schedule: Schedule) => (
+              <ScheduleItem 
+                key={schedule.id}
+                schedule={schedule}
+                onSkipTomorrow={() => handleSkipTomorrow(schedule.id)}
+                onEdit={() => setLocation(`/schedule-call?id=${schedule.id}`)}
+              />
+            ))
+          ) : (
+            <div className="text-center py-6 bg-gray-50 rounded-md">
+              <p className="text-gray-500">No schedules found. Create your first wakeup call schedule.</p>
+              <Button className="mt-4" onClick={() => {
+                const { user } = userData || {};
+                if (user && !user.phoneVerified) {
+                  localStorage.setItem("phoneVerificationReturnUrl", "/schedule-call");
+                  setLocation("/phone-verification");
+                } else {
+                  setLocation("/schedule-call");
+                }
+              }}>
+                Schedule a Call
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Call History Section */}
+      <div className="shadow sm:rounded-md sm:overflow-hidden">
+        <div className="bg-white py-6 px-4 sm:p-6">
+          <h2 className="text-lg leading-6 font-medium text-gray-900 mb-6">Recent Call History</h2>
+          
+          {callHistory && callHistory.length > 0 ? (
+            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+              <table className="min-w-full divide-y divide-gray-300">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="py-3 pl-4 pr-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 sm:pl-6">Date & Time</th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Voice</th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Duration</th>
+                    <th scope="col" className="relative py-3 pl-3 pr-4 sm:pr-6">
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {callHistory.slice(0, 5).map((call: CallHistory) => (
+                    <CallHistoryItem key={call.id} call={call} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-6 bg-gray-50 rounded-md">
+              <p className="text-gray-500">No call history yet. Schedule a call to get started.</p>
+            </div>
+          )}
+          
+          {callHistory && callHistory.length > 5 && (
+            <div className="mt-4 text-center">
+              <a href="#" className="text-sm font-medium text-primary hover:text-primary/80">
+                View all call history <span aria-hidden="true">→</span>
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </DashboardLayout>
   );
 }
