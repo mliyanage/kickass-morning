@@ -139,14 +139,13 @@ export default function OtpVerification() {
                     maxLength={6} 
                     value={otp} 
                     onChange={setOtp}
-                    render={({ slots }) => (
-                      <InputOTPGroup>
-                        {slots.map((_, i) => (
-                          <InputOTPSlot key={i} index={i} />
-                        ))}
-                      </InputOTPGroup>
-                    )}
-                  />
+                  >
+                    <InputOTPGroup>
+                      {Array.from({ length: 6 }, (_, i) => (
+                        <InputOTPSlot key={i} index={i} />
+                      ))}
+                    </InputOTPGroup>
+                  </InputOTP>
                 </div>
 
                 <div className="text-center">
