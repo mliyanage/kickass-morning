@@ -14,7 +14,42 @@ import { PersonalizationData, GoalType, StruggleType } from "@/types";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, Settings } from "lucide-react";
+
+// Helper functions for displaying text values
+const getGoalText = (goal: GoalType | string): string => {
+  switch (goal) {
+    case GoalType.EXERCISE:
+      return "Morning Exercise";
+    case GoalType.PRODUCTIVITY:
+      return "Work Productivity";
+    case GoalType.STUDY:
+      return "Study or Learning";
+    case GoalType.MEDITATION:
+      return "Meditation & Mindfulness";
+    case GoalType.CREATIVE:
+      return "Creative Projects";
+    default:
+      return "Custom Goal";
+  }
+};
+
+const getStruggleText = (struggle: StruggleType | string): string => {
+  switch (struggle) {
+    case StruggleType.TIRED:
+      return "Feeling tired and groggy";
+    case StruggleType.LACK_OF_MOTIVATION:
+      return "Lack of motivation";
+    case StruggleType.SNOOZE:
+      return "Hitting snooze multiple times";
+    case StruggleType.STAY_UP_LATE:
+      return "Staying up too late";
+    default:
+      return "Custom Struggle";
+  }
+};
+
+
 
 // Sample voices - in a real app, these would come from an API
 const voices = [
@@ -76,6 +111,7 @@ export default function Personalization() {
       setOtherStruggle(personalizationData.otherStruggle || "");
       setVoice(personalizationData.customVoice ? "" : personalizationData.voice);
       setCustomVoice(personalizationData.customVoice || "");
+      setStep(0); // Start with summary view when there's existing data
     }
   }, [personalizationData]);
 
@@ -169,6 +205,18 @@ export default function Personalization() {
     
     submitPersonalizationMutation.mutate(personalData);
   };
+  
+  // Helper function to get the selected voice text
+  const getVoiceText = (): string => {
+    if (voice) {
+      // Find voice from our list of sample voices
+      const selectedVoice = voices.find(v => v.id === voice);
+      return selectedVoice ? selectedVoice.name : "Custom Voice";
+    } else if (customVoice) {
+      return customVoice;
+    }
+    return "Not Selected";
+  };
 
   if (isLoading) {
     return (
@@ -197,9 +245,16 @@ export default function Personalization() {
           </Button>
           
           {hasExistingData && (
-            <div className="ml-auto flex items-center text-sm text-green-600 font-medium">
-              <Check className="h-4 w-4 mr-1" />
-              Already personalized
+            <div className="ml-auto">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setStep(1)}
+                className="flex items-center text-xs"
+              >
+                <Settings className="mr-1 h-3 w-3" />
+                Edit Preferences
+              </Button>
             </div>
           )}
         </div>
@@ -221,23 +276,57 @@ export default function Personalization() {
               </div>
               
               <CardContent className="p-6">
-                {/* Progress indicator */}
-                <div className="flex items-center mb-6">
-                  <div className="flex items-center text-sm">
-                    <span className={`flex h-6 w-6 items-center justify-center rounded-full ${step >= 1 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'}`}>1</span>
-                    <span className={`ml-2 ${step >= 1 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>Personal Goals</span>
+                {/* Summary view if user has existing data and isn't in edit mode */}
+                {hasExistingData && step === 0 && (
+                  <div className="mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Your Wake-Up Goal</h4>
+                        <p className="font-medium">{goal === GoalType.OTHER ? otherGoal : getGoalText(goal)}</p>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Your Biggest Struggle</h4>
+                        <p className="font-medium">{struggle === StruggleType.OTHER ? otherStruggle : getStruggleText(struggle)}</p>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Selected Voice</h4>
+                        <p className="font-medium">{getVoiceText()}</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 text-sm text-gray-600">
+                      <p>
+                        Your wake-up calls will be personalized to help you with {goal === GoalType.OTHER ? otherGoal.toLowerCase() : getGoalText(goal).toLowerCase()}, 
+                        addressing your struggle with {struggle === StruggleType.OTHER ? otherStruggle.toLowerCase() : getStruggleText(struggle).toLowerCase()}, 
+                        and delivered in the voice of {getVoiceText()}.
+                      </p>
+                      <div className="mt-4">
+                        <Button onClick={() => setStep(1)}>
+                          Edit Preferences
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="ml-4 flex-1 border-t border-gray-300"></div>
-                  <div className="flex items-center text-sm">
-                    <span className={`flex h-6 w-6 items-center justify-center rounded-full ${step >= 2 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'}`}>2</span>
-                    <span className={`ml-2 ${step >= 2 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>Challenges</span>
+                )}
+                
+                {/* Progress indicator for edit/create mode */}
+                {step > 0 && (
+                  <div className="flex items-center mb-6">
+                    <div className="flex items-center text-sm">
+                      <span className={`flex h-6 w-6 items-center justify-center rounded-full ${step >= 1 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'}`}>1</span>
+                      <span className={`ml-2 ${step >= 1 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>Personal Goals</span>
+                    </div>
+                    <div className="ml-4 flex-1 border-t border-gray-300"></div>
+                    <div className="flex items-center text-sm">
+                      <span className={`flex h-6 w-6 items-center justify-center rounded-full ${step >= 2 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'}`}>2</span>
+                      <span className={`ml-2 ${step >= 2 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>Challenges</span>
+                    </div>
+                    <div className="ml-4 flex-1 border-t border-gray-300"></div>
+                    <div className="flex items-center text-sm">
+                      <span className={`flex h-6 w-6 items-center justify-center rounded-full ${step >= 3 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'}`}>3</span>
+                      <span className={`ml-2 ${step >= 3 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>Voice Selection</span>
+                    </div>
                   </div>
-                  <div className="ml-4 flex-1 border-t border-gray-300"></div>
-                  <div className="flex items-center text-sm">
-                    <span className={`flex h-6 w-6 items-center justify-center rounded-full ${step >= 3 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'}`}>3</span>
-                    <span className={`ml-2 ${step >= 3 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>Voice Selection</span>
-                  </div>
-                </div>
+                )}
                 
                 {/* Personal goals section */}
                 {step === 1 && (
