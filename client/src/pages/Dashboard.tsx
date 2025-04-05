@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import ScheduleItem from "@/components/ScheduleItem";
 import CallHistoryItem from "@/components/CallHistoryItem";
+import { PersonalizationSection } from "@/components/PersonalizationSection";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Phone, Play } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -208,6 +209,9 @@ export default function Dashboard() {
 
           {/* Main content */}
           <div className="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
+            {/* Personalization Section */}
+            <PersonalizationSection />
+            
             {/* Sample Call Section */}
             <div className="shadow sm:rounded-md sm:overflow-hidden">
               <div className="bg-gradient-to-r from-primary-50 to-primary-100 py-6 px-4 sm:p-6">
