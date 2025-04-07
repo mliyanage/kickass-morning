@@ -1,5 +1,6 @@
 import { generateSpeechAudio } from "./openai";
 import { CallStatus } from "@shared/schema";
+import Twilio from "twilio";
 
 // Initialize Twilio client (conditionally)
 const accountSid = process.env.TWILIO_ACCOUNT_SID || "AC00000000000000000000000000000000"; // Fake SID that starts with AC
@@ -7,13 +8,13 @@ const authToken = process.env.TWILIO_AUTH_TOKEN || "dummy_token_for_development"
 const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER || "+15551234567";
 
 // Only initialize Twilio client if we have real credentials
-let client: any = null;
+let client: Twilio.Twilio | null = null;
 const isDevelopmentMode = !process.env.TWILIO_ACCOUNT_SID || accountSid.startsWith("AC0000");
 
 if (!isDevelopmentMode) {
   try {
-    const twilio = require("twilio");
-    client = twilio(accountSid, authToken);
+    client = Twilio(accountSid, authToken);
+    console.log("Twilio client initialized successfully");
   } catch (error) {
     console.warn("Failed to initialize Twilio client:", error);
   }
@@ -60,31 +61,48 @@ export async function makeCall(
       };
     }
 
-    // Generate speech audio using OpenAI
-    const audioBuffer = await generateSpeechAudio(message, mapVoiceIdToOpenAIVoice(voiceId));
-
-    // TODO: In a real implementation, we would:
-    // 1. Store the audio file somewhere accessible via URL
-    // 2. Create a TwiML response that plays this audio
-    // 3. Make the call with Twilio and point to a webhook that serves this TwiML
+    console.log(`Initiating call to ${to} with voice ${voiceId}`);
     
-    // For now, using a simple approach for demonstration
+    // Map the voice ID to an OpenAI voice
+    const openAIVoice = mapVoiceIdToOpenAIVoice(voiceId);
+    
+    // For now, use Twilio's built-in TTS with the message
+    // This provides immediate feedback while we implement the more advanced version
+    // The voice parameter in Twilio's TTS is different from OpenAI's voices
+    // We're just using a simple approach for now
+    
+    // Create TwiML to instruct Twilio how to handle the call
+    // Use a natural-sounding pause and voice selection
+    const twiml = `
+      <Response>
+        <Pause length="1"/>
+        <Say voice="alice">${message}</Say>
+        <Pause length="1"/>
+      </Response>
+    `;
+    
+    console.log("Calling with TwiML:", twiml);
+    
+    // Make the call with Twilio
     const call = await client.calls.create({
-      twiml: `<Response><Say>${message}</Say></Response>`,
+      twiml,
       from: twilioPhoneNumber,
       to,
       record: true,
     });
-
-    // In a real implementation, we would wait for call completion
-    // For now, return simulated results
+    
+    console.log("Call initiated with SID:", call.sid);
+    
+    // Since we can't determine the exact outcome immediately, 
+    // return a predicted successful result
     return {
-      status: CallStatus.ANSWERED,
-      duration: 60, // Simulated duration
-      recordingUrl: `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Recordings/${call.sid}.mp3`,
+      status: CallStatus.ANSWERED, // Optimistic assumption
+      duration: null,              // We don't know the duration yet
+      recordingUrl: null,          // We don't have the recording URL yet
     };
   } catch (error: any) {
     console.error("Error making call:", error);
+    console.error(error.stack);
     
     return {
       status: CallStatus.FAILED,

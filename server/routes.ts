@@ -623,6 +623,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Call-related Routes
   app.post("/api/call/sample", isAuthenticated, isPersonalized, async (req: Request, res: Response) => {
     try {
+      console.log("Sample call initiated for user:", req.session.userId);
+      
       // Check if user has verified phone number
       const user = await storage.getUser(req.session.userId!);
       if (!user) {
@@ -637,11 +639,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      console.log("Making sample call to verified phone:", user.phone);
+      
       // Get personalization data
       const personalization = await storage.getPersonalization(req.session.userId!);
       if (!personalization) {
         return res.status(400).json({ message: "Personalization data not found." });
       }
+      
+      console.log("Personalization data found:", 
+        { goal: personalization.goal, struggle: personalization.struggle, voice: personalization.voice }
+      );
       
       // Generate message for the sample call
       const message = await generateVoiceMessage(
@@ -650,7 +658,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user.name || "there"
       );
       
-      // Make the sample call
+      console.log("Generated voice message, length:", message.length);
+      
+      // Make the sample call using Twilio
       const call = await makeCall(user.phone, message, personalization.voice);
       
       // Log the sample call in history
