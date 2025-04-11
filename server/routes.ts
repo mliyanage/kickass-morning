@@ -376,9 +376,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Log success for debugging
         console.log(`Successfully sent OTP to ${phoneNumber}`);
-      } catch (smsError) {
-        console.error("SMS sending error:", smsError);
-        console.error(smsError.stack);
+      } catch (error) {
+        console.error("SMS sending error:", error);
         return res.status(500).json({ 
           message: "Failed to send verification SMS. Please check your phone number and try again."
         });
@@ -402,38 +401,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = otpVerificationSchema.parse(req.body);
       
+      // Ensure phone number is in E.164 format
+      const phoneNumber = validatedData.phone;
+      if (!phoneNumber.startsWith('+')) {
+        return res.status(400).json({ 
+          message: "Invalid phone number format. Must start with '+' followed by country code." 
+        });
+      }
+      
       // Add more detailed debug logging
-      console.log(`[OTP Debug] Verifying OTP for user ${req.session.userId}, phone ${validatedData.phone}, code ${validatedData.otp}`);
+      console.log(`[OTP Debug] Verifying OTP for user ${req.session.userId}, phone ${phoneNumber}, code ${validatedData.otp}`);
       
       // Verify OTP
-      const isValid = await storage.verifyOtpCode(req.session.userId!, validatedData.phone, validatedData.otp);
+      const isValid = await storage.verifyOtpCode(req.session.userId!, phoneNumber, validatedData.otp);
       
       if (!isValid) {
         // Get the user to check if the phone number matches what's stored
         const user = await storage.getUser(req.session.userId!);
-        if (user && user.phone && user.phone !== validatedData.phone) {
-          console.log(`[OTP Debug] Phone number mismatch. User has ${user.phone} but verification attempted with ${validatedData.phone}`);
+        if (user && user.phone && user.phone !== phoneNumber) {
+          console.log(`[OTP Debug] Phone number mismatch. User has ${user.phone} but verification attempted with ${phoneNumber}`);
           return res.status(400).json({ message: "Phone number doesn't match our records." });
         }
         
         // Check if there are any active OTPs for this user and phone
-        if (await storage.hasActiveOtps(req.session.userId!, validatedData.phone)) {
+        if (await storage.hasActiveOtps(req.session.userId!, phoneNumber)) {
           console.log(`[OTP Debug] User has active OTPs but entered incorrect code`);
           return res.status(400).json({ message: "Incorrect verification code. Please check and try again." });
         }
         
-        console.log(`[OTP Debug] OTP likely expired for ${validatedData.phone}`);
+        console.log(`[OTP Debug] OTP likely expired for ${phoneNumber}`);
         return res.status(400).json({ message: "Verification code has expired. Please request a new code." });
       }
       
       // Update user's phone number and verification status
-      await storage.updateUserPhone(req.session.userId!, validatedData.phone, true);
+      await storage.updateUserPhone(req.session.userId!, phoneNumber, true);
       
-      console.log(`[OTP Debug] Phone verification successful for user ${req.session.userId}, phone ${validatedData.phone}`);
+      console.log(`[OTP Debug] Phone verification successful for user ${req.session.userId}, phone ${phoneNumber}`);
       res.status(200).json({ message: "Phone number verified successfully." });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input data.", errors: error.errors });
+        const errorMessages = error.errors.map(err => `${err.path}: ${err.message}`).join(', ');
+        return res.status(400).json({ 
+          message: "Invalid input format.", 
+          details: errorMessages
+        });
       }
       console.error("Verify OTP error:", error);
       res.status(500).json({ message: "An error occurred while verifying OTP." });
