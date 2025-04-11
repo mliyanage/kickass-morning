@@ -47,45 +47,59 @@ export default function Login() {
     onSuccess: async (response: any) => {
       // Our apiRequest function now parses JSON and throws errors for non-200 status codes
       // so if we're here, the login was successful
-      console.log("Login successful, updating App state directly", response);
+      console.log("Login successful, redirecting based on user status", response);
       
       try {
-        // Notice we're NOT using window.location.href or window.location.replace
-        // Those cause a full page reload which is what creates the flash
+        const userData = response.user;
         
         toast({
           title: "Login successful",
-          description: "Welcome back!",
+          description: "Redirecting you to the dashboard...",
         });
         
-        // Instead of redirecting, we'll inform the parent App component
-        // that authentication was successful through localStorage
-        localStorage.setItem('kickassmorning_user', JSON.stringify(response.user));
+        // To fix the flash issue, we use a simple technique:
+        // 1. Create an overlay div that covers the screen during transition
+        // 2. Redirect after a slight delay to ensure the overlay is visible
+        // 3. The overlay will be removed when dashboard loads
         
-        // Using a direct location update instead of a full page reload
-        // This will use React's router to change pages without reloading
-        setLocation('/dashboard');
+        const overlay = document.createElement('div');
+        overlay.id = 'redirect-overlay';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'white';
+        overlay.style.zIndex = '9999';
+        document.body.appendChild(overlay);
+        
+        // Short delay to ensure overlay is visible before redirecting
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 100);
       } catch (error) {
         console.error("Error processing login response:", error);
+        // Fallback to auth check if response processing fails
         toast({
           title: "Login successful",
           description: "Checking your profile status...",
         });
         
+        // If authentication succeeds but we fail to process the response properly,
+        // try to verify authentication status and redirect
         setTimeout(async () => {
           try {
             const authCheck = await apiRequest("GET", "/api/auth/check");
             
             if (authCheck.authenticated) {
-              localStorage.setItem('kickassmorning_user', JSON.stringify(authCheck.user));
-              setLocation('/dashboard');
+              window.location.href = "/dashboard";
             } else {
+              // Should not reach here if login was successful
               toast({
                 variant: "destructive",
                 title: "Authentication failed",
                 description: "Please log in again",
               });
-              setLocation("/login");
             }
           } catch (secondError) {
             console.error("Error checking auth status:", secondError);
@@ -94,10 +108,10 @@ export default function Login() {
               title: "Authentication error",
               description: "Please try logging in again",
             });
-            setLocation("/login");
           }
         }, 1000);
       }
+    },
     },
     onError: (error: any) => {
       console.error("Login error:", error);
