@@ -18,6 +18,7 @@ interface UserData {
     id: number;
     email: string;
     name: string;
+    phone: string | null;
     phoneVerified: boolean;
     isPersonalized: boolean;
   };
@@ -77,16 +78,33 @@ export default function Dashboard() {
     }
   });
 
-  const handleSampleCall = () => {
-    // Check if user has verified phone
-    const { user } = userData || {};
-    if (user && !user.phoneVerified) {
-      localStorage.setItem("phoneVerificationReturnUrl", "/dashboard");
-      setLocation("/phone-verification");
-      return;
+  const handleSampleCall = async () => {
+    try {
+      // Get the latest user data from the server to ensure phone verification status is current
+      const authCheckResponse = await apiRequest("GET", "/api/auth/check");
+      const latestUserData = authCheckResponse;
+      
+      // Check if user has verified phone using the latest data
+      if (latestUserData && latestUserData.user && !latestUserData.user.phoneVerified) {
+        toast({
+          title: "Phone verification required",
+          description: "Please verify your phone number to receive calls.",
+        });
+        localStorage.setItem("phoneVerificationReturnUrl", "/dashboard");
+        setLocation("/phone-verification");
+        return;
+      }
+      
+      // Proceed with the sample call
+      sampleCallMutation.mutate();
+    } catch (error) {
+      console.error("Error checking auth status:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not verify your phone status. Please try again.",
+      });
     }
-    
-    sampleCallMutation.mutate();
   };
 
   // Next scheduled call
@@ -216,7 +234,16 @@ export default function Dashboard() {
                   </p>
                   <div className="flex items-center text-sm text-gray-500 mb-1">
                     <Phone className="h-4 w-4 mr-2 text-primary" />
-                    <span>Sent to your verified phone number</span>
+                    <span>Sent to your phone number: </span>
+                    {userData?.user?.phoneVerified ? (
+                      <span className="ml-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        {userData.user.phone} <span className="ml-1">✓</span>
+                      </span>
+                    ) : (
+                      <span className="ml-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Not verified
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex-shrink-0">
