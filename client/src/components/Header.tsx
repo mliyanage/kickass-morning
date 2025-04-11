@@ -15,8 +15,17 @@ export default function Header() {
       return await apiRequest("POST", "/api/auth/logout", {});
     },
     onSuccess: () => {
-      // Force reload to clear any state and properly redirect
-      window.location.href = "/login";
+      // Clear local user data
+      localStorage.removeItem('kickassmorning_user');
+      
+      // Display a success message
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+      
+      // Use React Router for navigation instead of full page reload
+      setLocation("/login");
     },
     onError: (error) => {
       toast({

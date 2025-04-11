@@ -47,50 +47,39 @@ export default function Login() {
     onSuccess: async (response: any) => {
       // Our apiRequest function now parses JSON and throws errors for non-200 status codes
       // so if we're here, the login was successful
-      console.log("Login successful, redirecting based on user status", response);
+      console.log("Login successful, updating App state directly", response);
       
       try {
-        const userData = response.user;
+        // Notice we're NOT using window.location.href or window.location.replace
+        // Those cause a full page reload which is what creates the flash
         
         toast({
           title: "Login successful",
-          description: "Loading your dashboard...",
+          description: "Welcome back!",
         });
         
-        // Display loading state
-        document.body.classList.add('auth-in-progress');
+        // Instead of redirecting, we'll inform the parent App component
+        // that authentication was successful through localStorage
+        localStorage.setItem('kickassmorning_user', JSON.stringify(response.user));
         
-        // Set a flag in session storage to indicate successful authentication
-        // This prevents the login screen flash by letting the app know auth is in progress
-        sessionStorage.setItem('auth_successful', 'true');
-        
-        // Use setTimeout to ensure the session is established before redirecting
-        setTimeout(() => {
-          console.log("Redirecting to dashboard");
-          // Use window.location.replace instead of href for a cleaner transition
-          window.location.replace("/dashboard");
-        }, 800);
+        // Using a direct location update instead of a full page reload
+        // This will use React's router to change pages without reloading
+        setLocation('/dashboard');
       } catch (error) {
         console.error("Error processing login response:", error);
-        // Fallback to auth check if response processing fails
         toast({
           title: "Login successful",
           description: "Checking your profile status...",
         });
-        
-        // Display loading state
-        document.body.classList.add('auth-in-progress');
         
         setTimeout(async () => {
           try {
             const authCheck = await apiRequest("GET", "/api/auth/check");
             
             if (authCheck.authenticated) {
-              sessionStorage.setItem('auth_successful', 'true');
-              window.location.replace("/dashboard");
+              localStorage.setItem('kickassmorning_user', JSON.stringify(authCheck.user));
+              setLocation('/dashboard');
             } else {
-              // Should not reach here if login was successful
-              document.body.classList.remove('auth-in-progress');
               toast({
                 variant: "destructive",
                 title: "Authentication failed",
@@ -99,7 +88,6 @@ export default function Login() {
               setLocation("/login");
             }
           } catch (secondError) {
-            document.body.classList.remove('auth-in-progress');
             console.error("Error checking auth status:", secondError);
             toast({
               variant: "destructive",
