@@ -7,8 +7,8 @@ export default function Sidebar() {
   const isActive = (path: string) => location === path;
 
   return (
-    <aside className="py-6 px-2 sm:px-6 lg:col-span-3 lg:py-0 lg:px-0">
-      <nav className="space-y-1">
+    <aside className="py-6 px-2 sm:px-6 lg:py-0 lg:px-0 lg:sticky lg:top-10 lg:self-start">
+      <nav className="space-y-1 w-full">
         {/* Dashboard */}
         <a
           href="#"
