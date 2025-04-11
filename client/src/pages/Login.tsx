@@ -46,7 +46,18 @@ export default function Login() {
       return await apiRequest("POST", "/api/auth/login", { email, otp, rememberMe });
     },
     onSuccess: async (response: any) => {
-      // Use the user data directly from the login response
+      // Check if the response contains an error flag
+      if (response.error) {
+        console.error("Login error:", response);
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: response.message || "Invalid verification code. Please try again.",
+        });
+        return;
+      }
+      
+      // If no error, proceed with login success
       console.log("Login successful, redirecting based on user status", response);
       
       try {
@@ -80,20 +91,31 @@ export default function Login() {
             const res = await fetch('/api/auth/check', {
               credentials: 'include'
             });
-            if (res.ok) {
-              const data = await res.json();
+            const data = await res.json();
+            
+            if (data.authenticated) {
               if (data.user && !data.user.isPersonalized) {
                 window.location.href = "/personalization";
               } else {
                 window.location.href = "/dashboard";
               }
             } else {
-              // If all else fails, just go to the root
-              window.location.href = "/";
+              // Not authenticated, show message and redirect to login
+              toast({
+                variant: "destructive",
+                title: "Authentication failed",
+                description: data.message || "Please login again",
+              });
+              window.location.href = "/login";
             }
           } catch (secondError) {
             console.error("Error checking auth status:", secondError);
-            window.location.href = "/";
+            toast({
+              variant: "destructive",
+              title: "Authentication error",
+              description: "Please try logging in again",
+            });
+            window.location.href = "/login";
           }
         }, 1000);
       }

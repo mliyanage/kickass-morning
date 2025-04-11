@@ -25,8 +25,9 @@ function App() {
         const res = await fetch('/api/auth/check', {
           credentials: 'include'
         });
-        if (res.ok) {
-          const data = await res.json();
+        const data = await res.json();
+        
+        if (data.authenticated) {
           setIsAuthenticated(true);
           setIsPhoneVerified(data.user.phoneVerified || false);
           setIsPersonalized(data.user.isPersonalized || false);
@@ -37,8 +38,17 @@ function App() {
             isPersonalized: data.user.isPersonalized
           });
         } else {
-          console.log("Not authenticated");
+          console.log("Not authenticated:", data.message);
           setIsAuthenticated(false);
+          // If we're trying to access a page that requires auth, redirect to login
+          const currentPath = window.location.pathname;
+          if (
+            currentPath !== '/' && 
+            currentPath !== '/login' && 
+            currentPath !== '/signup'
+          ) {
+            window.location.href = '/login';
+          }
         }
       } catch (error) {
         console.error("Auth check error:", error);

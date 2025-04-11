@@ -231,7 +231,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email, otp, name } = req.body;
       
       if (!email || !otp) {
-        return res.status(400).json({ message: "Email and OTP are required." });
+        return res.status(200).json({ 
+          error: true,
+          message: "Email and verification code are required." 
+        });
       }
       
       // First check if the OTP is valid, regardless of type
@@ -239,7 +242,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!isOtpValid) {
         console.error(`Verification failed: Invalid OTP ${otp} for ${email}`);
-        return res.status(401).json({ message: "Invalid or expired verification code." });
+        return res.status(200).json({ 
+          error: true,
+          message: "Invalid or expired verification code." 
+        });
       }
       
       // OTP is valid, now check if user exists
@@ -253,7 +259,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // User doesn't exist, this is a registration
         if (!name) {
-          return res.status(400).json({ message: "Name is required for registration." });
+          return res.status(200).json({ 
+            error: true,
+            message: "Name is required for registration." 
+          });
         }
         
         // Create new user
@@ -268,7 +277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.userId = user.id;
       
       // Return success
-      res.status(existingUser ? 200 : 201).json({
+      res.status(200).json({
         message: existingUser ? "Login successful." : "Registration successful.",
         user: {
           id: user.id,
@@ -280,7 +289,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Email OTP verification error:", error);
-      res.status(500).json({ message: "An error occurred during verification." });
+      res.status(200).json({ 
+        error: true,
+        message: "Something went wrong. Please try again later." 
+      });
     }
   });
 
