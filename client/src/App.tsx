@@ -19,44 +19,17 @@ function App() {
   const [isPersonalized, setIsPersonalized] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [, setLocation] = useLocation();
-  const [location] = useLocation();
 
   useEffect(() => {
-    // Setup a storage event listener to handle auth state changes from other tabs/components
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'kickassmorning_user' && e.newValue) {
-        try {
-          const userData = JSON.parse(e.newValue);
-          setIsAuthenticated(true);
-          setIsPhoneVerified(userData.phoneVerified || false);
-          setIsPersonalized(userData.isPersonalized || false);
-          setIsLoading(false);
-          console.log("Auth state updated from storage event");
-        } catch (error) {
-          console.error("Error parsing user data from storage:", error);
-        }
-      }
-    };
+    // Check for auth-in-progress indicator (set during login)
+    const authInProgress = sessionStorage.getItem('auth_successful') === 'true';
     
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Check if there's already user data in localStorage on mount
-    const storedUser = localStorage.getItem('kickassmorning_user');
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        setIsAuthenticated(true);
-        setIsPhoneVerified(userData.phoneVerified || false);
-        setIsPersonalized(userData.isPersonalized || false);
-        setIsLoading(false);
-        console.log("User found in localStorage on app start");
-      } catch (error) {
-        console.error("Error parsing stored user data:", error);
-        localStorage.removeItem('kickassmorning_user');
-      }
+    // If we're in auth transition, add loading state
+    if (authInProgress) {
+      document.body.classList.add('auth-in-progress');
     }
     
-    // Check if user is authenticated via API
+    // Check if user is authenticated
     const checkAuth = async () => {
       try {
         const res = await fetch('/api/auth/check', {
@@ -70,8 +43,11 @@ function App() {
           setIsPersonalized(data.user.isPersonalized || false);
           setIsLoading(false);
           
-          // Store user data in localStorage for future quick access
-          localStorage.setItem('kickassmorning_user', JSON.stringify(data.user));
+          // Clear the auth-in-progress flag once we're authenticated
+          if (authInProgress) {
+            sessionStorage.removeItem('auth_successful');
+            document.body.classList.remove('auth-in-progress');
+          }
           
           console.log("Auth check successful:", {
             isAuthenticated: true,
@@ -82,7 +58,12 @@ function App() {
           console.log("Not authenticated:", data.message);
           setIsAuthenticated(false);
           setIsLoading(false);
-          localStorage.removeItem('kickassmorning_user');
+          
+          // Clear any pending auth flag
+          if (authInProgress) {
+            sessionStorage.removeItem('auth_successful');
+            document.body.classList.remove('auth-in-progress');
+          }
           
           // If we're trying to access a page that requires auth, redirect to login
           const currentPath = window.location.pathname;
@@ -98,38 +79,44 @@ function App() {
         console.error("Auth check error:", error);
         setIsAuthenticated(false);
         setIsLoading(false);
-        localStorage.removeItem('kickassmorning_user');
+        
+        // Clear any pending auth flag
+        if (authInProgress) {
+          sessionStorage.removeItem('auth_successful');
+          document.body.classList.remove('auth-in-progress');
+        }
       }
     };
 
     checkAuth();
+    
+    // Add CSS to handle the auth transition without flashing
+    const style = document.createElement('style');
+    style.textContent = `
+      .auth-in-progress .login-page {
+        opacity: 0;
+        pointer-events: none;
+      }
+    `;
+    document.head.appendChild(style);
     
     // Set up interval to periodically check authentication status
     const authCheckInterval = setInterval(checkAuth, 10000); // Check auth every 10 seconds
     
     return () => {
       clearInterval(authCheckInterval);
-      window.removeEventListener('storage', handleStorageChange);
+      document.head.removeChild(style);
     };
   }, [setLocation]);
 
   // Authentication guard for protected routes
   const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
-      if (!isAuthenticated && !isLoading) {
-        // Use React Router navigation instead of full page reload
-        setLocation("/login");
+      if (!isAuthenticated) {
+        // Force a full page reload to /login to clear all state
+        window.location.href = "/login";
       }
-    }, [isAuthenticated, isLoading]);
-
-    // Show a loading state while checking authentication
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-        </div>
-      );
-    }
+    }, [isAuthenticated]);
 
     return isAuthenticated ? <>{children}</> : null;
   };

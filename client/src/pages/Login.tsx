@@ -54,29 +54,22 @@ export default function Login() {
         
         toast({
           title: "Login successful",
-          description: "Redirecting you to the dashboard...",
+          description: "Loading your dashboard...",
         });
         
-        // To fix the flash issue, we use a simple technique:
-        // 1. Create an overlay div that covers the screen during transition
-        // 2. Redirect after a slight delay to ensure the overlay is visible
-        // 3. The overlay will be removed when dashboard loads
+        // Display loading state
+        document.body.classList.add('auth-in-progress');
         
-        const overlay = document.createElement('div');
-        overlay.id = 'redirect-overlay';
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'white';
-        overlay.style.zIndex = '9999';
-        document.body.appendChild(overlay);
+        // Set a flag in session storage to indicate successful authentication
+        // This prevents the login screen flash by letting the app know auth is in progress
+        sessionStorage.setItem('auth_successful', 'true');
         
-        // Short delay to ensure overlay is visible before redirecting
+        // Use setTimeout to ensure the session is established before redirecting
         setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 100);
+          console.log("Redirecting to dashboard");
+          // Use window.location.replace instead of href for a cleaner transition
+          window.location.replace("/dashboard");
+        }, 800);
       } catch (error) {
         console.error("Error processing login response:", error);
         // Fallback to auth check if response processing fails
@@ -85,33 +78,38 @@ export default function Login() {
           description: "Checking your profile status...",
         });
         
-        // If authentication succeeds but we fail to process the response properly,
-        // try to verify authentication status and redirect
+        // Display loading state
+        document.body.classList.add('auth-in-progress');
+        
         setTimeout(async () => {
           try {
             const authCheck = await apiRequest("GET", "/api/auth/check");
             
             if (authCheck.authenticated) {
-              window.location.href = "/dashboard";
+              sessionStorage.setItem('auth_successful', 'true');
+              window.location.replace("/dashboard");
             } else {
               // Should not reach here if login was successful
+              document.body.classList.remove('auth-in-progress');
               toast({
                 variant: "destructive",
                 title: "Authentication failed",
                 description: "Please log in again",
               });
+              setLocation("/login");
             }
           } catch (secondError) {
+            document.body.classList.remove('auth-in-progress');
             console.error("Error checking auth status:", secondError);
             toast({
               variant: "destructive",
               title: "Authentication error",
               description: "Please try logging in again",
             });
+            setLocation("/login");
           }
         }, 1000);
       }
-    },
     },
     onError: (error: any) => {
       console.error("Login error:", error);
