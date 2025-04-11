@@ -11,7 +11,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="max-w-7xl mx-auto pt-10 pb-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
         <div className="lg:grid lg:grid-cols-12 lg:gap-x-5">
           {/* Sidebar */}
           <Sidebar />
