@@ -48,6 +48,7 @@ function App() {
             currentPath !== '/login' && 
             currentPath !== '/signup'
           ) {
+            // Use location.href to force a full page reload, clearing all state
             window.location.href = '/login';
           }
         }
@@ -58,13 +59,21 @@ function App() {
     };
 
     checkAuth();
+    
+    // Set up interval to periodically check authentication status
+    const authCheckInterval = setInterval(checkAuth, 10000); // Check auth every 10 seconds
+    
+    return () => {
+      clearInterval(authCheckInterval);
+    };
   }, []);
 
   // Authentication guard for protected routes
   const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
       if (!isAuthenticated) {
-        setLocation("/login");
+        // Force a full page reload to /login to clear all state
+        window.location.href = "/login";
       }
     }, [isAuthenticated]);
 

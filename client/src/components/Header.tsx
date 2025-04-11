@@ -15,7 +15,8 @@ export default function Header() {
       return await apiRequest("POST", "/api/auth/logout", {});
     },
     onSuccess: () => {
-      setLocation("/login");
+      // Force reload to clear any state and properly redirect
+      window.location.href = "/login";
     },
     onError: (error) => {
       toast({
