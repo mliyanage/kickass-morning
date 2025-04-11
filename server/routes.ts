@@ -262,13 +262,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email, otp, rememberMe } = req.body;
       
       if (!email || !otp) {
-        return res.status(400).json({ message: "Email and verification code are required." });
+        return res.status(200).json({ 
+          error: true,
+          message: "Email and verification code are required." 
+        });
       }
       
       // Step 1: Check if the user exists
       const existingUser = await storage.getUserByEmail(email);
       if (!existingUser) {
-        return res.status(401).json({ message: "No account found with this email. Please sign up instead." });
+        return res.status(200).json({ 
+          error: true,
+          message: "No account found with this email. Please sign up instead." 
+        });
       }
       
       // Step 2: Verify the OTP is valid for this email (regardless of type)
@@ -277,7 +283,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!isOtpValid) {
         console.error(`Login failed: Invalid OTP ${otp} for ${email}`);
-        return res.status(401).json({ message: "Invalid or expired verification code." });
+        return res.status(200).json({ 
+          error: true,
+          message: "Invalid or expired verification code." 
+        });
       }
       
       // Set session
@@ -303,7 +312,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Login error:", error);
-      res.status(500).json({ message: "An error occurred during login." });
+      res.status(200).json({ 
+        error: true,
+        message: "Something went wrong. Please try again later." 
+      });
     }
   });
 
@@ -318,13 +330,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/check", async (req: Request, res: Response) => {
     if (!req.session.userId) {
-      return res.status(401).json({ message: "Not authenticated." });
+      return res.status(200).json({ 
+        authenticated: false,
+        message: "Please log in to continue."
+      });
     }
     
     try {
       const user = await storage.getUser(req.session.userId);
       if (!user) {
-        return res.status(401).json({ message: "User not found." });
+        // Session exists but user doesn't - clear the session
+        req.session.destroy((err: any) => {
+          if (err) console.error("Failed to destroy invalid session:", err);
+        });
+        
+        return res.status(200).json({ 
+          authenticated: false,
+          message: "Your session has expired. Please log in again."
+        });
       }
       
       res.status(200).json({
