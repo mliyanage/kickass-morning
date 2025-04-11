@@ -99,13 +99,9 @@ export default function Header() {
                 className="flex items-center"
                 disabled={logoutMutation.isPending}
               >
-                <div className="rounded-full bg-gray-800 flex-shrink-0 h-8 w-8 mr-2">
-                  <img 
-                    className="h-8 w-8 rounded-full" 
-                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" 
-                    alt="User"
-                  />
-                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
                 <span>{logoutMutation.isPending ? "Logging out..." : "Logout"}</span>
               </Button>
             </div>
@@ -175,19 +171,6 @@ export default function Header() {
             </a>
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
-            <div className="flex items-center px-4">
-              <div className="flex-shrink-0">
-                <img 
-                  className="h-10 w-10 rounded-full" 
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" 
-                  alt=""
-                />
-              </div>
-              <div className="ml-3">
-                <div className="text-base font-medium text-gray-800">User</div>
-                <div className="text-sm font-medium text-gray-500">user@example.com</div>
-              </div>
-            </div>
             <div className="mt-3 space-y-1">
               <Button 
                 variant="ghost" 
@@ -198,7 +181,10 @@ export default function Header() {
                 className="w-full justify-start"
                 disabled={logoutMutation.isPending}
               >
-                {logoutMutation.isPending ? "Logging out..." : "Logout"}
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span>{logoutMutation.isPending ? "Logging out..." : "Logout"}</span>
               </Button>
             </div>
           </div>
