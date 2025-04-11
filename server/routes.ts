@@ -273,6 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: user.id,
           email: user.email,
           name: user.name,
+          phone: user.phone,
           phoneVerified: user.phoneVerified,
           isPersonalized: user.isPersonalized
         }
@@ -332,6 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: existingUser.id,
           email: existingUser.email,
           name: existingUser.name,
+          phone: existingUser.phone,
           phoneVerified: existingUser.phoneVerified,
           isPersonalized: existingUser.isPersonalized
         }
@@ -381,6 +383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: user.id,
           email: user.email,
           name: user.name,
+          phone: user.phone,
           phoneVerified: user.phoneVerified,
           isPersonalized: user.isPersonalized
         }
