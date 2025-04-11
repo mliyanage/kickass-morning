@@ -9,11 +9,33 @@ import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { PhoneVerificationRequest } from "@/types";
 import PhoneVerificationLayout from "@/components/PhoneVerificationLayout";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// List of common country codes
+const countryCodes = [
+  { code: '+1', name: 'United States/Canada (+1)' },
+  { code: '+44', name: 'United Kingdom (+44)' },
+  { code: '+91', name: 'India (+91)' },
+  { code: '+61', name: 'Australia (+61)' },
+  { code: '+33', name: 'France (+33)' },
+  { code: '+49', name: 'Germany (+49)' },
+  { code: '+81', name: 'Japan (+81)' },
+  { code: '+86', name: 'China (+86)' },
+  { code: '+52', name: 'Mexico (+52)' },
+  { code: '+55', name: 'Brazil (+55)' },
+  { code: '+234', name: 'Nigeria (+234)' },
+  { code: '+27', name: 'South Africa (+27)' },
+  { code: '+82', name: 'South Korea (+82)' },
+  { code: '+65', name: 'Singapore (+65)' },
+  { code: '+971', name: 'UAE (+971)' },
+  { code: '+7', name: 'Russia (+7)' },
+];
 
 export default function PhoneVerification() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [phone, setPhone] = useState("");
+  const [countryCode, setCountryCode] = useState("+1");
   const [returnUrl, setReturnUrl] = useState("/dashboard");
 
   // Check where the user was trying to go
@@ -35,7 +57,8 @@ export default function PhoneVerification() {
         description: "A verification code has been sent to your phone.",
       });
       // Store phone number in localStorage for the OTP verification page
-      localStorage.setItem("verificationPhone", phone);
+      const fullPhone = `${countryCode}${phone.replace(/\D/g, '')}`;
+      localStorage.setItem("verificationPhone", fullPhone);
       localStorage.setItem("otpVerificationReturnUrl", returnUrl);
       
       // Use router navigation to maintain the history
@@ -52,7 +75,9 @@ export default function PhoneVerification() {
 
   const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone || phone.length < 10) {
+    
+    // Basic validation - ensure phone has some digits
+    if (!phone || phone.replace(/\D/g, '').length < 5) {
       toast({
         variant: "destructive",
         title: "Invalid phone number",
@@ -61,11 +86,10 @@ export default function PhoneVerification() {
       return;
     }
     
-    // Format phone number to E.164 format (+1XXXXXXXXXX)
-    let formattedPhone = phone;
-    if (!formattedPhone.startsWith('+')) {
-      formattedPhone = `+1${formattedPhone.replace(/\D/g, '')}`;
-    }
+    // Format phone number to E.164 format (e.g., +1XXXXXXXXXX)
+    // Remove any non-digit characters from the phone input
+    const phoneDigits = phone.replace(/\D/g, '');
+    const formattedPhone = `${countryCode}${phoneDigits}`;
     
     sendOtpMutation.mutate({ phone: formattedPhone });
   };
@@ -91,15 +115,32 @@ export default function PhoneVerification() {
 
               <form onSubmit={handleSendOtp} className="space-y-6">
                 <div>
+                  <Label htmlFor="country-code">Country code</Label>
+                  <Select 
+                    value={countryCode} 
+                    onValueChange={setCountryCode}
+                  >
+                    <SelectTrigger id="country-code" className="w-full mb-3">
+                      <SelectValue placeholder="Select country code" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countryCodes.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
                   <Label htmlFor="phone">Phone number</Label>
                   <div className="mt-1 flex rounded-md shadow-sm">
                     <span className="inline-flex items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-gray-500 sm:text-sm">
-                      +1
+                      {countryCode}
                     </span>
                     <Input 
                       id="phone" 
                       type="tel" 
-                      placeholder="(555) 987-6543"
+                      placeholder="Enter phone number"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       className="rounded-l-none"

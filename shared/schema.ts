@@ -133,13 +133,17 @@ export const emailOtpSchema = z.object({
 
 // Schema for phone verification
 export const phoneVerificationSchema = z.object({
-  phone: z.string().min(10),
+  phone: z.string()
+    .min(6, "Phone number must include country code and at least 5 digits")
+    .regex(/^\+[1-9]\d{4,14}$/, "Phone number must be in E.164 format (e.g., +1234567890)")
 });
 
 // Schema for OTP verification
 export const otpVerificationSchema = z.object({
-  phone: z.string().min(10),
-  otp: z.string().length(6),
+  phone: z.string()
+    .min(6, "Phone number must include country code and at least 5 digits")
+    .regex(/^\+[1-9]\d{4,14}$/, "Phone number must be in E.164 format (e.g., +1234567890)"),
+  otp: z.string().length(6, "OTP must be exactly 6 digits"),
 });
 
 // Schema for personalization

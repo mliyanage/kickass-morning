@@ -348,29 +348,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = phoneVerificationSchema.parse(req.body);
       
+      // Log the phone number for debugging
+      console.log(`Sending OTP to international number: ${validatedData.phone}`);
+      
+      // Ensure phone number is in E.164 format (should already be validated by schema)
+      const phoneNumber = validatedData.phone;
+      if (!phoneNumber.startsWith('+')) {
+        return res.status(400).json({ 
+          message: "Invalid phone number format. Must start with '+' followed by country code." 
+        });
+      }
+      
       // Generate OTP
       const otp = generateOTP();
       
       // Store OTP
       await storage.createOtpCode({
         userId: req.session.userId!,
-        phone: validatedData.phone,
+        phone: phoneNumber,
         code: otp,
         expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes expiry
       });
       
       // Send OTP via SMS
       try {
-        await sendSMS(validatedData.phone, `Your KickAss Morning verification code is: ${otp}`);
+        await sendSMS(phoneNumber, `Your KickAss Morning verification code is: ${otp}`);
+        
+        // Log success for debugging
+        console.log(`Successfully sent OTP to ${phoneNumber}`);
       } catch (smsError) {
         console.error("SMS sending error:", smsError);
-        return res.status(500).json({ message: "Failed to send verification SMS." });
+        console.error(smsError.stack);
+        return res.status(500).json({ 
+          message: "Failed to send verification SMS. Please check your phone number and try again."
+        });
       }
       
       res.status(200).json({ message: "OTP sent successfully." });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input data.", errors: error.errors });
+        const errorMessages = error.errors.map(err => `${err.path}: ${err.message}`).join(', ');
+        return res.status(400).json({ 
+          message: "Invalid phone number format.", 
+          details: errorMessages
+        });
       }
       console.error("Send OTP error:", error);
       res.status(500).json({ message: "An error occurred while sending OTP." });
