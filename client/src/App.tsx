@@ -61,7 +61,7 @@ function App() {
     checkAuth();
     
     // Set up interval to periodically check authentication status
-    const authCheckInterval = setInterval(checkAuth, 10000); // Check auth every 10 seconds
+    const authCheckInterval = setInterval(checkAuth, 100000); // Check auth every 10 seconds
     
     return () => {
       clearInterval(authCheckInterval);
