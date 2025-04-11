@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { PhoneVerificationRequest } from "@/types";
-import PhoneVerificationLayout from "@/components/PhoneVerificationLayout";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // List of common country codes
@@ -95,7 +95,7 @@ export default function PhoneVerification() {
   };
 
   return (
-    <PhoneVerificationLayout>
+    <DashboardLayout>
       <div className="shadow sm:rounded-md sm:overflow-hidden">
         <div className="bg-white py-6 px-4 sm:p-6">
           <h2 className="text-lg leading-6 font-medium text-gray-900 mb-4">Phone Verification Required</h2>
@@ -161,6 +161,6 @@ export default function PhoneVerification() {
           </Card>
         </div>
       </div>
-    </PhoneVerificationLayout>
+    </DashboardLayout>
   );
 }
