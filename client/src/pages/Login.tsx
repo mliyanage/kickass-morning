@@ -46,18 +46,8 @@ export default function Login() {
       return await apiRequest("POST", "/api/auth/login", { email, otp, rememberMe });
     },
     onSuccess: async (response: any) => {
-      // Check if the response contains an error flag
-      if (response.error) {
-        console.error("Login error:", response);
-        toast({
-          variant: "destructive",
-          title: "Login failed",
-          description: response.message || "Invalid verification code. Please try again.",
-        });
-        return;
-      }
-      
-      // If no error, proceed with login success
+      // Our apiRequest function now parses JSON and throws errors for non-200 status codes
+      // so if we're here, the login was successful
       console.log("Login successful, redirecting based on user status", response);
       
       try {
@@ -88,23 +78,20 @@ export default function Login() {
         
         setTimeout(async () => {
           try {
-            const res = await fetch('/api/auth/check', {
-              credentials: 'include'
-            });
-            const data = await res.json();
+            const authCheck = await apiRequest("GET", "/api/auth/check");
             
-            if (data.authenticated) {
-              if (data.user && !data.user.isPersonalized) {
+            if (authCheck.authenticated) {
+              if (authCheck.user && !authCheck.user.isPersonalized) {
                 window.location.href = "/personalization";
               } else {
                 window.location.href = "/dashboard";
               }
             } else {
-              // Not authenticated, show message and redirect to login
+              // Should not reach here if login was successful
               toast({
                 variant: "destructive",
                 title: "Authentication failed",
-                description: data.message || "Please login again",
+                description: "Please log in again",
               });
               window.location.href = "/login";
             }
@@ -120,7 +107,8 @@ export default function Login() {
         }, 1000);
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Login error:", error);
       toast({
         variant: "destructive",
         title: "Login failed",

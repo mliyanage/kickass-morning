@@ -40,8 +40,7 @@ const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
   if (req.session && req.session.userId) {
     return next();
   }
-  res.status(200).json({ 
-    error: true,
+  res.status(401).json({ 
     message: "Please log in to continue.",
     requiresAuth: true
   });
@@ -50,8 +49,7 @@ const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
 // Middleware to check if phone is verified
 const isPhoneVerified = async (req: Request, res: Response, next: NextFunction) => {
   if (!req.session.userId) {
-    return res.status(200).json({ 
-      error: true,
+    return res.status(401).json({ 
       message: "Please log in to continue.",
       requiresAuth: true
     });
@@ -59,16 +57,14 @@ const isPhoneVerified = async (req: Request, res: Response, next: NextFunction) 
 
   const user = await storage.getUser(req.session.userId);
   if (!user) {
-    return res.status(200).json({ 
-      error: true,
+    return res.status(401).json({ 
       message: "Your session has expired. Please log in again.",
       requiresAuth: true
     });
   }
 
   if (!user.phoneVerified) {
-    return res.status(200).json({ 
-      error: true,
+    return res.status(403).json({ 
       message: "Please verify your phone number to continue",
       phoneVerificationRequired: true
     });
@@ -80,8 +76,7 @@ const isPhoneVerified = async (req: Request, res: Response, next: NextFunction) 
 // Middleware to check if user has completed personalization
 const isPersonalized = async (req: Request, res: Response, next: NextFunction) => {
   if (!req.session.userId) {
-    return res.status(200).json({ 
-      error: true,
+    return res.status(401).json({ 
       message: "Please log in to continue.",
       requiresAuth: true
     });
@@ -89,16 +84,14 @@ const isPersonalized = async (req: Request, res: Response, next: NextFunction) =
 
   const user = await storage.getUser(req.session.userId);
   if (!user) {
-    return res.status(200).json({ 
-      error: true,
+    return res.status(401).json({ 
       message: "Your session has expired. Please log in again.",
       requiresAuth: true
     });
   }
 
   if (!user.isPersonalized) {
-    return res.status(200).json({ 
-      error: true,
+    return res.status(403).json({ 
       message: "Please complete the personalization form first.",
       personalizationRequired: true
     });
@@ -231,8 +224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email, otp, name } = req.body;
       
       if (!email || !otp) {
-        return res.status(200).json({ 
-          error: true,
+        return res.status(400).json({ 
           message: "Email and verification code are required." 
         });
       }
@@ -242,8 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!isOtpValid) {
         console.error(`Verification failed: Invalid OTP ${otp} for ${email}`);
-        return res.status(200).json({ 
-          error: true,
+        return res.status(401).json({ 
           message: "Invalid or expired verification code." 
         });
       }
@@ -259,8 +250,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // User doesn't exist, this is a registration
         if (!name) {
-          return res.status(200).json({ 
-            error: true,
+          return res.status(400).json({ 
             message: "Name is required for registration." 
           });
         }
@@ -289,8 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Email OTP verification error:", error);
-      res.status(200).json({ 
-        error: true,
+      res.status(500).json({ 
         message: "Something went wrong. Please try again later." 
       });
     }
@@ -302,8 +291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email, otp, rememberMe } = req.body;
       
       if (!email || !otp) {
-        return res.status(200).json({ 
-          error: true,
+        return res.status(400).json({ 
           message: "Email and verification code are required." 
         });
       }
@@ -311,8 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Step 1: Check if the user exists
       const existingUser = await storage.getUserByEmail(email);
       if (!existingUser) {
-        return res.status(200).json({ 
-          error: true,
+        return res.status(401).json({ 
           message: "No account found with this email. Please sign up instead." 
         });
       }
@@ -323,8 +310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!isOtpValid) {
         console.error(`Login failed: Invalid OTP ${otp} for ${email}`);
-        return res.status(200).json({ 
-          error: true,
+        return res.status(401).json({ 
           message: "Invalid or expired verification code." 
         });
       }
@@ -352,8 +338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Login error:", error);
-      res.status(200).json({ 
-        error: true,
+      res.status(500).json({ 
         message: "Something went wrong. Please try again later." 
       });
     }
