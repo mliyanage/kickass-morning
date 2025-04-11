@@ -40,22 +40,38 @@ const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
   if (req.session && req.session.userId) {
     return next();
   }
-  res.status(401).json({ message: "Unauthorized. Please log in." });
+  res.status(200).json({ 
+    error: true,
+    message: "Please log in to continue.",
+    requiresAuth: true
+  });
 };
 
 // Middleware to check if phone is verified
 const isPhoneVerified = async (req: Request, res: Response, next: NextFunction) => {
   if (!req.session.userId) {
-    return res.status(401).json({ message: "Unauthorized. Please log in." });
+    return res.status(200).json({ 
+      error: true,
+      message: "Please log in to continue.",
+      requiresAuth: true
+    });
   }
 
   const user = await storage.getUser(req.session.userId);
   if (!user) {
-    return res.status(401).json({ message: "User not found." });
+    return res.status(200).json({ 
+      error: true,
+      message: "Your session has expired. Please log in again.",
+      requiresAuth: true
+    });
   }
 
   if (!user.phoneVerified) {
-    return res.status(403).json({ message: "Phone number not verified." });
+    return res.status(200).json({ 
+      error: true,
+      message: "Please verify your phone number to continue",
+      phoneVerificationRequired: true
+    });
   }
 
   next();
@@ -64,16 +80,28 @@ const isPhoneVerified = async (req: Request, res: Response, next: NextFunction) 
 // Middleware to check if user has completed personalization
 const isPersonalized = async (req: Request, res: Response, next: NextFunction) => {
   if (!req.session.userId) {
-    return res.status(401).json({ message: "Unauthorized. Please log in." });
+    return res.status(200).json({ 
+      error: true,
+      message: "Please log in to continue.",
+      requiresAuth: true
+    });
   }
 
   const user = await storage.getUser(req.session.userId);
   if (!user) {
-    return res.status(401).json({ message: "User not found." });
+    return res.status(200).json({ 
+      error: true,
+      message: "Your session has expired. Please log in again.",
+      requiresAuth: true
+    });
   }
 
   if (!user.isPersonalized) {
-    return res.status(403).json({ message: "User has not completed personalization." });
+    return res.status(200).json({ 
+      error: true,
+      message: "Please complete the personalization form first.",
+      personalizationRequired: true
+    });
   }
 
   next();
