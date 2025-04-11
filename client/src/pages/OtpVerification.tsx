@@ -11,7 +11,7 @@ import {
   InputOTPGroup, 
   InputOTPSlot 
 } from "@/components/ui/input-otp";
-import PhoneVerificationLayout from "@/components/PhoneVerificationLayout";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
 
 export default function OtpVerification() {
   const { toast } = useToast();
@@ -152,7 +152,7 @@ export default function OtpVerification() {
   };
 
   return (
-    <PhoneVerificationLayout>
+    <DashboardLayout>
       <div className="shadow sm:rounded-md sm:overflow-hidden">
         <div className="bg-white py-6 px-4 sm:p-6">
           <h2 className="text-lg leading-6 font-medium text-gray-900 mb-4">Complete Phone Verification</h2>
@@ -213,6 +213,6 @@ export default function OtpVerification() {
           </Card>
         </div>
       </div>
-    </PhoneVerificationLayout>
+    </DashboardLayout>
   );
 }

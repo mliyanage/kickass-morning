@@ -19,8 +19,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import Header from "@/components/Header";
-import Sidebar from "@/components/Sidebar";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
 
 // Timezone options
 const timezones = [
@@ -187,209 +186,193 @@ export default function ScheduleCall() {
   // Show loading state while checking phone verification
   if (isLoading || isUserDataLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="lg:grid lg:grid-cols-12 lg:gap-x-5">
-            <Sidebar />
-            <div className="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
-              <div className="text-center py-16">
-                <p>Loading...</p>
-              </div>
-            </div>
-          </div>
+      <DashboardLayout>
+        <div className="text-center py-16">
+          <p>Loading...</p>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   // Only render the schedule form if user is verified
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="lg:grid lg:grid-cols-12 lg:gap-x-5">
-          <Sidebar />
-          <div className="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
-            <div className="shadow sm:rounded-md sm:overflow-hidden">
-              <div className="bg-white py-6 px-4 sm:p-6">
-                <h2 className="text-lg leading-6 font-medium text-gray-900 mb-4">Schedule Your Wakeup Call</h2>
-                <Card className="overflow-hidden">
-                  <CardContent className="p-6">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                      <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                        <div className="sm:col-span-3">
-                          <Label htmlFor="wakeup-time">Wakeup Time</Label>
-                          <Input 
-                            id="wakeup-time" 
-                            type="time" 
-                            value={wakeupTime}
-                            onChange={(e) => setWakeupTime(e.target.value)}
-                            className="mt-1"
-                            required
-                          />
-                        </div>
-                        
-                        <div className="sm:col-span-3">
-                          <Label htmlFor="timezone">Timezone</Label>
-                          <Select value={timezone} onValueChange={setTimezone}>
-                            <SelectTrigger id="timezone" className="mt-1">
-                              <SelectValue placeholder="Select timezone" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                {timezones.map((tz) => (
-                                  <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>
-                                ))}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm font-medium">Days of the Week</Label>
-                          <div>
-                            <Button 
-                              variant="ghost" 
-                              type="button" 
-                              className="h-auto text-xs text-primary hover:text-primary/80"
-                              onClick={handleSelectAllDays}
-                            >
-                              Select All
-                            </Button>
-                            <span className="text-gray-300 mx-1">|</span>
-                            <Button 
-                              variant="ghost" 
-                              type="button" 
-                              className="h-auto text-xs text-primary hover:text-primary/80"
-                              onClick={handleClearAllDays}
-                            >
-                              Clear All
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        <div className="mt-2 grid grid-cols-7 gap-2">
-                          {weekdays.map((day) => (
-                            <div key={day.value}>
-                              <input 
-                                type="checkbox" 
-                                id={`day-${day.value}`} 
-                                checked={selectedDays.includes(day.value)}
-                                onChange={() => handleDayToggle(day.value)}
-                                className="sr-only peer" 
-                              />
-                              <label 
-                                htmlFor={`day-${day.value}`} 
-                                className="flex flex-col items-center justify-center rounded-md border border-gray-200 p-2 peer-checked:border-primary peer-checked:bg-primary/10 cursor-pointer hover:bg-gray-50"
-                              >
-                                <span className="block text-xs font-medium text-gray-700">{day.label}</span>
-                              </label>
-                            </div>
+    <DashboardLayout>
+      <div className="shadow sm:rounded-md sm:overflow-hidden">
+        <div className="bg-white py-6 px-4 sm:p-6">
+          <h2 className="text-lg leading-6 font-medium text-gray-900 mb-4">Schedule Your Wakeup Call</h2>
+          <Card className="overflow-hidden">
+            <CardContent className="p-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                  <div className="sm:col-span-3">
+                    <Label htmlFor="wakeup-time">Wakeup Time</Label>
+                    <Input 
+                      id="wakeup-time" 
+                      type="time" 
+                      value={wakeupTime}
+                      onChange={(e) => setWakeupTime(e.target.value)}
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="sm:col-span-3">
+                    <Label htmlFor="timezone">Timezone</Label>
+                    <Select value={timezone} onValueChange={setTimezone}>
+                      <SelectTrigger id="timezone" className="mt-1">
+                        <SelectValue placeholder="Select timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {timezones.map((tz) => (
+                            <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>
                           ))}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <Label className="text-sm font-medium">Recurrence</Label>
-                        <RadioGroup className="mt-2" value={isRecurring ? "daily" : "once"} onValueChange={(val) => setIsRecurring(val === "daily")}>
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="daily" id="recurring-daily" />
-                              <Label htmlFor="recurring-daily">Daily (on selected days)</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="once" id="recurring-once" />
-                              <Label htmlFor="recurring-once">One-time only</Label>
-                            </div>
-                          </div>
-                        </RadioGroup>
-                        
-                        {!isRecurring && (
-                          <div className="ml-7 mt-2">
-                            <Label htmlFor="date-picker" className="block text-xs font-medium mb-1">Select Date</Label>
-                            <Input 
-                              id="date-picker" 
-                              type="date" 
-                              value={date}
-                              onChange={(e) => setDate(e.target.value)}
-                              min={new Date().toISOString().split('T')[0]}
-                              required={!isRecurring}
-                            />
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <Label className="text-sm font-medium mb-2 block">Call Settings</Label>
-                        <div className="space-y-2">
-                          <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              id="call-retry" 
-                              checked={callRetry}
-                              onCheckedChange={(checked) => setCallRetry(!!checked)}
-                            />
-                            <Label htmlFor="call-retry" className="text-sm">
-                              Automatically retry call if not answered (up to 3 times)
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              id="advance-notice" 
-                              checked={advanceNotice}
-                              onCheckedChange={(checked) => setAdvanceNotice(!!checked)}
-                            />
-                            <Label htmlFor="advance-notice" className="text-sm">
-                              Send a reminder text 5 minutes before the call
-                            </Label>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div>
-                        <Button 
-                          type="button" 
-                          variant="secondary" 
-                          className="mb-4"
-                          onClick={handleSampleCall}
-                          disabled={sampleCallMutation.isPending}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Days of the Week</Label>
+                    <div>
+                      <Button 
+                        variant="ghost" 
+                        type="button" 
+                        className="h-auto text-xs text-primary hover:text-primary/80"
+                        onClick={handleSelectAllDays}
+                      >
+                        Select All
+                      </Button>
+                      <span className="text-gray-300 mx-1">|</span>
+                      <Button 
+                        variant="ghost" 
+                        type="button" 
+                        className="h-auto text-xs text-primary hover:text-primary/80"
+                        onClick={handleClearAllDays}
+                      >
+                        Clear All
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-2 grid grid-cols-7 gap-2">
+                    {weekdays.map((day) => (
+                      <div key={day.value}>
+                        <input 
+                          type="checkbox" 
+                          id={`day-${day.value}`} 
+                          checked={selectedDays.includes(day.value)}
+                          onChange={() => handleDayToggle(day.value)}
+                          className="sr-only peer" 
+                        />
+                        <label 
+                          htmlFor={`day-${day.value}`} 
+                          className="flex flex-col items-center justify-center rounded-md border border-gray-200 p-2 peer-checked:border-primary peer-checked:bg-primary/10 cursor-pointer hover:bg-gray-50"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          {sampleCallMutation.isPending ? "Initiating call..." : "Try a Sample Call Now"}
-                        </Button>
-                        <p className="text-xs text-gray-500">A sample wakeup call will be sent to your verified phone number immediately.</p>
+                          <span className="block text-xs font-medium text-gray-700">{day.label}</span>
+                        </label>
                       </div>
-                      
-                      <div className="flex justify-end space-x-3">
-                        <Button 
-                          type="button" 
-                          variant="outline"
-                          onClick={() => setLocation("/dashboard")}
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          type="submit"
-                          disabled={scheduleMutation.isPending}
-                        >
-                          {scheduleMutation.isPending ? "Saving..." : "Save Schedule"}
-                        </Button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium">Recurrence</Label>
+                  <RadioGroup className="mt-2" value={isRecurring ? "daily" : "once"} onValueChange={(val) => setIsRecurring(val === "daily")}>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="daily" id="recurring-daily" />
+                        <Label htmlFor="recurring-daily">Daily (on selected days)</Label>
                       </div>
-                    </form>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="once" id="recurring-once" />
+                        <Label htmlFor="recurring-once">One-time only</Label>
+                      </div>
+                    </div>
+                  </RadioGroup>
+                  
+                  {!isRecurring && (
+                    <div className="ml-7 mt-2">
+                      <Label htmlFor="date-picker" className="block text-xs font-medium mb-1">Select Date</Label>
+                      <Input 
+                        id="date-picker" 
+                        type="date" 
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        required={!isRecurring}
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Call Settings</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="call-retry" 
+                        checked={callRetry}
+                        onCheckedChange={(checked) => setCallRetry(!!checked)}
+                      />
+                      <Label htmlFor="call-retry" className="text-sm">
+                        Automatically retry call if not answered (up to 3 times)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="advance-notice" 
+                        checked={advanceNotice}
+                        onCheckedChange={(checked) => setAdvanceNotice(!!checked)}
+                      />
+                      <Label htmlFor="advance-notice" className="text-sm">
+                        Send a reminder text 5 minutes before the call
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    className="mb-4"
+                    onClick={handleSampleCall}
+                    disabled={sampleCallMutation.isPending}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {sampleCallMutation.isPending ? "Initiating call..." : "Try a Sample Call Now"}
+                  </Button>
+                  <p className="text-xs text-gray-500">A sample wakeup call will be sent to your verified phone number immediately.</p>
+                </div>
+                
+                <div className="flex justify-end space-x-3">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => setLocation("/dashboard")}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit"
+                    disabled={scheduleMutation.isPending}
+                  >
+                    {scheduleMutation.isPending ? "Saving..." : "Save Schedule"}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
