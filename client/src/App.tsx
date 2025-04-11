@@ -9,6 +9,7 @@ import OtpVerification from "@/pages/OtpVerification";
 import Personalization from "@/pages/Personalization";
 import ScheduleCall from "@/pages/ScheduleCall";
 import Dashboard from "@/pages/Dashboard";
+import Help from "@/pages/Help";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
@@ -127,6 +128,11 @@ function App() {
         <Route path="/dashboard">
           <AuthGuard>
             <Dashboard />
+          </AuthGuard>
+        </Route>
+        <Route path="/help">
+          <AuthGuard>
+            <Help />
           </AuthGuard>
         </Route>
         <Route component={NotFound} />
