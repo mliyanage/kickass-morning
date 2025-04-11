@@ -54,14 +54,22 @@ export default function Login() {
         
         toast({
           title: "Login successful",
-          description: "Redirecting you to the appropriate page...",
+          description: "Loading your dashboard...",
         });
         
-        // Force a short delay to ensure the session is set
+        // Display loading state
+        document.body.classList.add('auth-in-progress');
+        
+        // Set a flag in session storage to indicate successful authentication
+        // This prevents the login screen flash by letting the app know auth is in progress
+        sessionStorage.setItem('auth_successful', 'true');
+        
+        // Use setTimeout to ensure the session is established before redirecting
         setTimeout(() => {
           console.log("Redirecting to dashboard");
-          window.location.href = "/dashboard";
-        }, 500);
+          // Use window.location.replace instead of href for a cleaner transition
+          window.location.replace("/dashboard");
+        }, 800);
       } catch (error) {
         console.error("Error processing login response:", error);
         // Fallback to auth check if response processing fails
@@ -70,29 +78,35 @@ export default function Login() {
           description: "Checking your profile status...",
         });
         
+        // Display loading state
+        document.body.classList.add('auth-in-progress');
+        
         setTimeout(async () => {
           try {
             const authCheck = await apiRequest("GET", "/api/auth/check");
             
             if (authCheck.authenticated) {
-              window.location.href = "/dashboard";
+              sessionStorage.setItem('auth_successful', 'true');
+              window.location.replace("/dashboard");
             } else {
               // Should not reach here if login was successful
+              document.body.classList.remove('auth-in-progress');
               toast({
                 variant: "destructive",
                 title: "Authentication failed",
                 description: "Please log in again",
               });
-              window.location.href = "/login";
+              setLocation("/login");
             }
           } catch (secondError) {
+            document.body.classList.remove('auth-in-progress');
             console.error("Error checking auth status:", secondError);
             toast({
               variant: "destructive",
               title: "Authentication error",
               description: "Please try logging in again",
             });
-            window.location.href = "/login";
+            setLocation("/login");
           }
         }, 1000);
       }
@@ -134,7 +148,7 @@ export default function Login() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 px-4 sm:px-6">
+    <div className="max-w-md mx-auto mt-10 px-4 sm:px-6 login-page">
       <Card>
         <CardContent className="pt-6">
           <div className="text-center mb-6">

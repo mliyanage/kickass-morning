@@ -17,9 +17,18 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isPhoneVerified, setIsPhoneVerified] = useState<boolean>(false);
   const [isPersonalized, setIsPersonalized] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
+    // Check for auth-in-progress indicator (set during login)
+    const authInProgress = sessionStorage.getItem('auth_successful') === 'true';
+    
+    // If we're in auth transition, add loading state
+    if (authInProgress) {
+      document.body.classList.add('auth-in-progress');
+    }
+    
     // Check if user is authenticated
     const checkAuth = async () => {
       try {
@@ -32,6 +41,13 @@ function App() {
           setIsAuthenticated(true);
           setIsPhoneVerified(data.user.phoneVerified || false);
           setIsPersonalized(data.user.isPersonalized || false);
+          setIsLoading(false);
+          
+          // Clear the auth-in-progress flag once we're authenticated
+          if (authInProgress) {
+            sessionStorage.removeItem('auth_successful');
+            document.body.classList.remove('auth-in-progress');
+          }
           
           console.log("Auth check successful:", {
             isAuthenticated: true,
@@ -41,6 +57,14 @@ function App() {
         } else {
           console.log("Not authenticated:", data.message);
           setIsAuthenticated(false);
+          setIsLoading(false);
+          
+          // Clear any pending auth flag
+          if (authInProgress) {
+            sessionStorage.removeItem('auth_successful');
+            document.body.classList.remove('auth-in-progress');
+          }
+          
           // If we're trying to access a page that requires auth, redirect to login
           const currentPath = window.location.pathname;
           if (
@@ -48,25 +72,42 @@ function App() {
             currentPath !== '/login' && 
             currentPath !== '/signup'
           ) {
-            // Use location.href to force a full page reload, clearing all state
-            window.location.href = '/login';
+            setLocation('/login');
           }
         }
       } catch (error) {
         console.error("Auth check error:", error);
         setIsAuthenticated(false);
+        setIsLoading(false);
+        
+        // Clear any pending auth flag
+        if (authInProgress) {
+          sessionStorage.removeItem('auth_successful');
+          document.body.classList.remove('auth-in-progress');
+        }
       }
     };
 
     checkAuth();
     
+    // Add CSS to handle the auth transition without flashing
+    const style = document.createElement('style');
+    style.textContent = `
+      .auth-in-progress .login-page {
+        opacity: 0;
+        pointer-events: none;
+      }
+    `;
+    document.head.appendChild(style);
+    
     // Set up interval to periodically check authentication status
-    const authCheckInterval = setInterval(checkAuth, 100000); // Check auth every 10 seconds
+    const authCheckInterval = setInterval(checkAuth, 10000); // Check auth every 10 seconds
     
     return () => {
       clearInterval(authCheckInterval);
+      document.head.removeChild(style);
     };
-  }, []);
+  }, [setLocation]);
 
   // Authentication guard for protected routes
   const AuthGuard = ({ children }: { children: React.ReactNode }) => {

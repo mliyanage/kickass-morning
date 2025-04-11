@@ -38,4 +38,25 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400;
   }
+
+  /* Smooth transitions for page loading states */
+  .login-page {
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  .auth-in-progress .login-page {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .auth-in-progress::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    z-index: 9999;
+  }
 }
