@@ -60,13 +60,8 @@ export default function Login() {
         
         // Force a short delay to ensure the session is set
         setTimeout(() => {
-          if (userData && 'isPersonalized' in userData && userData.isPersonalized === false) {
-            console.log("Redirecting to personalization");
-            window.location.href = "/personalization";
-          } else {
-            console.log("Redirecting to dashboard");
-            window.location.href = "/dashboard";
-          }
+          console.log("Redirecting to dashboard");
+          window.location.href = "/dashboard";
         }, 500);
       } catch (error) {
         console.error("Error processing login response:", error);
@@ -81,11 +76,7 @@ export default function Login() {
             const authCheck = await apiRequest("GET", "/api/auth/check");
             
             if (authCheck.authenticated) {
-              if (authCheck.user && !authCheck.user.isPersonalized) {
-                window.location.href = "/personalization";
-              } else {
-                window.location.href = "/dashboard";
-              }
+              window.location.href = "/dashboard";
             } else {
               // Should not reach here if login was successful
               toast({

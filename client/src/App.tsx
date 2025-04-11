@@ -98,11 +98,7 @@ function App() {
         <Route path="/" component={Home} />
         <Route path="/login">
           {isAuthenticated ? (
-            !isPersonalized ? (
-              <Personalization />
-            ) : (
-              <Dashboard />
-            )
+            <Dashboard />
           ) : (
             <Login />
           )}
@@ -129,9 +125,9 @@ function App() {
           </PersonalizedGuard>
         </Route>
         <Route path="/dashboard">
-          <PersonalizedGuard>
+          <AuthGuard>
             <Dashboard />
-          </PersonalizedGuard>
+          </AuthGuard>
         </Route>
         <Route component={NotFound} />
       </Switch>

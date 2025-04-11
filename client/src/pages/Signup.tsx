@@ -55,15 +55,15 @@ export default function Signup() {
       return await apiRequest("POST", "/api/auth/verify-email-otp", { email, otp, name });
     },
     onSuccess: (response: any) => {
-      console.log("Account created successfully, redirecting to personalization", response);
+      console.log("Account created successfully, redirecting to dashboard", response);
       toast({
         title: "Account created successfully",
-        description: "Please tell us about your goals and preferences.",
+        description: "Welcome to KickAss Morning!",
       });
       
       // Force a short delay to ensure the session is set
       setTimeout(() => {
-        window.location.href = "/personalization";
+        window.location.href = "/dashboard";
       }, 500);
     },
     onError: (error) => {
