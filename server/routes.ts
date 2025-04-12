@@ -553,9 +553,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (scheduleId) {
       try {
         const validatedData = scheduleSchema.parse(req.body);
+        console.log("Updating schedule with ID:", scheduleId);
+        console.log("Weekdays from request:", validatedData.weekdays, "Type:", typeof validatedData.weekdays);
         
         // Check if schedule exists and belongs to user
         const existingSchedule = await storage.getSchedule(scheduleId);
+        console.log("Existing schedule found:", existingSchedule);
         if (!existingSchedule || existingSchedule.userId !== req.session.userId) {
           return res.status(404).json({ message: "Schedule not found." });
         }
@@ -566,11 +569,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Please complete personalization first." });
         }
         
+        // Process weekdays
+        let formattedWeekdays = "";
+        if (Array.isArray(validatedData.weekdays)) {
+          formattedWeekdays = validatedData.weekdays.join(',');
+          console.log("Weekdays formatted from array:", formattedWeekdays);
+        } else if (typeof validatedData.weekdays === 'string') {
+          formattedWeekdays = validatedData.weekdays;
+          console.log("Weekdays already a string:", formattedWeekdays);
+        }
+        
         // Update the schedule
         const updatedSchedule = await storage.updateSchedule(scheduleId, {
           wakeupTime: validatedData.wakeupTime,
           timezone: validatedData.timezone,
-          weekdays: Array.isArray(validatedData.weekdays) ? validatedData.weekdays.join(',') : validatedData.weekdays,
+          weekdays: formattedWeekdays,
           isRecurring: validatedData.isRecurring,
           date: validatedData.date,
           callRetry: validatedData.callRetry,
@@ -703,22 +716,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Found schedules in database:", schedules);
       
       // Transform the data to match the expected format
-      const formattedSchedules = schedules.map(schedule => ({
-        id: schedule.id,
-        userId: schedule.userId,
-        wakeupTime: schedule.wakeupTime,
-        timezone: schedule.timezone,
-        weekdays: schedule.weekdays.split(','),
-        isRecurring: schedule.isRecurring,
-        date: schedule.date,
-        callRetry: schedule.callRetry,
-        advanceNotice: schedule.advanceNotice,
-        goalType: schedule.goalType,
-        struggleType: schedule.struggleType,
-        voiceId: schedule.voiceId,
-        isActive: schedule.isActive,
-        createdAt: schedule.createdAt
-      }));
+      const formattedSchedules = schedules.map(schedule => {
+        const weekdays = typeof schedule.weekdays === 'string' ? schedule.weekdays.split(',') : [];
+        console.log(`Formatting schedule ${schedule.id} - weekdays from db: ${schedule.weekdays} (${typeof schedule.weekdays})`);
+        console.log(`Formatted to array: ${weekdays} (${typeof weekdays})`);
+        
+        return {
+          id: schedule.id,
+          userId: schedule.userId,
+          wakeupTime: schedule.wakeupTime,
+          timezone: schedule.timezone,
+          weekdays: weekdays,
+          isRecurring: schedule.isRecurring,
+          date: schedule.date,
+          callRetry: schedule.callRetry,
+          advanceNotice: schedule.advanceNotice,
+          goalType: schedule.goalType,
+          struggleType: schedule.struggleType,
+          voiceId: schedule.voiceId,
+          isActive: schedule.isActive,
+          createdAt: schedule.createdAt
+        };
+      });
       
       console.log("Returning formatted schedules to client:", formattedSchedules);
       res.status(200).json(formattedSchedules);

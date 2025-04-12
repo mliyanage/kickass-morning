@@ -124,10 +124,24 @@ export default function ScheduleCall() {
   // Set form data from the schedule we're editing
   useEffect(() => {
     if (scheduleToEdit) {
+      console.log("Editing schedule with weekdays:", scheduleToEdit.weekdays);
       setEditingScheduleId(scheduleToEdit.id);
       setWakeupTime(scheduleToEdit.wakeupTime);
       setTimezone(scheduleToEdit.timezone);
-      setSelectedDays(scheduleToEdit.weekdays);
+      
+      // Handle weekdays correctly
+      const weekdaysData = scheduleToEdit.weekdays;
+      console.log("Weekdays type:", typeof weekdaysData, "Value:", weekdaysData);
+      
+      if (Array.isArray(weekdaysData)) {
+        console.log("Setting weekdays from array:", weekdaysData);
+        setSelectedDays(weekdaysData);
+      } else {
+        // Default to empty array
+        console.log("Setting weekdays to empty array, couldn't process:", weekdaysData);
+        setSelectedDays([]);
+      }
+      
       setIsRecurring(scheduleToEdit.isRecurring);
       if (scheduleToEdit.date) {
         setDate(scheduleToEdit.date);
