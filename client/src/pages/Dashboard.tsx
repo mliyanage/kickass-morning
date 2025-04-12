@@ -12,6 +12,16 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, Phone, Play } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
+// Helper function to format timezone display
+const formatTimezone = (timezone: string): string => {
+  // Extract the last part of the timezone identifier (the city/region name)
+  const parts = timezone.split('/');
+  const lastPart = parts[parts.length - 1];
+  
+  // Replace underscores with spaces and format the name
+  return lastPart.replace(/_/g, ' ');
+};
+
 interface UserData {
   authenticated: boolean;
   user: {
@@ -143,12 +153,16 @@ export default function Dashboard() {
       
       if (nextDayIndex !== undefined) {
         const dayName = weekdayNames[nextDayIndex];
-        return `${nextDayIndex === todayDay ? 'Today' : dayName} at ${nextCall.wakeupTime} (${nextCall.timezone.replace('America/', '')})`;
+        // Format the timezone for display
+        const formattedTimezone = formatTimezone(nextCall.timezone);
+        return `${nextDayIndex === todayDay ? 'Today' : dayName} at ${nextCall.wakeupTime} (${formattedTimezone})`;
       }
     } else if (nextCall.date) {
       const callDate = new Date(nextCall.date);
       const formattedDate = callDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-      return `${formattedDate} at ${nextCall.wakeupTime} (${nextCall.timezone.replace('America/', '')})`;
+      // Format the timezone for display
+      const formattedTimezone = formatTimezone(nextCall.timezone);
+      return `${formattedDate} at ${nextCall.wakeupTime} (${formattedTimezone})`;
     }
     
     return "Schedule details unavailable";
