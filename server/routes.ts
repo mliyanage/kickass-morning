@@ -570,7 +570,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const updatedSchedule = await storage.updateSchedule(scheduleId, {
           wakeupTime: validatedData.wakeupTime,
           timezone: validatedData.timezone,
-          weekdays: validatedData.weekdays.join(','),
+          weekdays: Array.isArray(validatedData.weekdays) ? validatedData.weekdays.join(',') : validatedData.weekdays,
           isRecurring: validatedData.isRecurring,
           date: validatedData.date,
           callRetry: validatedData.callRetry,
@@ -625,7 +625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.session.userId!,
         wakeupTime: validatedData.wakeupTime,
         timezone: validatedData.timezone,
-        weekdays: validatedData.weekdays.join(','),
+        weekdays: Array.isArray(validatedData.weekdays) ? validatedData.weekdays.join(',') : validatedData.weekdays,
         isRecurring: validatedData.isRecurring,
         date: validatedData.date,
         callRetry: validatedData.callRetry,

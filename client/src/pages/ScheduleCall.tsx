@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 import { useState, useEffect, useCallback } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ScheduleData } from "@/types";
+import { ScheduleData, Schedule } from "@/types";
 import { 
   Select, 
   SelectContent, 
@@ -157,7 +157,9 @@ export default function ScheduleCall() {
 
   const scheduleMutation = useMutation({
     mutationFn: async (data: ScheduleData) => {
-      return await apiRequest("POST", "/api/schedule", data);
+      // If we're editing an existing schedule, append the id as a query parameter
+      const endpoint = editingScheduleId ? `/api/schedule?id=${editingScheduleId}` : "/api/schedule";
+      return await apiRequest("POST", endpoint, data);
     },
     onSuccess: () => {
       toast({
@@ -273,7 +275,9 @@ export default function ScheduleCall() {
     <DashboardLayout>
       <div className="shadow sm:rounded-md sm:overflow-hidden">
         <div className="bg-white py-6 px-4 sm:p-6">
-          <h2 className="text-lg leading-6 font-medium text-gray-900 mb-4">Schedule Your Wakeup Call</h2>
+          <h2 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+            {editingScheduleId ? "Edit Wakeup Call Schedule" : "Schedule Your Wakeup Call"}
+          </h2>
           <Card className="overflow-hidden">
             <CardContent className="p-6">
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -439,7 +443,7 @@ export default function ScheduleCall() {
                     type="submit"
                     disabled={scheduleMutation.isPending}
                   >
-                    {scheduleMutation.isPending ? "Saving..." : "Save Schedule"}
+                    {scheduleMutation.isPending ? "Saving..." : (editingScheduleId ? "Update Schedule" : "Save Schedule")}
                   </Button>
                 </div>
               </form>
