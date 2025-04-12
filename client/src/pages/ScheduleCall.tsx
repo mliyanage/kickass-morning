@@ -134,8 +134,16 @@ export default function ScheduleCall() {
       console.log("Weekdays type:", typeof weekdaysData, "Value:", weekdaysData);
       
       if (Array.isArray(weekdaysData)) {
-        console.log("Setting weekdays from array:", weekdaysData);
-        setSelectedDays(weekdaysData);
+        console.log("Setting weekdays from array:", weekdaysData, "Schedule ID:", scheduleToEdit.id);
+        
+        // Create a new array to ensure we don't have reference issues
+        const days = [...weekdaysData];
+        setSelectedDays(days);
+        
+        // Log if each day is included or not for debugging
+        weekdays.forEach(day => {
+          console.log(`Day ${day.value} included:`, days.includes(day.value));
+        });
       } else {
         // Default to empty array
         console.log("Setting weekdays to empty array, couldn't process:", weekdaysData);
