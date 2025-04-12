@@ -17,7 +17,7 @@ import {
 } from "../shared/schema";
 import { generateOTP, getNextCallTime } from "./utils";
 import { sendSMS, makeCall } from "./twilio";
-import { generateVoiceMessage } from "./openai";
+import { generateVoiceMessage, generateSpeechAudio } from "./openai";
 import * as nodeSchedule from "node-schedule";
 import session from "express-session";
 
@@ -811,6 +811,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Voice preview error:", error);
       res.status(500).json({ message: "An error occurred while generating voice preview." });
+    }
+  });
+
+  // Test route for ElevenLabs integration
+  app.post("/api/elevenlabs/test", async (req: Request, res: Response) => {
+    try {
+      const { text, voice } = req.body;
+      if (!text) {
+        return res.status(400).json({ message: "Text is required" });
+      }
+      
+      // Import directly here to avoid circular dependencies
+      const { textToSpeech } = await import("./elevenlabs");
+      
+      // Use the provided voice or default to 'jocko'
+      const voiceId = voice || 'jocko';
+      
+      // Generate audio with ElevenLabs
+      const result = await textToSpeech(text, voiceId);
+      
+      // Return the URL to the generated audio file
+      res.json({
+        message: "Audio generated successfully",
+        audioUrl: result.url,
+        voice: voiceId
+      });
+    } catch (error: any) {
+      console.error("Error testing ElevenLabs:", error);
+      res.status(500).json({ 
+        message: "Failed to generate audio with ElevenLabs", 
+        error: error.message 
+      });
     }
   });
 

@@ -134,16 +134,4 @@ export async function makeCall(
   }
 }
 
-// Helper function to map voice IDs to OpenAI voice names
-function mapVoiceIdToOpenAIVoice(voiceId: string): string {
-  // In a real implementation, this would map custom voice IDs to available voices
-  // For now, use default OpenAI voices based on some common names
-  const voiceMap: Record<string, string> = {
-    "elon-musk": "echo",      // Male voice
-    "oprah-winfrey": "nova",  // Female voice
-    "david-goggins": "onyx",  // Deep male voice
-    "steve-jobs": "alloy",    // Neutral voice
-  };
-
-  return voiceMap[voiceId] || "alloy"; // Default to alloy if no mapping exists
-}
+// This function has been replaced by the ElevenLabs voice mapping in elevenlabs.ts
