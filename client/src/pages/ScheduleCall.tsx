@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ScheduleData } from "@/types";
@@ -78,8 +78,16 @@ const weekdays = [
 
 export default function ScheduleCall() {
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(true);
+  const [editingScheduleId, setEditingScheduleId] = useState<number | null>(null);
+  
+  // Parse the schedule ID from URL if present
+  const getScheduleIdFromUrl = useCallback(() => {
+    const url = new URL(window.location.href);
+    const id = url.searchParams.get('id');
+    return id ? parseInt(id, 10) : null;
+  }, []);
   
   // Schedule state
   const [wakeupTime, setWakeupTime] = useState("06:30");
@@ -96,6 +104,38 @@ export default function ScheduleCall() {
     retry: false,
     refetchOnWindowFocus: false
   });
+
+  // Fetch schedule data for editing
+  const scheduleIdToEdit = getScheduleIdFromUrl();
+  
+  // Fetch the schedule if we're editing
+  const { data: scheduleToEdit, isLoading: isLoadingSchedule } = useQuery<Schedule>({
+    queryKey: ['/api/schedule', scheduleIdToEdit],
+    queryFn: async () => {
+      if (!scheduleIdToEdit) return null;
+      // We're using the GET all schedules endpoint and filtering client-side for simplicity
+      const response = await apiRequest("GET", "/api/schedule");
+      const schedules = await response.json();
+      return schedules.find((s: Schedule) => s.id === scheduleIdToEdit) || null;
+    },
+    enabled: !!scheduleIdToEdit && !!userData?.authenticated,
+  });
+
+  // Set form data from the schedule we're editing
+  useEffect(() => {
+    if (scheduleToEdit) {
+      setEditingScheduleId(scheduleToEdit.id);
+      setWakeupTime(scheduleToEdit.wakeupTime);
+      setTimezone(scheduleToEdit.timezone);
+      setSelectedDays(scheduleToEdit.weekdays);
+      setIsRecurring(scheduleToEdit.isRecurring);
+      if (scheduleToEdit.date) {
+        setDate(scheduleToEdit.date);
+      }
+      setCallRetry(scheduleToEdit.callRetry);
+      setAdvanceNotice(scheduleToEdit.advanceNotice);
+    }
+  }, [scheduleToEdit]);
 
   // Handle phone verification check
   useEffect(() => {

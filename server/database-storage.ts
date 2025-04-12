@@ -352,6 +352,19 @@ export class DatabaseStorage implements IStorage {
     
     return schedule;
   }
+  
+  async updateSchedule(id: number, data: any): Promise<Schedule | undefined> {
+    const [schedule] = await db
+      .update(schedules)
+      .set({ 
+        ...data,
+        updatedAt: new Date() 
+      })
+      .where(eq(schedules.id, id))
+      .returning();
+    
+    return schedule;
+  }
 
   async getUserSchedules(userId: number): Promise<Schedule[]> {
     return db

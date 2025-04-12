@@ -548,6 +548,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Schedule Routes
   app.post("/api/schedule", isAuthenticated, isPersonalized, async (req: Request, res: Response) => {
+    // Check if we're updating an existing schedule 
+    const scheduleId = req.query.id ? parseInt(req.query.id as string, 10) : null;
+    if (scheduleId) {
+      try {
+        const validatedData = scheduleSchema.parse(req.body);
+        
+        // Check if schedule exists and belongs to user
+        const existingSchedule = await storage.getSchedule(scheduleId);
+        if (!existingSchedule || existingSchedule.userId !== req.session.userId) {
+          return res.status(404).json({ message: "Schedule not found." });
+        }
+        
+        // Get user's personalization data
+        const personalization = await storage.getPersonalization(req.session.userId!);
+        if (!personalization) {
+          return res.status(400).json({ message: "Please complete personalization first." });
+        }
+        
+        // Update the schedule
+        const updatedSchedule = await storage.updateSchedule(scheduleId, {
+          wakeupTime: validatedData.wakeupTime,
+          timezone: validatedData.timezone,
+          weekdays: validatedData.weekdays.join(','),
+          isRecurring: validatedData.isRecurring,
+          date: validatedData.date,
+          callRetry: validatedData.callRetry,
+          advanceNotice: validatedData.advanceNotice,
+          // We keep the goal, struggle and voice from personalization
+          goalType: personalization.goal,
+          struggleType: personalization.struggle,
+          voiceId: personalization.voice
+        });
+        
+        res.status(200).json({
+          message: "Schedule updated successfully.",
+          schedule: updatedSchedule
+        });
+        return;
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ message: "Invalid input data.", errors: error.errors });
+        }
+        console.error("Update schedule error:", error);
+        res.status(500).json({ message: "An error occurred while updating schedule." });
+        return;
+      }
+    }
+    
+    // This is a new schedule creation
     try {
       const validatedData = scheduleSchema.parse(req.body);
       

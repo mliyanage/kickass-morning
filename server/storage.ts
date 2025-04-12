@@ -36,6 +36,7 @@ export interface IStorage {
   getSchedule(id: number): Promise<Schedule | undefined>;
   getUserSchedules(userId: number): Promise<Schedule[]>;
   updateScheduleStatus(id: number, isActive: boolean): Promise<Schedule | undefined>;
+  updateSchedule(id: number, data: any): Promise<Schedule | undefined>;
   
   // Call history related
   createCallHistory(data: any): Promise<CallHistoryEntry>;
@@ -383,6 +384,21 @@ export class MemStorage implements IStorage {
     
     this.schedules.set(id, schedule);
     return schedule;
+  }
+  
+  async updateSchedule(id: number, data: any): Promise<Schedule | undefined> {
+    const schedule = this.schedules.get(id);
+    if (!schedule) return undefined;
+    
+    // Update the schedule with the new data
+    const updatedSchedule = {
+      ...schedule,
+      ...data,
+      updatedAt: new Date()
+    };
+    
+    this.schedules.set(id, updatedSchedule);
+    return updatedSchedule;
   }
 
   // Call history related methods
