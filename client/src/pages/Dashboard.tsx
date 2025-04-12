@@ -53,6 +53,12 @@ export default function Dashboard() {
     error: schedulesError
   } = useQuery<Schedule[]>({
     queryKey: ['/api/schedule'],
+    onSuccess: (data) => {
+      console.log("Schedules fetched successfully:", data);
+    },
+    onError: (error) => {
+      console.error("Error fetching schedules:", error);
+    }
   });
 
   // Get call history

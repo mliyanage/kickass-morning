@@ -649,7 +649,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/schedule", isAuthenticated, async (req: Request, res: Response) => {
     try {
+      console.log("Fetching schedules for user:", req.session.userId);
       const schedules = await storage.getUserSchedules(req.session.userId!);
+      console.log("Found schedules in database:", schedules);
       
       // Transform the data to match the expected format
       const formattedSchedules = schedules.map(schedule => ({
@@ -669,6 +671,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: schedule.createdAt
       }));
       
+      console.log("Returning formatted schedules to client:", formattedSchedules);
       res.status(200).json(formattedSchedules);
     } catch (error) {
       console.error("Get schedules error:", error);
