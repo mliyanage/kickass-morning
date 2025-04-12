@@ -22,76 +22,76 @@ function App() {
 
   useEffect(() => {
     // Check for auth-in-progress indicator (set during login)
-    const authInProgress = sessionStorage.getItem('auth_successful') === 'true';
-    
+    const authInProgress = sessionStorage.getItem("auth_successful") === "true";
+
     // If we're in auth transition, add loading state
     if (authInProgress) {
-      document.body.classList.add('auth-in-progress');
+      document.body.classList.add("auth-in-progress");
     }
-    
+
     // Check if user is authenticated
     const checkAuth = async () => {
       try {
-        const res = await fetch('/api/auth/check', {
-          credentials: 'include'
+        const res = await fetch("/api/auth/check", {
+          credentials: "include",
         });
         const data = await res.json();
-        
+
         if (data.authenticated) {
           setIsAuthenticated(true);
           setIsPhoneVerified(data.user.phoneVerified || false);
           setIsPersonalized(data.user.isPersonalized || false);
           setIsLoading(false);
-          
+
           // Clear the auth-in-progress flag once we're authenticated
           if (authInProgress) {
-            sessionStorage.removeItem('auth_successful');
-            document.body.classList.remove('auth-in-progress');
+            sessionStorage.removeItem("auth_successful");
+            document.body.classList.remove("auth-in-progress");
           }
-          
+
           console.log("Auth check successful:", {
             isAuthenticated: true,
             isPhoneVerified: data.user.phoneVerified,
-            isPersonalized: data.user.isPersonalized
+            isPersonalized: data.user.isPersonalized,
           });
         } else {
           console.log("Not authenticated:", data.message);
           setIsAuthenticated(false);
           setIsLoading(false);
-          
+
           // Clear any pending auth flag
           if (authInProgress) {
-            sessionStorage.removeItem('auth_successful');
-            document.body.classList.remove('auth-in-progress');
+            sessionStorage.removeItem("auth_successful");
+            document.body.classList.remove("auth-in-progress");
           }
-          
+
           // If we're trying to access a page that requires auth, redirect to login
           const currentPath = window.location.pathname;
           if (
-            currentPath !== '/' && 
-            currentPath !== '/login' && 
-            currentPath !== '/signup'
+            currentPath !== "/" &&
+            currentPath !== "/login" &&
+            currentPath !== "/signup"
           ) {
-            setLocation('/login');
+            setLocation("/login");
           }
         }
       } catch (error) {
         console.error("Auth check error:", error);
         setIsAuthenticated(false);
         setIsLoading(false);
-        
+
         // Clear any pending auth flag
         if (authInProgress) {
-          sessionStorage.removeItem('auth_successful');
-          document.body.classList.remove('auth-in-progress');
+          sessionStorage.removeItem("auth_successful");
+          document.body.classList.remove("auth-in-progress");
         }
       }
     };
 
     checkAuth();
-    
+
     // Add CSS to handle the auth transition without flashing
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       .auth-in-progress .login-page {
         opacity: 0;
@@ -99,10 +99,10 @@ function App() {
       }
     `;
     document.head.appendChild(style);
-    
+
     // Set up interval to periodically check authentication status
-    const authCheckInterval = setInterval(checkAuth, 10000); // Check auth every 10 seconds
-    
+    const authCheckInterval = setInterval(checkAuth, 100000); // Check auth every 10 seconds
+
     return () => {
       clearInterval(authCheckInterval);
       document.head.removeChild(style);
@@ -148,11 +148,7 @@ function App() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/login">
-          {isAuthenticated ? (
-            <Dashboard />
-          ) : (
-            <Login />
-          )}
+          {isAuthenticated ? <Dashboard /> : <Login />}
         </Route>
         <Route path="/signup" component={Signup} />
         <Route path="/phone-verification">

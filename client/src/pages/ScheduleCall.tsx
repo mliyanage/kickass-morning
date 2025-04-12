@@ -23,12 +23,46 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 
 // Timezone options
 const timezones = [
-  { value: "America/New_York", label: "Eastern Time (ET)" },
-  { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
-  { value: "America/Chicago", label: "Central Time (CT)" },
-  { value: "America/Denver", label: "Mountain Time (MT)" },
-  { value: "America/Anchorage", label: "Alaska Time (AKT)" },
-  { value: "America/Honolulu", label: "Hawaii-Aleutian Time (HAT)" },
+  // North America
+  { value: "America/New_York", label: "Eastern Time - New York (UTC-5/4)" },
+  { value: "America/Chicago", label: "Central Time - Chicago (UTC-6/5)" },
+  { value: "America/Denver", label: "Mountain Time - Denver (UTC-7/6)" },
+  { value: "America/Los_Angeles", label: "Pacific Time - Los Angeles (UTC-8/7)" },
+  { value: "America/Anchorage", label: "Alaska Time (UTC-9/8)" },
+  { value: "America/Honolulu", label: "Hawaii Time (UTC-10)" },
+  { value: "America/Toronto", label: "Eastern Time - Toronto (UTC-5/4)" },
+  { value: "America/Vancouver", label: "Pacific Time - Vancouver (UTC-8/7)" },
+  { value: "America/Mexico_City", label: "Mexico City (UTC-6/5)" },
+  
+  // Europe
+  { value: "Europe/London", label: "London (UTC+0/1)" },
+  { value: "Europe/Paris", label: "Paris, Berlin, Rome (UTC+1/2)" },
+  { value: "Europe/Athens", label: "Athens, Helsinki (UTC+2/3)" },
+  { value: "Europe/Moscow", label: "Moscow (UTC+3)" },
+  
+  // Asia
+  { value: "Asia/Dubai", label: "Dubai (UTC+4)" },
+  { value: "Asia/Kolkata", label: "India (UTC+5:30)" },
+  { value: "Asia/Bangkok", label: "Bangkok, Jakarta (UTC+7)" },
+  { value: "Asia/Singapore", label: "Singapore, Manila (UTC+8)" },
+  { value: "Asia/Tokyo", label: "Tokyo, Seoul (UTC+9)" },
+  { value: "Asia/Hong_Kong", label: "Hong Kong, Beijing (UTC+8)" },
+  
+  // Australia & New Zealand
+  { value: "Australia/Perth", label: "Perth (UTC+8)" },
+  { value: "Australia/Sydney", label: "Sydney, Melbourne (UTC+10/11)" },
+  { value: "Australia/Brisbane", label: "Brisbane (UTC+10)" },
+  { value: "Pacific/Auckland", label: "Auckland (UTC+12/13)" },
+  
+  // South America
+  { value: "America/Sao_Paulo", label: "São Paulo (UTC-3/2)" },
+  { value: "America/Buenos_Aires", label: "Buenos Aires (UTC-3)" },
+  { value: "America/Santiago", label: "Santiago (UTC-4/3)" },
+  
+  // Africa
+  { value: "Africa/Cairo", label: "Cairo (UTC+2)" },
+  { value: "Africa/Johannesburg", label: "Johannesburg (UTC+2)" },
+  { value: "Africa/Lagos", label: "Lagos (UTC+1)" },
 ];
 
 // Weekdays

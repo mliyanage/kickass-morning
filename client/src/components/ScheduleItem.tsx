@@ -64,7 +64,12 @@ export default function ScheduleItem({ schedule, onSkipTomorrow, onEdit }: Sched
 
   // Get timezone display name
   const getTimezoneDisplay = (timezone: string): string => {
-    return timezone.replace('America/', '');
+    // Extract the last part of the timezone identifier (the city/region name)
+    const parts = timezone.split('/');
+    const lastPart = parts[parts.length - 1];
+    
+    // Replace underscores with spaces and format the name
+    return lastPart.replace(/_/g, ' ');
   };
 
   return (
