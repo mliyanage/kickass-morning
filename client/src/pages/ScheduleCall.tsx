@@ -113,10 +113,20 @@ export default function ScheduleCall() {
     queryKey: ['/api/schedule', scheduleIdToEdit],
     queryFn: async () => {
       if (!scheduleIdToEdit) return null;
+      
+      console.log("Fetching schedule with ID:", scheduleIdToEdit);
+      
       // We're using the GET all schedules endpoint and filtering client-side for simplicity
       const response = await apiRequest("GET", "/api/schedule");
       const schedules = await response.json();
-      return schedules.find((s: Schedule) => s.id === scheduleIdToEdit) || null;
+      const schedule = schedules.find((s: Schedule) => s.id === scheduleIdToEdit) || null;
+      
+      console.log("Found schedule for editing:", schedule);
+      if (schedule) {
+        console.log("Schedule weekdays:", schedule.weekdays);
+      }
+      
+      return schedule;
     },
     enabled: !!scheduleIdToEdit && !!userData?.authenticated,
   });
@@ -124,30 +134,24 @@ export default function ScheduleCall() {
   // Set form data from the schedule we're editing
   useEffect(() => {
     if (scheduleToEdit) {
-      console.log("Editing schedule with weekdays:", scheduleToEdit.weekdays);
+      console.log("Editing schedule with ID:", scheduleToEdit.id);
       setEditingScheduleId(scheduleToEdit.id);
       setWakeupTime(scheduleToEdit.wakeupTime);
       setTimezone(scheduleToEdit.timezone);
       
-      // Handle weekdays correctly
-      const weekdaysData = scheduleToEdit.weekdays;
-      console.log("Weekdays type:", typeof weekdaysData, "Value:", weekdaysData);
+      // Fix for weekdays selection bug
+      // Clear any existing selected days first
+      setSelectedDays([]);
       
-      if (Array.isArray(weekdaysData)) {
-        console.log("Setting weekdays from array:", weekdaysData, "Schedule ID:", scheduleToEdit.id);
+      // Get the weekday data
+      if (Array.isArray(scheduleToEdit.weekdays)) {
+        const selectedWeekdays = scheduleToEdit.weekdays;
+        console.log("Got weekdays array:", selectedWeekdays);
         
-        // Create a new array to ensure we don't have reference issues
-        const days = [...weekdaysData];
-        setSelectedDays(days);
-        
-        // Log if each day is included or not for debugging
-        weekdays.forEach(day => {
-          console.log(`Day ${day.value} included:`, days.includes(day.value));
-        });
-      } else {
-        // Default to empty array
-        console.log("Setting weekdays to empty array, couldn't process:", weekdaysData);
-        setSelectedDays([]);
+        setTimeout(() => {
+          console.log("Setting selected days:", selectedWeekdays);
+          setSelectedDays(selectedWeekdays);
+        }, 10);
       }
       
       setIsRecurring(scheduleToEdit.isRecurring);
