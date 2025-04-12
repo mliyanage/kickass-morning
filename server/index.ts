@@ -1,10 +1,19 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import path from "path";
+import { fileURLToPath } from 'url';
+
+// Create dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Serve audio files from the audio-cache directory
+app.use('/audio-cache', express.static(path.join(__dirname, '..', 'audio-cache')));
 
 app.use((req, res, next) => {
   const start = Date.now();

@@ -1,6 +1,7 @@
-import { generateSpeechAudio } from "./openai";
 import { CallStatus } from "@shared/schema";
 import Twilio from "twilio";
+import { textToSpeech } from "./elevenlabs";
+import { log } from "./vite";
 
 // Initialize Twilio client (conditionally)
 const accountSid = process.env.TWILIO_ACCOUNT_SID || "AC00000000000000000000000000000000"; // Fake SID that starts with AC
@@ -52,36 +53,55 @@ export async function makeCall(
   try {
     // In development mode, just simulate success
     if (isDevelopmentMode || !client) {
-      console.log(`[MOCK CALL] To: ${to}, Voice: ${voiceId}, Message: ${message}`);
+      log(`[MOCK CALL] To: ${to}, Voice: ${voiceId}, Message: ${message}`, 'twilio');
       
-      return {
-        status: CallStatus.ANSWERED,
-        duration: 60, // Simulate a 60-second call
-        recordingUrl: "https://example.com/mock-recording.mp3",
-      };
+      // Even in mock mode, generate the audio file using ElevenLabs for testing purposes
+      try {
+        const audioResult = await textToSpeech(message, voiceId);
+        log(`Generated mock audio file at: ${audioResult.filePath}`, 'twilio');
+        
+        // Return a mock success with the actual audio URL for development testing
+        return {
+          status: CallStatus.ANSWERED,
+          duration: 60, // Simulate a 60-second call
+          recordingUrl: audioResult.url,
+        };
+      } catch (error: any) {
+        log(`Error generating mock audio: ${error.message}`, 'twilio');
+        
+        // Return standard mock response if audio generation fails
+        return {
+          status: CallStatus.ANSWERED,
+          duration: 60,
+          recordingUrl: "https://example.com/mock-recording.mp3",
+        };
+      }
     }
 
-    console.log(`Initiating call to ${to} with voice ${voiceId}`);
+    log(`Initiating call to ${to} with voice ${voiceId}`, 'twilio');
     
-    // Map the voice ID to an OpenAI voice
-    const openAIVoice = mapVoiceIdToOpenAIVoice(voiceId);
+    // Generate audio using ElevenLabs text-to-speech
+    const audioResult = await textToSpeech(message, voiceId);
     
-    // For now, use Twilio's built-in TTS with the message
-    // This provides immediate feedback while we implement the more advanced version
-    // The voice parameter in Twilio's TTS is different from OpenAI's voices
-    // We're just using a simple approach for now
+    // Get the complete URL for the audio file
+    // The audioResult.url is a relative path, we need to make it a fully qualified URL
+    // For Twilio to access the file, it needs to be publicly accessible
+    const baseUrl = process.env.BASE_URL || `http://localhost:5000`;
+    const audioUrl = `${baseUrl}${audioResult.url}`;
     
-    // Create TwiML to instruct Twilio how to handle the call
-    // Use a natural-sounding pause and voice selection
+    log(`Generated audio available at: ${audioUrl}`, 'twilio');
+    
+    // Create TwiML to instruct Twilio how to handle the call with our custom audio
     const twiml = `
       <Response>
         <Pause length="1"/>
-        <Say voice="alice">${message}</Say>
+        <Play>${audioUrl}</Play>
         <Pause length="1"/>
       </Response>
     `;
     
-    console.log("Calling with TwiML:", twiml);
+    log("Calling with TwiML:", 'twilio');
+    log(twiml, 'twilio-twiml');
     
     // Make the call with Twilio
     const call = await client.calls.create({
@@ -91,17 +111,19 @@ export async function makeCall(
       record: true,
     });
     
-    console.log("Call initiated with SID:", call.sid);
+    log(`Call initiated with SID: ${call.sid}`, 'twilio');
     
-    // Since we can't determine the exact outcome immediately, 
-    // return a predicted successful result
+    // Return the call results
     return {
       status: CallStatus.ANSWERED, // Optimistic assumption
       duration: null,              // We don't know the duration yet
-      recordingUrl: null,          // We don't have the recording URL yet
+      recordingUrl: audioResult.url, // Store the relative URL for our own records
     };
   } catch (error: any) {
     console.error("Error making call:", error);
+    if (error.response) {
+      console.error("Error response:", error.response.data);
+    }
     console.error(error.stack);
     
     return {

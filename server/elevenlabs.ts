@@ -2,7 +2,12 @@ import axios from 'axios';
 import fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { log } from './vite';
+
+// Create dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Create a directory for temporary audio files if it doesn't exist
 const AUDIO_DIR = path.join(__dirname, '..', 'audio-cache');
@@ -19,12 +24,13 @@ const isConfigured = !!ELEVENLABS_API_KEY && ELEVENLABS_API_KEY !== 'dummy_key_f
 
 // Voice ID mapping
 const voiceMap: Record<string, string> = {
-  'elon-musk': '21m00Tcm4TlvDq8ikWAM', // Default male voice - "Adam"
+  'elon-musk': '21m00Tcm4TlvDq8ikWAM',    // Default male voice - "Adam"
   'oprah-winfrey': 'EXAVITQu4vr4xnSDxMaL', // Female voice - "Sarah"
   'david-goggins': 'VR6AewLTigWG4xSOukaG', // Deep male voice - "Arnold"
-  'steve-jobs': 'pNInz6obpgDQGcFmaJgB', // Neutral voice
-  'jocko': 'pQ4UJV5rfb04U3utkvKW', // Jocko voice as requested
-  'default': 'pNInz6obpgDQGcFmaJgB', // Default fallback
+  'steve-jobs': 'pNInz6obpgDQGcFmaJgB',    // Neutral voice
+  'jocko': 'pQ4UJV5rfb04U3utkvKW',         // Jocko voice as requested
+  'jocko-willink': 'pQ4UJV5rfb04U3utkvKW', // Alternative name for Jocko
+  'default': 'pNInz6obpgDQGcFmaJgB',       // Default fallback
 };
 
 /**
