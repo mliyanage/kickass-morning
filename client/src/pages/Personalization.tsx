@@ -53,6 +53,12 @@ const getStruggleText = (struggle: StruggleType | string): string => {
 // Sample voices - in a real app, these would come from an API
 const voices = [
   {
+    id: "jocko",
+    name: "Jocko Willink",
+    category: "Navy SEAL & Leadership Expert",
+    imageUrl: "https://images.unsplash.com/photo-1552058544-f2b08422138a?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80"
+  },
+  {
     id: "elon-musk",
     name: "Elon Musk",
     category: "Entrepreneur & Innovator",
