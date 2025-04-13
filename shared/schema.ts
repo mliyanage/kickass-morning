@@ -43,10 +43,10 @@ export const users = pgTable("users", {
 export const personalizations = pgTable("personalizations", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  goal: text("goal").notNull(),
+  goals: text("goals").array().notNull(), // Changed to array to support multi-select
   otherGoal: text("other_goal"),
   goalDescription: text("goal_description"),
-  struggle: text("struggle").notNull(),
+  struggles: text("struggles").array().notNull(), // Changed to array to support multi-select
   otherStruggle: text("other_struggle"),
   voice: text("voice").notNull(),
   customVoice: text("custom_voice"),
@@ -148,23 +148,23 @@ export const otpVerificationSchema = z.object({
 
 // Schema for personalization
 export const personalizationSchema = z.object({
-  goal: z.enum([
+  goals: z.array(z.enum([
     GoalType.EXERCISE,
     GoalType.PRODUCTIVITY,
     GoalType.STUDY,
     GoalType.MEDITATION,
     GoalType.CREATIVE,
     GoalType.OTHER
-  ]),
+  ])).min(1, "Select at least one goal"),
   otherGoal: z.string().optional(),
   goalDescription: z.string().optional(),
-  struggle: z.enum([
+  struggles: z.array(z.enum([
     StruggleType.TIRED,
     StruggleType.LACK_OF_MOTIVATION,
     StruggleType.SNOOZE,
     StruggleType.STAY_UP_LATE,
     StruggleType.OTHER
-  ]),
+  ])).min(1, "Select at least one struggle"),
   otherStruggle: z.string().optional(),
   voice: z.string(),
   customVoice: z.string().optional(),
