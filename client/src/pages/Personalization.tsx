@@ -16,7 +16,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import VoiceCard from "@/components/VoiceCard";
 import SelectionCard from "@/components/SelectionCard";
-import { PersonalizationData, GoalType, StruggleType } from "@/types";
+import { PersonalizationData, GoalType, StruggleType } from "@shared/schema";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { 
   Settings,
@@ -30,7 +30,9 @@ import {
   Coffee,
   AlarmClock,
   BedDouble,
-  HelpCircle
+  HelpCircle,
+  Heart as HeartPulse,
+  Monitor as Laptop
 } from "lucide-react";
 
 // Helper functions for displaying text values
@@ -132,9 +134,29 @@ export default function Personalization() {
   useEffect(() => {
     if (personalizationData) {
       setHasExistingData(true);
-      setGoals(personalizationData.goals || []);
+      
+      // Handle goals array (backward compatibility)
+      if (Array.isArray(personalizationData.goals)) {
+        setGoals(personalizationData.goals);
+      } else if (personalizationData.goal) {
+        // Handle legacy single goal data
+        setGoals([personalizationData.goal as GoalType]);
+      } else {
+        setGoals([]);
+      }
+      
       setOtherGoal(personalizationData.otherGoal || "");
-      setStruggles(personalizationData.struggles || []);
+      
+      // Handle struggles array (backward compatibility)
+      if (Array.isArray(personalizationData.struggles)) {
+        setStruggles(personalizationData.struggles);
+      } else if (personalizationData.struggle) {
+        // Handle legacy single struggle data
+        setStruggles([personalizationData.struggle as StruggleType]);
+      } else {
+        setStruggles([]);
+      }
+      
       setOtherStruggle(personalizationData.otherStruggle || "");
       setVoice(
         personalizationData.customVoice ? "" : personalizationData.voice,
