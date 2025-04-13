@@ -44,3 +44,6 @@
 
 - **Consider Broader Impact**  
   Always think through what other methods or areas of the code might be affected by your changes.
+
+- **Ask before making changes**  
+Always wait until I give clear instructions before changing or building. Sometimes I want to have a conversation with you and understand the options before jumping and changing the code or implementing new code.
