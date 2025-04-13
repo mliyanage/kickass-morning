@@ -92,11 +92,16 @@ export default function ScheduleCall() {
   // Schedule state
   const [wakeupTime, setWakeupTime] = useState("06:30");
   const [timezone, setTimezone] = useState("America/New_York");
-  const [selectedDays, setSelectedDays] = useState<string[]>(["mon", "tue", "wed", "thu", "fri"]);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);  // Start with empty array, will be populated when editing
   const [isRecurring, setIsRecurring] = useState(true);
   const [date, setDate] = useState("");
   const [callRetry, setCallRetry] = useState(true);
   const [advanceNotice, setAdvanceNotice] = useState(false);
+  
+  // For debugging
+  useEffect(() => {
+    console.log("selectedDays changed:", selectedDays);
+  }, [selectedDays]);
 
   // Fetch user data to check phone verification status
   const { data: userData, isLoading: isUserDataLoading } = useQuery<{ authenticated: boolean, user: { phoneVerified: boolean } }>({
@@ -118,12 +123,15 @@ export default function ScheduleCall() {
       
       // We're using the GET all schedules endpoint and filtering client-side for simplicity
       const response = await apiRequest("GET", "/api/schedule");
-      const schedules = await response.json();
-      const schedule = schedules.find((s: Schedule) => s.id === scheduleIdToEdit) || null;
+      const allSchedules = await response.json();
+      console.log("All schedules:", allSchedules);
+      
+      // Find the specific schedule
+      const schedule = allSchedules.find((s: Schedule) => s.id === scheduleIdToEdit) || null;
       
       console.log("Found schedule for editing:", schedule);
       if (schedule) {
-        console.log("Schedule weekdays:", schedule.weekdays);
+        console.log("Schedule weekdays from API:", schedule.weekdays, "Type:", typeof schedule.weekdays);
       }
       
       return schedule;
@@ -291,6 +299,15 @@ export default function ScheduleCall() {
       </DashboardLayout>
     );
   }
+
+  // For new schedules, let's add workdays as default
+  useEffect(() => {
+    // If we're not editing (new schedule) and no days are selected yet, default to Mon-Fri
+    if (!scheduleIdToEdit && selectedDays.length === 0 && !isLoadingSchedule) {
+      console.log("Setting default workdays (Mon-Fri) for new schedule");
+      setSelectedDays(["mon", "tue", "wed", "thu", "fri"]);
+    }
+  }, [scheduleIdToEdit, selectedDays.length, isLoadingSchedule]);
 
   // Only render the schedule form if user is verified
   return (
