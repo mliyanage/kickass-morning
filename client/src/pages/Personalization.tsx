@@ -12,21 +12,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import VoiceCard from "@/components/VoiceCard";
+import SelectionCard from "@/components/SelectionCard";
 import { PersonalizationData, GoalType, StruggleType } from "@/types";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
-import { Settings } from "lucide-react";
+import { 
+  Settings,
+  Dumbbell, 
+  Briefcase, 
+  GraduationCap, 
+  SunMedium, 
+  PaintBucket, 
+  Sparkles,
+  Moon,
+  Coffee,
+  AlarmClock,
+  BedDouble,
+  HelpCircle
+} from "lucide-react";
 
 // Helper functions for displaying text values
 const getGoalText = (goal: GoalType | string): string => {
@@ -105,11 +110,11 @@ export default function Personalization() {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState(1);
 
-  const [goal, setGoal] = useState<GoalType | "">("");
+  const [goals, setGoals] = useState<GoalType[]>([]);
   const [otherGoal, setOtherGoal] = useState("");
   const [goalDescription, setGoalDescription] = useState("");
 
-  const [struggle, setStruggle] = useState<StruggleType | "">("");
+  const [struggles, setStruggles] = useState<StruggleType[]>([]);
   const [otherStruggle, setOtherStruggle] = useState("");
 
   const [voice, setVoice] = useState("");
