@@ -150,37 +150,69 @@ export function PersonalizationSection() {
               // Display summary view
               <div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Your Wake-Up Goals</h4>
-                    <div className="space-y-1">
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 shadow-sm">
+                    <div className="flex items-center mb-2">
+                      <div className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-500 text-white mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                      </div>
+                      <h4 className="text-sm font-medium text-gray-700">Your Wake-Up Goal</h4>
+                    </div>
+                    <div className="space-y-1 pl-1">
                       {goals.length > 0 ? (
-                        goals.map((g, index) => (
-                          <p key={index} className="font-medium">
-                            {index + 1}. {getGoalText(g)}
-                          </p>
-                        ))
+                        <ul className="list-disc pl-5 space-y-1">
+                          {goals.map((g, index) => (
+                            <li key={index} className="text-sm font-medium text-primary-700">
+                              {getGoalText(g)}
+                            </li>
+                          ))}
+                        </ul>
                       ) : (
-                        <p className="font-medium">Not set</p>
+                        <p className="font-medium text-gray-500 italic">Not set</p>
                       )}
                     </div>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Your Biggest Struggles</h4>
-                    <div className="space-y-1">
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 shadow-sm">
+                    <div className="flex items-center mb-2">
+                      <div className="flex items-center justify-center h-6 w-6 rounded-full bg-purple-500 text-white mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                      </div>
+                      <h4 className="text-sm font-medium text-gray-700">Your Biggest Struggle</h4>
+                    </div>
+                    <div className="space-y-1 pl-1">
                       {struggles.length > 0 ? (
-                        struggles.map((s, index) => (
-                          <p key={index} className="font-medium">
-                            {index + 1}. {getStruggleText(s)}
-                          </p>
-                        ))
+                        <ul className="list-disc pl-5 space-y-1">
+                          {struggles.map((s, index) => (
+                            <li key={index} className="text-sm font-medium text-primary-700">
+                              {getStruggleText(s)}
+                            </li>
+                          ))}
+                        </ul>
                       ) : (
-                        <p className="font-medium">Not set</p>
+                        <p className="font-medium text-gray-500 italic">Not set</p>
                       )}
                     </div>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Selected Voice</h4>
-                    <p className="font-medium">{getVoiceText()}</p>
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 shadow-sm">
+                    <div className="flex items-center mb-2">
+                      <div className="flex items-center justify-center h-6 w-6 rounded-full bg-green-500 text-white mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                          <line x1="12" y1="19" x2="12" y2="23"></line>
+                          <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                      </div>
+                      <h4 className="text-sm font-medium text-gray-700">Selected Voice</h4>
+                    </div>
+                    <div className="pl-8">
+                      <p className="text-sm font-medium text-primary-700">{getVoiceText()}</p>
+                    </div>
                   </div>
                 </div>
                 <div className="mt-4 text-sm text-gray-600">
