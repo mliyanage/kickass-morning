@@ -62,6 +62,7 @@ export function PersonalizationSection() {
   const struggles = personalizationData?.struggles || [];
   const otherGoal = personalizationData?.otherGoal || "";
   const otherStruggle = personalizationData?.otherStruggle || "";
+  const goalDescription = personalizationData?.goalDescription || "";
   const voice = personalizationData?.customVoice ? "" : (personalizationData?.voice || "");
   const customVoice = personalizationData?.customVoice || "";
   
@@ -223,6 +224,13 @@ export function PersonalizationSection() {
                     {struggles.length > 0 ? ` (${struggles.map(s => getStruggleText(s).toLowerCase()).join(', ')})` : ''}, 
                     and delivered in the voice of {getVoiceText()}.
                   </p>
+                  
+                  {goalDescription && (
+                    <div className="mt-4 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                      <h4 className="text-xs font-medium uppercase text-blue-700 mb-1">Your Personal Goal Description</h4>
+                      <p className="text-sm text-blue-800 italic">"{goalDescription}"</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
