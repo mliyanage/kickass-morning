@@ -224,24 +224,7 @@ export default function ScheduleCall() {
     }
   });
 
-  const sampleCallMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("POST", "/api/call/sample", {});
-    },
-    onSuccess: () => {
-      toast({
-        title: "Sample call initiated",
-        description: "A sample wakeup call will be sent to your phone shortly.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Failed to start sample call",
-        description: error.message || "Please try again later.",
-      });
-    }
-  });
+
 
   const handleDayToggle = (day: string) => {
     if (selectedDays.includes(day)) {
@@ -302,9 +285,7 @@ export default function ScheduleCall() {
     scheduleMutation.mutate(scheduleData);
   };
 
-  const handleSampleCall = () => {
-    sampleCallMutation.mutate();
-  };
+
 
   // Show loading state while checking phone verification
   if (isLoading || isUserDataLoading) {
@@ -464,23 +445,6 @@ export default function ScheduleCall() {
                 </div>
                 
                 <Separator />
-                
-                <div>
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    className="mb-4"
-                    onClick={handleSampleCall}
-                    disabled={sampleCallMutation.isPending}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {sampleCallMutation.isPending ? "Initiating call..." : "Try a Sample Call Now"}
-                  </Button>
-                  <p className="text-xs text-gray-500">A sample wakeup call will be sent to your verified phone number immediately.</p>
-                </div>
                 
                 <div className="flex justify-end space-x-3">
                   <Button 
