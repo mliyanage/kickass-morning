@@ -140,18 +140,14 @@ export default function ScheduleCall() {
       setTimezone(scheduleToEdit.timezone);
       
       // Fix for weekdays selection bug
-      // Clear any existing selected days first
-      setSelectedDays([]);
-      
-      // Get the weekday data
+      // Immediately set the selected days from the weekdays data
       if (Array.isArray(scheduleToEdit.weekdays)) {
-        const selectedWeekdays = scheduleToEdit.weekdays;
-        console.log("Got weekdays array:", selectedWeekdays);
-        
-        setTimeout(() => {
-          console.log("Setting selected days:", selectedWeekdays);
-          setSelectedDays(selectedWeekdays);
-        }, 10);
+        console.log("Setting weekdays directly:", scheduleToEdit.weekdays);
+        setSelectedDays([...scheduleToEdit.weekdays]);
+      } else {
+        // Default to empty array if not an array
+        console.log("No weekdays data or invalid format, setting empty array");
+        setSelectedDays([]);
       }
       
       setIsRecurring(scheduleToEdit.isRecurring);
