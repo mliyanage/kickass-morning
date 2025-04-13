@@ -57,7 +57,7 @@ const SelectionCard: React.FC<SelectionCardProps> = ({
       )}
 
       <div className="p-4">
-        <div className="flex items-start mb-3">
+        <div className="flex items-start">
           {icon && (
             <div className={cn("mr-3 flex-shrink-0 mt-1", iconColor)}>
               {icon}
@@ -68,30 +68,8 @@ const SelectionCard: React.FC<SelectionCardProps> = ({
             <p className="text-sm text-gray-500 mt-1">{description}</p>
           </div>
         </div>
-
-        {(tips || example) && (
-          <div className="mt-3 pt-3 border-t border-gray-200">
-            {example && (
-              <div className="mb-2">
-                <span className="text-xs font-medium text-gray-500">Example:</span>
-                <p className="text-xs text-gray-600 italic">"{example}"</p>
-              </div>
-            )}
-            
-            {tips && tips.length > 0 && (
-              <div>
-                <span className="text-xs font-medium text-gray-500">Tips:</span>
-                <ul className="mt-1 text-xs text-gray-600 space-y-1 pl-4">
-                  {tips.map((tip, index) => (
-                    <li key={index} className="list-disc list-outside">
-                      {tip}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
+        
+        {/* Examples and tips section removed as requested */}
       </div>
     </div>
   );

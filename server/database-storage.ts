@@ -280,15 +280,24 @@ export class DatabaseStorage implements IStorage {
       .from(personalizations)
       .where(eq(personalizations.userId, userId));
     
+    // Extract primary values from the arrays or use legacy values
+    const primaryGoal = data.goals && data.goals.length > 0 
+      ? data.goals[0] 
+      : (data as any).goal || GoalType.EXERCISE;
+      
+    const primaryStruggle = data.struggles && data.struggles.length > 0 
+      ? data.struggles[0] 
+      : (data as any).struggle || StruggleType.TIRED;
+    
     if (existingPers) {
       // Update existing personalization
       const [personalization] = await db
         .update(personalizations)
         .set({
-          goals: data.goals,
+          goal: primaryGoal, // Use the primary goal for db column 'goal'
           otherGoal: data.otherGoal,
           goalDescription: data.goalDescription,
-          struggles: data.struggles,
+          struggle: primaryStruggle, // Use the primary struggle for db column 'struggle'
           otherStruggle: data.otherStruggle,
           voice: data.voice,
           customVoice: data.customVoice,
@@ -304,10 +313,10 @@ export class DatabaseStorage implements IStorage {
         .insert(personalizations)
         .values({
           userId,
-          goals: data.goals,
+          goal: primaryGoal, // Use the primary goal for db column 'goal'
           otherGoal: data.otherGoal,
           goalDescription: data.goalDescription,
-          struggles: data.struggles,
+          struggle: primaryStruggle, // Use the primary struggle for db column 'struggle'
           otherStruggle: data.otherStruggle,
           voice: data.voice,
           customVoice: data.customVoice
@@ -327,9 +336,10 @@ export class DatabaseStorage implements IStorage {
     if (!personalization) return undefined;
     
     // Convert database values to the expected format for PersonalizationData
+    // For backward compatibility, convert single values to arrays
     const result: PersonalizationData = {
-      goals: personalization.goals.map(g => g as GoalType),
-      struggles: personalization.struggles.map(s => s as StruggleType),
+      goals: [personalization.goal as GoalType], // Convert single goal to array
+      struggles: [personalization.struggle as StruggleType], // Convert single struggle to array
       voice: personalization.voice
     };
     

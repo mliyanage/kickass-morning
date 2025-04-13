@@ -43,10 +43,10 @@ export const users = pgTable("users", {
 export const personalizations = pgTable("personalizations", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  goals: text("goals").array().notNull(), // Changed to array to support multi-select
+  goal: text("goal").notNull(), // Single goal in database
   otherGoal: text("other_goal"),
   goalDescription: text("goal_description"),
-  struggles: text("struggles").array().notNull(), // Changed to array to support multi-select
+  struggle: text("struggle").notNull(), // Single struggle in database
   otherStruggle: text("other_struggle"),
   voice: text("voice").notNull(),
   customVoice: text("custom_voice"),
