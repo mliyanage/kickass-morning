@@ -132,9 +132,9 @@ export default function Personalization() {
   useEffect(() => {
     if (personalizationData) {
       setHasExistingData(true);
-      setGoal(personalizationData.goal);
+      setGoals(personalizationData.goals || []);
       setOtherGoal(personalizationData.otherGoal || "");
-      setStruggle(personalizationData.struggle);
+      setStruggles(personalizationData.struggles || []);
       setOtherStruggle(personalizationData.otherStruggle || "");
       setVoice(
         personalizationData.customVoice ? "" : personalizationData.voice,
@@ -166,36 +166,36 @@ export default function Personalization() {
 
   const handleNextStep = () => {
     if (step === 1) {
-      if (!goal) {
+      if (goals.length === 0) {
         toast({
           variant: "destructive",
-          title: "Please select a goal",
-          description: "Choose your primary goal for waking up early.",
+          title: "Please select at least one goal",
+          description: "Choose one or more goals for waking up early.",
         });
         return;
       }
-      if (goal === GoalType.OTHER && !otherGoal) {
+      if (goals.includes(GoalType.OTHER) && !otherGoal) {
         toast({
           variant: "destructive",
-          title: "Please specify your goal",
+          title: "Please specify your custom goal",
           description: "Tell us about your custom goal.",
         });
         return;
       }
       setStep(2);
     } else if (step === 2) {
-      if (!struggle) {
+      if (struggles.length === 0) {
         toast({
           variant: "destructive",
-          title: "Please select a struggle",
-          description: "Choose your biggest struggle with waking up early.",
+          title: "Please select at least one struggle",
+          description: "Choose one or more struggles with waking up early.",
         });
         return;
       }
-      if (struggle === StruggleType.OTHER && !otherStruggle) {
+      if (struggles.includes(StruggleType.OTHER) && !otherStruggle) {
         toast({
           variant: "destructive",
-          title: "Please specify your struggle",
+          title: "Please specify your custom struggle",
           description: "Tell us about your custom struggle.",
         });
         return;
@@ -224,12 +224,12 @@ export default function Personalization() {
     }
 
     const personalData: PersonalizationData = {
-      goal: goal as GoalType,
-      otherGoal: goal === GoalType.OTHER ? otherGoal : undefined,
+      goals: goals,
+      otherGoal: goals.includes(GoalType.OTHER) ? otherGoal : undefined,
       goalDescription,
-      struggle: struggle as StruggleType,
+      struggles: struggles,
       otherStruggle:
-        struggle === StruggleType.OTHER ? otherStruggle : undefined,
+        struggles.includes(StruggleType.OTHER) ? otherStruggle : undefined,
       voice: voice || customVoice,
       customVoice: customVoice || undefined,
     };
@@ -294,9 +294,20 @@ export default function Personalization() {
                     </svg>
                     <h4 className="text-sm font-medium text-gray-700">Your Wake-Up Goal</h4>
                   </div>
-                  <p className="font-medium text-primary-700 text-lg">
-                    {goal === GoalType.OTHER ? otherGoal : getGoalText(goal)}
-                  </p>
+                  <div className="font-medium text-primary-700">
+                    {goals.length > 0 ? (
+                      <ul className="space-y-1">
+                        {goals.map((goal, index) => (
+                          <li key={index} className="flex items-center text-sm">
+                            <span className="mr-1.5">•</span>
+                            {goal === GoalType.OTHER ? otherGoal : getGoalText(goal)}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-gray-500 italic">No goals selected</p>
+                    )}
+                  </div>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 shadow-sm">
                   <div className="flex items-center mb-2">
@@ -305,11 +316,20 @@ export default function Personalization() {
                     </svg>
                     <h4 className="text-sm font-medium text-gray-700">Your Biggest Struggle</h4>
                   </div>
-                  <p className="font-medium text-primary-700 text-lg">
-                    {struggle === StruggleType.OTHER
-                      ? otherStruggle
-                      : getStruggleText(struggle)}
-                  </p>
+                  <div className="font-medium text-primary-700">
+                    {struggles.length > 0 ? (
+                      <ul className="space-y-1">
+                        {struggles.map((struggle, index) => (
+                          <li key={index} className="flex items-center text-sm">
+                            <span className="mr-1.5">•</span>
+                            {struggle === StruggleType.OTHER ? otherStruggle : getStruggleText(struggle)}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-gray-500 italic">No struggles selected</p>
+                    )}
+                  </div>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 shadow-sm">
                   <div className="flex items-center mb-2">
