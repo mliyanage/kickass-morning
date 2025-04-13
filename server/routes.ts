@@ -507,12 +507,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = personalizationSchema.parse(req.body);
       
-      // Save personalization data
+      // Save personalization data - using new array-based structure
       await storage.savePersonalization(req.session.userId!, {
-        goal: validatedData.goal,
+        goals: validatedData.goals,
         otherGoal: validatedData.otherGoal,
         goalDescription: validatedData.goalDescription,
-        struggle: validatedData.struggle,
+        struggles: validatedData.struggles,
         otherStruggle: validatedData.otherStruggle,
         voice: validatedData.voice,
         customVoice: validatedData.customVoice
@@ -589,8 +589,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           callRetry: validatedData.callRetry,
           advanceNotice: validatedData.advanceNotice,
           // We keep the goal, struggle and voice from personalization
-          goalType: personalization.goal,
-          struggleType: personalization.struggle,
+          goalType: personalization.goals[0],
+          struggleType: personalization.struggles[0],
           voiceId: personalization.voice
         });
         
@@ -643,8 +643,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         date: validatedData.date,
         callRetry: validatedData.callRetry,
         advanceNotice: validatedData.advanceNotice,
-        goalType: personalization.goal,
-        struggleType: personalization.struggle,
+        goalType: personalization.goals[0],
+        struggleType: personalization.struggles[0],
         voiceId: personalization.voice,
         isActive: true
       });
