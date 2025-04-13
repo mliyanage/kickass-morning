@@ -8,20 +8,23 @@ const openai = new OpenAI({
 
 // Function to generate personalized wakeup message
 export async function generateVoiceMessage(
-  goalType: GoalType,
-  struggleType: StruggleType,
-  userName: string | null
+  goals: GoalType[],
+  struggles: StruggleType[],
+  userName: string | null,
+  otherGoal?: string,
+  otherStruggle?: string
 ): Promise<string> {
   // Default to "there" if name is null
   const formattedName = userName || "there";
-  // Format goal and struggle for prompt
+  
+  // Format goals for prompt
   const goalTypeMap: Record<GoalType, string> = {
     [GoalType.EXERCISE]: "morning exercise",
     [GoalType.PRODUCTIVITY]: "work productivity",
     [GoalType.STUDY]: "studying or learning",
     [GoalType.MEDITATION]: "meditation and mindfulness",
     [GoalType.CREATIVE]: "creative projects",
-    [GoalType.OTHER]: "their personal goal"
+    [GoalType.OTHER]: otherGoal || "their personal goal"
   };
 
   const struggleTypeMap: Record<StruggleType, string> = {
@@ -29,11 +32,16 @@ export async function generateVoiceMessage(
     [StruggleType.LACK_OF_MOTIVATION]: "lacking motivation",
     [StruggleType.SNOOZE]: "hitting the snooze button multiple times",
     [StruggleType.STAY_UP_LATE]: "staying up too late",
-    [StruggleType.OTHER]: "their personal struggle"
+    [StruggleType.OTHER]: otherStruggle || "their personal struggle"
   };
 
-  const goal = goalTypeMap[goalType] || "their goal";
-  const struggle = struggleTypeMap[struggleType] || "their struggle";
+  // Map each goal and struggle to its corresponding text
+  const formattedGoals = goals.map(g => goalTypeMap[g] || "their goal");
+  const formattedStruggles = struggles.map(s => struggleTypeMap[s] || "their struggle");
+  
+  // Join multiple goals and struggles with commas and 'and'
+  const goalsText = formatListForPrompt(formattedGoals);
+  const strugglesText = formatListForPrompt(formattedStruggles);
 
   try {
     // The newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
@@ -51,19 +59,31 @@ export async function generateVoiceMessage(
         {
           role: "user",
           content: `Create a motivational wakeup call message for ${formattedName}. 
-          Their goal is focused on ${goal} and they struggle with ${struggle}. 
-          Make it sound conversational and natural, as if a motivational figure is personally calling them.`
+          Their goals are focused on ${goalsText} and they struggle with ${strugglesText}. 
+          Make it sound conversational and natural, as if a motivational figure is personally calling them.
+          Address multiple goals and struggles in a coherent way that feels personalized.`
         }
       ],
       max_tokens: 250,
       temperature: 0.7,
     });
 
-    return response.choices[0].message.content || fallbackMessage(userName, goal);
+    return response.choices[0].message.content || fallbackMessage(userName, goalsText);
   } catch (error) {
     console.error("Error generating voice message:", error);
-    return fallbackMessage(userName, goal);
+    return fallbackMessage(userName, goalsText);
   }
+}
+
+// Helper function to format an array of strings into a natural language list
+function formatListForPrompt(items: string[]): string {
+  if (items.length === 0) return "";
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  
+  const lastItem = items[items.length - 1];
+  const otherItems = items.slice(0, -1).join(", ");
+  return `${otherItems}, and ${lastItem}`;
 }
 
 // Fallback message in case OpenAI API fails

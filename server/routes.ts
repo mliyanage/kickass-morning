@@ -666,11 +666,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const scheduleData = await storage.getSchedule(schedule.id);
             
             if (user && user.phone && scheduleData && scheduleData.isActive) {
-              // Generate message for the call
+              // Get personalization data for more detailed message generation
+              const personalization = await storage.getPersonalization(req.session.userId!);
+              
+              // Generate message for the call with main goal and struggle from schedule
+              // but using full personalization data for context
               const message = await generateVoiceMessage(
-                scheduleData.goalType as GoalType,
-                scheduleData.struggleType as StruggleType,
-                user.name || "there"
+                [scheduleData.goalType as GoalType], // Use schedule's goal as primary focus
+                [scheduleData.struggleType as StruggleType], // Use schedule's struggle as primary focus
+                user.name || "there",
+                personalization?.otherGoal,
+                personalization?.otherStruggle
               );
               
               // Make the call
@@ -802,14 +808,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log("Personalization data found:", 
-        { goal: personalization.goal, struggle: personalization.struggle, voice: personalization.voice }
+        { goals: personalization.goals, struggles: personalization.struggles, voice: personalization.voice }
       );
       
       // Generate message for the sample call
       const message = await generateVoiceMessage(
-        personalization.goal as GoalType,
-        personalization.struggle as StruggleType,
-        user.name || "there"
+        personalization.goals as GoalType[],
+        personalization.struggles as StruggleType[],
+        user.name || "there",
+        personalization.otherGoal,
+        personalization.otherStruggle
       );
       
       console.log("Generated voice message, length:", message.length);

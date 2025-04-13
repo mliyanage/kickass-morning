@@ -283,7 +283,13 @@ export class DatabaseStorage implements IStorage {
       const [personalization] = await db
         .update(personalizations)
         .set({
-          ...data,
+          goals: data.goals,
+          otherGoal: data.otherGoal,
+          goalDescription: data.goalDescription,
+          struggles: data.struggles,
+          otherStruggle: data.otherStruggle,
+          voice: data.voice,
+          customVoice: data.customVoice,
           updatedAt: new Date()
         })
         .where(eq(personalizations.userId, userId))
@@ -296,10 +302,10 @@ export class DatabaseStorage implements IStorage {
         .insert(personalizations)
         .values({
           userId,
-          goal: data.goal,
+          goals: data.goals,
           otherGoal: data.otherGoal,
           goalDescription: data.goalDescription,
-          struggle: data.struggle,
+          struggles: data.struggles,
           otherStruggle: data.otherStruggle,
           voice: data.voice,
           customVoice: data.customVoice
@@ -318,10 +324,10 @@ export class DatabaseStorage implements IStorage {
     
     if (!personalization) return undefined;
     
-    // Convert database null values to undefined for the PersonalizationData interface
+    // Convert database values to the expected format for PersonalizationData
     const result: PersonalizationData = {
-      goal: personalization.goal as any,
-      struggle: personalization.struggle as any,
+      goals: personalization.goals.map(g => g as GoalType),
+      struggles: personalization.struggles.map(s => s as StruggleType),
       voice: personalization.voice
     };
     
