@@ -274,6 +274,8 @@ export class DatabaseStorage implements IStorage {
 
   // Personalization related methods
   async savePersonalization(userId: number, data: PersonalizationData): Promise<any> {
+    console.log("Saving personalization data:", JSON.stringify(data, null, 2));
+    
     // Check if personalization already exists for this user
     const [existingPers] = await db
       .select()
@@ -288,6 +290,9 @@ export class DatabaseStorage implements IStorage {
     const strugglesValue = data.struggles && data.struggles.length > 0 
       ? data.struggles.join(',') 
       : (data as any).struggle || StruggleType.TIRED;
+      
+    console.log(`Converting goals array ${JSON.stringify(data.goals)} to string: ${goalsValue}`);
+    console.log(`Converting struggles array ${JSON.stringify(data.struggles)} to string: ${strugglesValue}`);
     
     if (existingPers) {
       // Update existing personalization
@@ -335,10 +340,15 @@ export class DatabaseStorage implements IStorage {
     
     if (!personalization) return undefined;
     
+    console.log("Raw personalization data from DB:", JSON.stringify(personalization, null, 2));
+    
     // Convert comma-separated values to arrays for the expected format
     // For backward compatibility, handle both formats
     const goalValue = personalization.goal || '';
     const struggleValue = personalization.struggle || '';
+    
+    console.log(`Converting goal string: ${goalValue} to array`);
+    console.log(`Converting struggle string: ${struggleValue} to array`);
     
     const result: PersonalizationData = {
       goals: goalValue.includes(',') 
@@ -349,6 +359,8 @@ export class DatabaseStorage implements IStorage {
         : [struggleValue as StruggleType],
       voice: personalization.voice
     };
+    
+    console.log("Converted personalization data:", JSON.stringify(result, null, 2));
     
     // Handle optional fields
     if (personalization.otherGoal !== null) result.otherGoal = personalization.otherGoal;
