@@ -147,16 +147,28 @@ export default function ScheduleCall() {
       setWakeupTime(scheduleToEdit.wakeupTime);
       setTimezone(scheduleToEdit.timezone);
       
-      // Fix for weekdays selection bug
-      // Immediately set the selected days from the weekdays data
+      // Process weekdays data
+      let weekdaysArray: string[] = [];
+      
+      // Handle different formats of weekdays (array or comma-separated string)
       if (Array.isArray(scheduleToEdit.weekdays)) {
-        console.log("Setting weekdays directly:", scheduleToEdit.weekdays);
-        setSelectedDays([...scheduleToEdit.weekdays]);
+        weekdaysArray = [...scheduleToEdit.weekdays]; // Array
+        console.log("Weekdays is already an array:", weekdaysArray);
+      } else if (typeof scheduleToEdit.weekdays === 'string') {
+        // Add type assertion to handle the TypeScript error
+        weekdaysArray = (scheduleToEdit.weekdays as string).split(','); 
+        console.log("Converted weekdays string to array:", weekdaysArray);
       } else {
-        // Default to empty array if not an array
-        console.log("No weekdays data or invalid format, setting empty array");
-        setSelectedDays([]);
+        console.log("No valid weekdays data found");
       }
+      
+      // Clear existing selected days and set with data from schedule
+      setSelectedDays([]);
+      // Small timeout to ensure state is cleared before setting new values
+      setTimeout(() => {
+        console.log("Setting weekdays:", weekdaysArray);
+        setSelectedDays(weekdaysArray);
+      }, 0);
       
       setIsRecurring(scheduleToEdit.isRecurring);
       if (scheduleToEdit.date) {
@@ -300,14 +312,23 @@ export default function ScheduleCall() {
     );
   }
 
-  // For new schedules, let's add workdays as default
+  // Set default weekdays for new schedules only (runs only once on page load)
+  // This needs to be placed after the Edit useEffect to ensure it doesn't override the edit data
   useEffect(() => {
-    // If we're not editing (new schedule) and no days are selected yet, default to Mon-Fri
-    if (!scheduleIdToEdit && selectedDays.length === 0 && !isLoadingSchedule) {
-      console.log("Setting default workdays (Mon-Fri) for new schedule");
-      setSelectedDays(["mon", "tue", "wed", "thu", "fri"]);
+    // We only want to run this on initial mount and only for new schedules
+    if (!editingScheduleId && !scheduleIdToEdit && selectedDays.length === 0) {
+      // Add a small delay to ensure we're not in an edit mode
+      const timer = setTimeout(() => {
+        if (!editingScheduleId && selectedDays.length === 0) {
+          console.log("Setting default weekdays (Mon-Fri) for new schedule");
+          setSelectedDays(["mon", "tue", "wed", "thu", "fri"]);
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
-  }, [scheduleIdToEdit, selectedDays.length, isLoadingSchedule]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array means this only runs once when component mounts
 
   // Only render the schedule form if user is verified
   return (

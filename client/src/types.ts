@@ -63,7 +63,7 @@ export interface Schedule {
   userId: number;
   wakeupTime: string;
   timezone: string;
-  weekdays: string[];
+  weekdays: string[] | string; // Can be array or string (from database it might come as string)
   isRecurring: boolean;
   date: string | null;
   callRetry: boolean;
