@@ -280,13 +280,13 @@ export class DatabaseStorage implements IStorage {
       .from(personalizations)
       .where(eq(personalizations.userId, userId));
     
-    // Extract primary values from the arrays or use legacy values
-    const primaryGoal = data.goals && data.goals.length > 0 
-      ? data.goals[0] 
+    // Convert arrays to comma-separated values for storage
+    const goalsValue = data.goals && data.goals.length > 0 
+      ? data.goals.join(',') 
       : (data as any).goal || GoalType.EXERCISE;
       
-    const primaryStruggle = data.struggles && data.struggles.length > 0 
-      ? data.struggles[0] 
+    const strugglesValue = data.struggles && data.struggles.length > 0 
+      ? data.struggles.join(',') 
       : (data as any).struggle || StruggleType.TIRED;
     
     if (existingPers) {
@@ -294,15 +294,15 @@ export class DatabaseStorage implements IStorage {
       const [personalization] = await db
         .update(personalizations)
         .set({
-          goal: primaryGoal, // Use the primary goal for db column 'goal'
+          goal: goalsValue, // Store comma-separated goals
           otherGoal: data.otherGoal,
           goalDescription: data.goalDescription,
-          struggle: primaryStruggle, // Use the primary struggle for db column 'struggle'
+          struggle: strugglesValue, // Store comma-separated struggles
           otherStruggle: data.otherStruggle,
           voice: data.voice,
           customVoice: data.customVoice,
           updatedAt: new Date()
-        })
+        } as any) // Type assertion to avoid TypeScript errors
         .where(eq(personalizations.userId, userId))
         .returning();
       
@@ -313,14 +313,14 @@ export class DatabaseStorage implements IStorage {
         .insert(personalizations)
         .values({
           userId,
-          goal: primaryGoal, // Use the primary goal for db column 'goal'
+          goal: goalsValue, // Store comma-separated goals
           otherGoal: data.otherGoal,
           goalDescription: data.goalDescription,
-          struggle: primaryStruggle, // Use the primary struggle for db column 'struggle'
+          struggle: strugglesValue, // Store comma-separated struggles
           otherStruggle: data.otherStruggle,
           voice: data.voice,
           customVoice: data.customVoice
-        })
+        } as any) // Type assertion to avoid TypeScript errors
         .returning();
       
       return personalization;
@@ -335,11 +335,18 @@ export class DatabaseStorage implements IStorage {
     
     if (!personalization) return undefined;
     
-    // Convert database values to the expected format for PersonalizationData
-    // For backward compatibility, convert single values to arrays
+    // Convert comma-separated values to arrays for the expected format
+    // For backward compatibility, handle both formats
+    const goalValue = personalization.goal || '';
+    const struggleValue = personalization.struggle || '';
+    
     const result: PersonalizationData = {
-      goals: [personalization.goal as GoalType], // Convert single goal to array
-      struggles: [personalization.struggle as StruggleType], // Convert single struggle to array
+      goals: goalValue.includes(',') 
+        ? goalValue.split(',').map(g => g.trim() as GoalType) 
+        : [goalValue as GoalType],
+      struggles: struggleValue.includes(',') 
+        ? struggleValue.split(',').map(s => s.trim() as StruggleType) 
+        : [struggleValue as StruggleType],
       voice: personalization.voice
     };
     

@@ -57,9 +57,10 @@ export function PersonalizationSection() {
   });
   
   // Local variables for displaying personalization data
-  const goal = personalizationData?.goal || "";
+  // Using new array-based format
+  const goals = personalizationData?.goals || [];
+  const struggles = personalizationData?.struggles || [];
   const otherGoal = personalizationData?.otherGoal || "";
-  const struggle = personalizationData?.struggle || "";
   const otherStruggle = personalizationData?.otherStruggle || "";
   const voice = personalizationData?.customVoice ? "" : (personalizationData?.voice || "");
   const customVoice = personalizationData?.customVoice || "";
@@ -150,12 +151,32 @@ export function PersonalizationSection() {
               <div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-gray-50 p-3 rounded-lg">
-                    <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Your Wake-Up Goal</h4>
-                    <p className="font-medium">{getGoalText(goal)}</p>
+                    <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Your Wake-Up Goals</h4>
+                    <div className="space-y-1">
+                      {goals.length > 0 ? (
+                        goals.map((g, index) => (
+                          <p key={index} className="font-medium">
+                            {index + 1}. {getGoalText(g)}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="font-medium">Not set</p>
+                      )}
+                    </div>
                   </div>
                   <div className="bg-gray-50 p-3 rounded-lg">
-                    <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Your Biggest Struggle</h4>
-                    <p className="font-medium">{getStruggleText(struggle)}</p>
+                    <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Your Biggest Struggles</h4>
+                    <div className="space-y-1">
+                      {struggles.length > 0 ? (
+                        struggles.map((s, index) => (
+                          <p key={index} className="font-medium">
+                            {index + 1}. {getStruggleText(s)}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="font-medium">Not set</p>
+                      )}
+                    </div>
                   </div>
                   <div className="bg-gray-50 p-3 rounded-lg">
                     <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Selected Voice</h4>
@@ -164,8 +185,10 @@ export function PersonalizationSection() {
                 </div>
                 <div className="mt-4 text-sm text-gray-600">
                   <p>
-                    Your wake-up calls will be personalized to help you with {getGoalText(goal).toLowerCase()}, 
-                    addressing your struggle with {getStruggleText(struggle).toLowerCase()}, 
+                    Your wake-up calls will be personalized to help you with your goals
+                    {goals.length > 0 ? ` (${goals.map(g => getGoalText(g).toLowerCase()).join(', ')})` : ''}, 
+                    addressing your struggles
+                    {struggles.length > 0 ? ` (${struggles.map(s => getStruggleText(s).toLowerCase()).join(', ')})` : ''}, 
                     and delivered in the voice of {getVoiceText()}.
                   </p>
                 </div>
