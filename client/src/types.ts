@@ -38,10 +38,13 @@ export enum StruggleType {
 }
 
 export interface PersonalizationData {
-  goal: GoalType;
+  // Support both legacy single selection and new multi-select arrays
+  goal?: GoalType;
+  goals?: GoalType[];
   otherGoal?: string;
   goalDescription?: string;
-  struggle: StruggleType;
+  struggle?: StruggleType;
+  struggles?: StruggleType[];
   otherStruggle?: string;
   voice: string;
   customVoice?: string;

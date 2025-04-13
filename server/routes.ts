@@ -509,10 +509,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Save personalization data
       await storage.savePersonalization(req.session.userId!, {
-        goal: validatedData.goal,
+        goals: validatedData.goals,
         otherGoal: validatedData.otherGoal,
         goalDescription: validatedData.goalDescription,
-        struggle: validatedData.struggle,
+        struggles: validatedData.struggles,
         otherStruggle: validatedData.otherStruggle,
         voice: validatedData.voice,
         customVoice: validatedData.customVoice
@@ -589,8 +589,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           callRetry: validatedData.callRetry,
           advanceNotice: validatedData.advanceNotice,
           // We keep the goal, struggle and voice from personalization
-          goalType: personalization.goal,
-          struggleType: personalization.struggle,
+          goalType: personalization.goals?.[0] || personalization.goal, // Use first goal from array or fallback to legacy
+          struggleType: personalization.struggles?.[0] || personalization.struggle, // Use first struggle from array or fallback to legacy
           voiceId: personalization.voice
         });
         
@@ -643,8 +643,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         date: validatedData.date,
         callRetry: validatedData.callRetry,
         advanceNotice: validatedData.advanceNotice,
-        goalType: personalization.goal,
-        struggleType: personalization.struggle,
+        goalType: personalization.goals?.[0] || personalization.goal, // Use first goal from array or fallback to legacy
+        struggleType: personalization.struggles?.[0] || personalization.struggle, // Use first struggle from array or fallback to legacy
         voiceId: personalization.voice,
         isActive: true
       });

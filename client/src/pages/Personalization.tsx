@@ -146,6 +146,7 @@ export default function Personalization() {
       }
       
       setOtherGoal(personalizationData.otherGoal || "");
+      setGoalDescription(personalizationData.goalDescription || "");
       
       // Handle struggles array (backward compatibility)
       if (Array.isArray(personalizationData.struggles)) {
