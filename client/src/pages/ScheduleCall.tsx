@@ -92,7 +92,16 @@ export default function ScheduleCall() {
   // Schedule state
   const [wakeupTime, setWakeupTime] = useState("06:30");
   const [timezone, setTimezone] = useState("America/New_York");
-  const [selectedDays, setSelectedDays] = useState<string[]>([]);  // Start with empty array, will be populated when editing
+  // For new schedules, initialize with workdays (Mon-Fri)
+  // For edit mode, this will be overwritten when schedule data loads
+  const [selectedDays, setSelectedDays] = useState<string[]>(() => {
+    const scheduleId = getScheduleIdFromUrl();
+    if (!scheduleId) {
+      // Default selection for new schedules only
+      return ["mon", "tue", "wed", "thu", "fri"];  
+    }
+    return []; // Empty for edit mode, will be populated from data
+  });
   const [isRecurring, setIsRecurring] = useState(true);
   const [date, setDate] = useState("");
   const [callRetry, setCallRetry] = useState(true);
@@ -143,39 +152,35 @@ export default function ScheduleCall() {
   useEffect(() => {
     if (scheduleToEdit) {
       console.log("Editing schedule with ID:", scheduleToEdit.id);
+      
+      // First, update the simple fields
       setEditingScheduleId(scheduleToEdit.id);
       setWakeupTime(scheduleToEdit.wakeupTime);
       setTimezone(scheduleToEdit.timezone);
-      
-      // Process weekdays data
-      let weekdaysArray: string[] = [];
-      
-      // Handle different formats of weekdays (array or comma-separated string)
-      if (Array.isArray(scheduleToEdit.weekdays)) {
-        weekdaysArray = [...scheduleToEdit.weekdays]; // Array
-        console.log("Weekdays is already an array:", weekdaysArray);
-      } else if (typeof scheduleToEdit.weekdays === 'string') {
-        // Add type assertion to handle the TypeScript error
-        weekdaysArray = (scheduleToEdit.weekdays as string).split(','); 
-        console.log("Converted weekdays string to array:", weekdaysArray);
-      } else {
-        console.log("No valid weekdays data found");
-      }
-      
-      // Clear existing selected days and set with data from schedule
-      setSelectedDays([]);
-      // Small timeout to ensure state is cleared before setting new values
-      setTimeout(() => {
-        console.log("Setting weekdays:", weekdaysArray);
-        setSelectedDays(weekdaysArray);
-      }, 0);
-      
       setIsRecurring(scheduleToEdit.isRecurring);
       if (scheduleToEdit.date) {
         setDate(scheduleToEdit.date);
       }
       setCallRetry(scheduleToEdit.callRetry);
       setAdvanceNotice(scheduleToEdit.advanceNotice);
+      
+      // Now handle the weekdays separately
+      let weekdaysArray: string[] = [];
+      
+      // Handle different formats of weekdays - could be array or string
+      if (Array.isArray(scheduleToEdit.weekdays)) {
+        weekdaysArray = [...scheduleToEdit.weekdays];
+        console.log("Weekdays is already an array:", weekdaysArray);
+      } else if (typeof scheduleToEdit.weekdays === 'string') {
+        weekdaysArray = scheduleToEdit.weekdays.split(','); 
+        console.log("Converted weekdays string to array:", weekdaysArray);
+      }
+      
+      // Set the weekdays all at once instead of clearing first - this avoids the hooks issue
+      if (weekdaysArray.length > 0) {
+        console.log("Setting weekdays for edited schedule:", weekdaysArray);
+        setSelectedDays(weekdaysArray);
+      }
     }
   }, [scheduleToEdit]);
 
@@ -312,23 +317,9 @@ export default function ScheduleCall() {
     );
   }
 
-  // Set default weekdays for new schedules only (runs only once on page load)
-  // This needs to be placed after the Edit useEffect to ensure it doesn't override the edit data
-  useEffect(() => {
-    // We only want to run this on initial mount and only for new schedules
-    if (!editingScheduleId && !scheduleIdToEdit && selectedDays.length === 0) {
-      // Add a small delay to ensure we're not in an edit mode
-      const timer = setTimeout(() => {
-        if (!editingScheduleId && selectedDays.length === 0) {
-          console.log("Setting default weekdays (Mon-Fri) for new schedule");
-          setSelectedDays(["mon", "tue", "wed", "thu", "fri"]);
-        }
-      }, 100);
-      
-      return () => clearTimeout(timer);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array means this only runs once when component mounts
+  // We've moved the default weekdays initialization to the useState declaration
+  // This ensures it only runs once during component initialization
+  // and doesn't conflict with the editing useEffect
 
   // Only render the schedule form if user is verified
   return (
