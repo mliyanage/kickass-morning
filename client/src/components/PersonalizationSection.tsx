@@ -48,18 +48,7 @@ const voices = [
 ];
 
 export function PersonalizationSection() {
-  const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const queryClient = useQueryClient();
-  
-  // States for personalization
-  const [isEditing, setIsEditing] = useState(false);
-  const [goal, setGoal] = useState<GoalType | "">("");
-  const [otherGoal, setOtherGoal] = useState("");
-  const [struggle, setStruggle] = useState<StruggleType | "">("");
-  const [otherStruggle, setOtherStruggle] = useState("");
-  const [voice, setVoice] = useState("");
-  const [customVoice, setCustomVoice] = useState("");
   
   // Fetch existing personalization data
   const { data: personalizationData, isLoading } = useQuery<PersonalizationData>({
@@ -67,98 +56,13 @@ export function PersonalizationSection() {
     retry: false
   });
   
-  // Set initial values from fetched data
-  useEffect(() => {
-    if (personalizationData) {
-      setGoal(personalizationData.goal);
-      setOtherGoal(personalizationData.otherGoal || "");
-      setStruggle(personalizationData.struggle);
-      setOtherStruggle(personalizationData.otherStruggle || "");
-      setVoice(personalizationData.customVoice ? "" : personalizationData.voice);
-      setCustomVoice(personalizationData.customVoice || "");
-    }
-  }, [personalizationData]);
-  
-  // Personalization mutation
-  const submitPersonalizationMutation = useMutation({
-    mutationFn: async (data: PersonalizationData) => {
-      return await apiRequest("POST", "/api/user/personalization", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Preferences saved",
-        description: "Your personalization settings have been saved.",
-      });
-      setIsEditing(false);
-      queryClient.invalidateQueries({ queryKey: ['/api/user/personalization'] });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Failed to save preferences",
-        description: error.message || "Please try again later.",
-      });
-    }
-  });
-  
-  const handleSubmit = () => {
-    if (!goal) {
-      toast({
-        variant: "destructive",
-        title: "Please select a goal",
-        description: "Choose your primary goal for waking up early.",
-      });
-      return;
-    }
-    
-    if (goal === GoalType.OTHER && !otherGoal) {
-      toast({
-        variant: "destructive",
-        title: "Please specify your goal",
-        description: "Tell us about your custom goal.",
-      });
-      return;
-    }
-    
-    if (!struggle) {
-      toast({
-        variant: "destructive",
-        title: "Please select a struggle",
-        description: "Choose your biggest struggle with waking up early.",
-      });
-      return;
-    }
-    
-    if (struggle === StruggleType.OTHER && !otherStruggle) {
-      toast({
-        variant: "destructive",
-        title: "Please specify your struggle",
-        description: "Tell us about your custom struggle.",
-      });
-      return;
-    }
-    
-    if (!voice && !customVoice) {
-      toast({
-        variant: "destructive",
-        title: "Please select a voice",
-        description: "Choose an inspirational figure's voice or enter a custom one.",
-      });
-      return;
-    }
-    
-    const personalData: PersonalizationData = {
-      goal: goal as GoalType,
-      otherGoal: goal === GoalType.OTHER ? otherGoal : undefined,
-      goalDescription: "",
-      struggle: struggle as StruggleType,
-      otherStruggle: struggle === StruggleType.OTHER ? otherStruggle : undefined,
-      voice: voice || customVoice,
-      customVoice: customVoice || undefined
-    };
-    
-    submitPersonalizationMutation.mutate(personalData);
-  };
+  // Local variables for displaying personalization data
+  const goal = personalizationData?.goal || "";
+  const otherGoal = personalizationData?.otherGoal || "";
+  const struggle = personalizationData?.struggle || "";
+  const otherStruggle = personalizationData?.otherStruggle || "";
+  const voice = personalizationData?.customVoice ? "" : (personalizationData?.voice || "");
+  const customVoice = personalizationData?.customVoice || "";
   
   // Helper function to get goal display text
   const getGoalText = (goal: GoalType | string) => {
@@ -221,11 +125,11 @@ export function PersonalizationSection() {
                   Personalize your wake-up calls to match your goals and motivations
                 </CardDescription>
               </div>
-              {!isEditing && personalizationData && (
+              {personalizationData && (
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => setLocation("/personalization")}
                   className="flex items-center text-xs"
                 >
                   <Settings className="mr-1 h-3 w-3" />
@@ -235,140 +139,11 @@ export function PersonalizationSection() {
             </div>
           </CardHeader>
           <CardContent>
-            {isEditing || !personalizationData ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Goal selection */}
-                  <div>
-                    <Label htmlFor="personal-goal">Your wake-up goal</Label>
-                    <Select 
-                      value={goal} 
-                      onValueChange={(value) => setGoal(value as GoalType)}
-                    >
-                      <SelectTrigger id="personal-goal" className="mt-1">
-                        <SelectValue placeholder="Select your goal" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value={GoalType.EXERCISE}>Morning Exercise</SelectItem>
-                          <SelectItem value={GoalType.PRODUCTIVITY}>Work Productivity</SelectItem>
-                          <SelectItem value={GoalType.STUDY}>Study or Learning</SelectItem>
-                          <SelectItem value={GoalType.MEDITATION}>Meditation & Mindfulness</SelectItem>
-                          <SelectItem value={GoalType.CREATIVE}>Creative Projects</SelectItem>
-                          <SelectItem value={GoalType.OTHER}>Other</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    
-                    {goal === GoalType.OTHER && (
-                      <div className="mt-2">
-                        <Input 
-                          placeholder="Please specify your goal"
-                          value={otherGoal}
-                          onChange={(e) => setOtherGoal(e.target.value)}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Struggle selection */}
-                  <div>
-                    <Label htmlFor="wake-struggle">Your biggest struggle</Label>
-                    <Select 
-                      value={struggle} 
-                      onValueChange={(value) => setStruggle(value as StruggleType)}
-                    >
-                      <SelectTrigger id="wake-struggle" className="mt-1">
-                        <SelectValue placeholder="Select your struggle" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value={StruggleType.TIRED}>Feeling tired and groggy</SelectItem>
-                          <SelectItem value={StruggleType.LACK_OF_MOTIVATION}>Lack of motivation</SelectItem>
-                          <SelectItem value={StruggleType.SNOOZE}>Hitting snooze multiple times</SelectItem>
-                          <SelectItem value={StruggleType.STAY_UP_LATE}>Staying up too late</SelectItem>
-                          <SelectItem value={StruggleType.OTHER}>Other</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    
-                    {struggle === StruggleType.OTHER && (
-                      <div className="mt-2">
-                        <Input 
-                          placeholder="Please specify your struggle"
-                          value={otherStruggle}
-                          onChange={(e) => setOtherStruggle(e.target.value)}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Voice selection */}
-                <div>
-                  <Label className="block">Select a motivational voice</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
-                    {voices.map((v) => (
-                      <div 
-                        key={v.id}
-                        className={`flex items-center p-2 border rounded cursor-pointer hover:bg-gray-50 ${voice === v.id ? 'ring-2 ring-primary border-transparent' : ''}`}
-                        onClick={() => {
-                          setVoice(v.id);
-                          setCustomVoice("");
-                        }}
-                      >
-                        <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
-                          <img src={v.imageUrl} alt={v.name} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{v.name}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="mt-3">
-                    <Label htmlFor="custom-voice">Other person not listed?</Label>
-                    <Input 
-                      id="custom-voice" 
-                      className="mt-1"
-                      placeholder="Enter name"
-                      value={customVoice}
-                      onChange={(e) => {
-                        setCustomVoice(e.target.value);
-                        setVoice("");
-                      }}
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex justify-end space-x-3 pt-3">
-                  {personalizationData && (
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setIsEditing(false);
-                        // Reset to previous values
-                        if (personalizationData) {
-                          setGoal(personalizationData.goal);
-                          setOtherGoal(personalizationData.otherGoal || "");
-                          setStruggle(personalizationData.struggle);
-                          setOtherStruggle(personalizationData.otherStruggle || "");
-                          setVoice(personalizationData.customVoice ? "" : personalizationData.voice);
-                          setCustomVoice(personalizationData.customVoice || "");
-                        }
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  )}
-                  <Button 
-                    onClick={handleSubmit}
-                    disabled={submitPersonalizationMutation.isPending}
-                  >
-                    {submitPersonalizationMutation.isPending ? "Saving..." : personalizationData ? "Update Preferences" : "Save Preferences"}
-                  </Button>
-                </div>
+            {!personalizationData ? (
+              <div className="flex justify-center p-4">
+                <Button onClick={() => setLocation("/personalization")}>
+                  Set Up Your Preferences
+                </Button>
               </div>
             ) : (
               // Display summary view
