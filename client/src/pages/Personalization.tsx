@@ -345,14 +345,23 @@ export default function Personalization() {
               <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">How Your Wake-Up Calls Are Personalized</h3>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  Your wake-up calls are uniquely crafted to help you with <span className="text-primary-600 font-medium">
-                  {goal === GoalType.OTHER
-                    ? otherGoal.toLowerCase()
-                    : getGoalText(goal).toLowerCase()}</span>, 
-                  specifically addressing your struggle with <span className="text-primary-600 font-medium">
-                  {struggle === StruggleType.OTHER
-                    ? otherStruggle.toLowerCase()
-                    : getStruggleText(struggle).toLowerCase()}</span>, 
+                  Your wake-up calls are uniquely crafted to help you with your goals: 
+                  <span className="text-primary-600 font-medium">
+                    {goals.map((g, index) => (
+                      <span key={index}>
+                        {index > 0 && ", "}
+                        {g === GoalType.OTHER ? otherGoal.toLowerCase() : getGoalText(g).toLowerCase()}
+                      </span>
+                    ))}
+                  </span>, 
+                  specifically addressing your struggles with <span className="text-primary-600 font-medium">
+                    {struggles.map((s, index) => (
+                      <span key={index}>
+                        {index > 0 && ", "}
+                        {s === StruggleType.OTHER ? otherStruggle.toLowerCase() : getStruggleText(s).toLowerCase()}
+                      </span>
+                    ))}
+                  </span>, 
                   and delivered in the inspiring voice of <span className="text-primary-600 font-medium">{getVoiceText()}</span>.
                 </p>
                 <div className="mt-4 flex justify-center">
@@ -424,53 +433,144 @@ export default function Personalization() {
             
               <div>
                 <Label htmlFor="personal-goal" className="text-base font-medium">
-                  What's your primary goal for waking up early?
+                  What are your goals for waking up early?
                 </Label>
-                <p className="text-sm text-gray-500 mt-1 mb-2">
-                  Choose the main reason you want to get out of bed each morning
+                <p className="text-sm text-gray-500 mt-1 mb-4">
+                  Select one or more reasons why you want to get out of bed each morning
                 </p>
-                <Select
-                  value={goal}
-                  onValueChange={(value) => setGoal(value as GoalType)}
-                >
-                  <SelectTrigger id="personal-goal" className="w-full mt-1">
-                    <SelectValue placeholder="Select your goal" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value={GoalType.EXERCISE}>
-                        Morning Exercise
-                      </SelectItem>
-                      <SelectItem value={GoalType.PRODUCTIVITY}>
-                        Work Productivity
-                      </SelectItem>
-                      <SelectItem value={GoalType.STUDY}>
-                        Study or Learning
-                      </SelectItem>
-                      <SelectItem value={GoalType.MEDITATION}>
-                        Meditation & Mindfulness
-                      </SelectItem>
-                      <SelectItem value={GoalType.CREATIVE}>
-                        Creative Projects
-                      </SelectItem>
-                      <SelectItem value={GoalType.OTHER}>Other</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                {goal && goal !== GoalType.OTHER && (
-                  <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-600">
-                    {goal === GoalType.EXERCISE && "Wake up early to prioritize fitness and physical wellbeing through morning workouts."}
-                    {goal === GoalType.PRODUCTIVITY && "Start your day ahead of schedule to maximize work output and professional achievements."}
-                    {goal === GoalType.STUDY && "Dedicate early morning hours to focused learning and educational advancement."}
-                    {goal === GoalType.MEDITATION && "Begin each day with clarity through mindfulness practices and mental preparation."}
-                    {goal === GoalType.CREATIVE && "Harness your morning creative energy for artistic projects and innovative thinking."}
-                  </div>
-                )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <SelectionCard
+                    id="exercise-goal"
+                    title="Morning Exercise"
+                    description="Wake up early to prioritize fitness and physical wellbeing"
+                    icon={<Dumbbell className="h-5 w-5" />}
+                    iconColor="text-blue-500"
+                    selected={goals.includes(GoalType.EXERCISE)}
+                    onSelect={() => {
+                      if (goals.includes(GoalType.EXERCISE)) {
+                        setGoals(goals.filter(g => g !== GoalType.EXERCISE));
+                      } else {
+                        setGoals([...goals, GoalType.EXERCISE]);
+                      }
+                    }}
+                    tips={[
+                      "Morning workouts boost metabolism all day",
+                      "Exercise releases endorphins for a positive start",
+                      "Fewer distractions and interruptions in the morning"
+                    ]}
+                    example="I want to complete my 30-minute HIIT workout before the day gets busy"
+                  />
+                  
+                  <SelectionCard
+                    id="productivity-goal"
+                    title="Work Productivity"
+                    description="Start your day ahead of schedule to maximize work output"
+                    icon={<Briefcase className="h-5 w-5" />}
+                    iconColor="text-indigo-500"
+                    selected={goals.includes(GoalType.PRODUCTIVITY)}
+                    onSelect={() => {
+                      if (goals.includes(GoalType.PRODUCTIVITY)) {
+                        setGoals(goals.filter(g => g !== GoalType.PRODUCTIVITY));
+                      } else {
+                        setGoals([...goals, GoalType.PRODUCTIVITY]);
+                      }
+                    }}
+                    tips={[
+                      "Morning hours have fewer distractions",
+                      "Get a head start on daily priorities",
+                      "Tackle complex tasks when your mind is fresh"
+                    ]}
+                    example="I need to finish key work tasks before meetings begin"
+                  />
+                  
+                  <SelectionCard
+                    id="study-goal"
+                    title="Study & Learning"
+                    description="Dedicate early morning hours to education and skill building"
+                    icon={<GraduationCap className="h-5 w-5" />}
+                    iconColor="text-green-500"
+                    selected={goals.includes(GoalType.STUDY)}
+                    onSelect={() => {
+                      if (goals.includes(GoalType.STUDY)) {
+                        setGoals(goals.filter(g => g !== GoalType.STUDY));
+                      } else {
+                        setGoals([...goals, GoalType.STUDY]);
+                      }
+                    }}
+                    tips={[
+                      "The brain is most receptive to new information in the morning",
+                      "Consistent study time builds lasting habits",
+                      "Morning learning sets a positive tone for the day"
+                    ]}
+                    example="I want to study for my certification exam for 45 minutes every day"
+                  />
+                  
+                  <SelectionCard
+                    id="meditation-goal"
+                    title="Meditation & Mindfulness"
+                    description="Begin each day with mental clarity and spiritual practice"
+                    icon={<SunMedium className="h-5 w-5" />}
+                    iconColor="text-amber-500"
+                    selected={goals.includes(GoalType.MEDITATION)}
+                    onSelect={() => {
+                      if (goals.includes(GoalType.MEDITATION)) {
+                        setGoals(goals.filter(g => g !== GoalType.MEDITATION));
+                      } else {
+                        setGoals([...goals, GoalType.MEDITATION]);
+                      }
+                    }}
+                    tips={[
+                      "Morning meditation reduces stress throughout the day",
+                      "Quiet morning hours are ideal for mindfulness",
+                      "Start with just 5-10 minutes to build a sustainable habit"
+                    ]}
+                    example="I want to meditate for 15 minutes to set a positive intention for my day"
+                  />
+                  
+                  <SelectionCard
+                    id="creative-goal"
+                    title="Creative Projects"
+                    description="Harness your morning creative energy for artistic endeavors"
+                    icon={<PaintBucket className="h-5 w-5" />}
+                    iconColor="text-pink-500"
+                    selected={goals.includes(GoalType.CREATIVE)}
+                    onSelect={() => {
+                      if (goals.includes(GoalType.CREATIVE)) {
+                        setGoals(goals.filter(g => g !== GoalType.CREATIVE));
+                      } else {
+                        setGoals([...goals, GoalType.CREATIVE]);
+                      }
+                    }}
+                    tips={[
+                      "Creative thinking is often strongest in the morning",
+                      "Work on personal projects before daily demands take over",
+                      "Morning light is excellent for artistic activities"
+                    ]}
+                    example="I want to write, paint, or work on my side project for an hour each morning"
+                  />
+                  
+                  <SelectionCard
+                    id="other-goal"
+                    title="Custom Goal"
+                    description="Tell us about your unique morning motivation"
+                    icon={<Sparkles className="h-5 w-5" />}
+                    iconColor="text-purple-500"
+                    selected={goals.includes(GoalType.OTHER)}
+                    onSelect={() => {
+                      if (goals.includes(GoalType.OTHER)) {
+                        setGoals(goals.filter(g => g !== GoalType.OTHER));
+                      } else {
+                        setGoals([...goals, GoalType.OTHER]);
+                      }
+                    }}
+                  />
+                </div>
               </div>
 
-              {goal === GoalType.OTHER && (
-                <div>
-                  <Label htmlFor="other-goal" className="text-base font-medium">Please specify your goal</Label>
+              {goals.includes(GoalType.OTHER) && (
+                <div className="mt-4 mb-4 p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+                  <Label htmlFor="other-goal" className="text-base font-medium">Please specify your custom goal</Label>
                   <p className="text-sm text-gray-500 mt-1 mb-2">
                     Tell us about your unique morning motivation
                   </p>
@@ -539,98 +639,123 @@ export default function Personalization() {
             
               <div>
                 <Label className="mb-3 block text-base font-medium">
-                  What's your biggest struggle with waking up early?
+                  What are your struggles with waking up early?
                 </Label>
                 <p className="text-sm text-gray-500 mb-4">
-                  Select the main obstacle that keeps you from getting out of bed
+                  Select one or more obstacles that keep you from getting out of bed
                 </p>
                 
-                <RadioGroup
-                  value={struggle}
-                  onValueChange={(value) => setStruggle(value as StruggleType)}
-                >
-                  <div className="grid gap-3">
-                    <div className="flex items-start space-x-3 p-3 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => setStruggle(StruggleType.TIRED)}>
-                      <RadioGroupItem
-                        value={StruggleType.TIRED}
-                        id="struggle-1"
-                        className="mt-1"
-                      />
-                      <div>
-                        <Label htmlFor="struggle-1" className="font-medium">
-                          Feeling tired and groggy
-                        </Label>
-                        <p className="text-xs text-gray-500 mt-1">
-                          You wake up feeling exhausted and have difficulty becoming alert and energized
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3 p-3 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => setStruggle(StruggleType.LACK_OF_MOTIVATION)}>
-                      <RadioGroupItem
-                        value={StruggleType.LACK_OF_MOTIVATION}
-                        id="struggle-2"
-                        className="mt-1"
-                      />
-                      <div>
-                        <Label htmlFor="struggle-2" className="font-medium">Lack of motivation</Label>
-                        <p className="text-xs text-gray-500 mt-1">
-                          You know you should get up but can't find the willpower or a compelling reason to do so
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3 p-3 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => setStruggle(StruggleType.SNOOZE)}>
-                      <RadioGroupItem
-                        value={StruggleType.SNOOZE}
-                        id="struggle-3"
-                        className="mt-1"
-                      />
-                      <div>
-                        <Label htmlFor="struggle-3" className="font-medium">
-                          Hitting snooze multiple times
-                        </Label>
-                        <p className="text-xs text-gray-500 mt-1">
-                          You constantly delay getting up by hitting the snooze button, losing valuable morning time
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3 p-3 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => setStruggle(StruggleType.STAY_UP_LATE)}>
-                      <RadioGroupItem
-                        value={StruggleType.STAY_UP_LATE}
-                        id="struggle-4"
-                        className="mt-1"
-                      />
-                      <div>
-                        <Label htmlFor="struggle-4" className="font-medium">Staying up too late</Label>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Night-time habits make it difficult to get sufficient sleep, affecting your morning routine
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3 p-3 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => setStruggle(StruggleType.OTHER)}>
-                      <RadioGroupItem
-                        value={StruggleType.OTHER}
-                        id="struggle-5"
-                        className="mt-1"
-                      />
-                      <div>
-                        <Label htmlFor="struggle-5" className="font-medium">Other</Label>
-                        <p className="text-xs text-gray-500 mt-1">
-                          You face a different challenge that isn't listed here
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </RadioGroup>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <SelectionCard
+                    id="tired-struggle"
+                    title="Feeling Tired & Groggy"
+                    description="You wake up feeling exhausted with low energy levels"
+                    icon={<Moon className="h-5 w-5" />}
+                    iconColor="text-blue-500"
+                    selected={struggles.includes(StruggleType.TIRED)}
+                    onSelect={() => {
+                      if (struggles.includes(StruggleType.TIRED)) {
+                        setStruggles(struggles.filter(s => s !== StruggleType.TIRED));
+                      } else {
+                        setStruggles([...struggles, StruggleType.TIRED]);
+                      }
+                    }}
+                    tips={[
+                      "May be caused by poor sleep quality or sleep debt",
+                      "Can be improved with consistent sleep schedules",
+                      "Morning light exposure helps reset your body clock"
+                    ]}
+                    example="I feel like I could sleep for 3 more hours every morning"
+                  />
+                  
+                  <SelectionCard
+                    id="motivation-struggle"
+                    title="Lack of Motivation"
+                    description="You can't find a compelling reason to get out of bed"
+                    icon={<HeartPulse className="h-5 w-5" />}
+                    iconColor="text-red-500"
+                    selected={struggles.includes(StruggleType.LACK_OF_MOTIVATION)}
+                    onSelect={() => {
+                      if (struggles.includes(StruggleType.LACK_OF_MOTIVATION)) {
+                        setStruggles(struggles.filter(s => s !== StruggleType.LACK_OF_MOTIVATION));
+                      } else {
+                        setStruggles([...struggles, StruggleType.LACK_OF_MOTIVATION]);
+                      }
+                    }}
+                    tips={[
+                      "Setting exciting morning goals can help",
+                      "Rewarding yourself for getting up creates positive reinforcement",
+                      "Visualizing the benefits of early rising can increase motivation"
+                    ]}
+                    example="I know I should get up but can't find the willpower to do it"
+                  />
+                  
+                  <SelectionCard
+                    id="snooze-struggle"
+                    title="Hitting Snooze Repeatedly"
+                    description="You constantly delay getting up with the snooze button"
+                    icon={<AlarmClock className="h-5 w-5" />}
+                    iconColor="text-amber-500"
+                    selected={struggles.includes(StruggleType.SNOOZE)}
+                    onSelect={() => {
+                      if (struggles.includes(StruggleType.SNOOZE)) {
+                        setStruggles(struggles.filter(s => s !== StruggleType.SNOOZE));
+                      } else {
+                        setStruggles([...struggles, StruggleType.SNOOZE]);
+                      }
+                    }}
+                    tips={[
+                      "Moving your alarm away from your bed can help",
+                      "Fragmented sleep from snoozing can make you more tired",
+                      "Creating an immediate morning activity builds momentum"
+                    ]}
+                    example="I hit snooze 5+ times every morning before finally getting up"
+                  />
+                  
+                  <SelectionCard
+                    id="late-night-struggle"
+                    title="Staying Up Too Late"
+                    description="Night-time habits affect your ability to wake up refreshed"
+                    icon={<Laptop className="h-5 w-5" />}
+                    iconColor="text-indigo-500"
+                    selected={struggles.includes(StruggleType.STAY_UP_LATE)}
+                    onSelect={() => {
+                      if (struggles.includes(StruggleType.STAY_UP_LATE)) {
+                        setStruggles(struggles.filter(s => s !== StruggleType.STAY_UP_LATE));
+                      } else {
+                        setStruggles([...struggles, StruggleType.STAY_UP_LATE]);
+                      }
+                    }}
+                    tips={[
+                      "Creating an evening routine can signal your body to wind down",
+                      "Reducing screen time before bed improves sleep quality",
+                      "Consistent bedtimes help regulate your sleep-wake cycle"
+                    ]}
+                    example="I get caught in late night activities and can't stop myself from staying up"
+                  />
+                  
+                  <SelectionCard
+                    id="other-struggle"
+                    title="Custom Struggle"
+                    description="Tell us about your unique morning challenge"
+                    icon={<HelpCircle className="h-5 w-5" />}
+                    iconColor="text-purple-500"
+                    selected={struggles.includes(StruggleType.OTHER)}
+                    onSelect={() => {
+                      if (struggles.includes(StruggleType.OTHER)) {
+                        setStruggles(struggles.filter(s => s !== StruggleType.OTHER));
+                      } else {
+                        setStruggles([...struggles, StruggleType.OTHER]);
+                      }
+                    }}
+                  />
+                </div>
               </div>
 
-              {struggle === StruggleType.OTHER && (
-                <div>
+              {struggles.includes(StruggleType.OTHER) && (
+                <div className="mt-4 mb-4 p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50">
                   <Label htmlFor="other-struggle" className="text-base font-medium">
-                    Please specify your struggle
+                    Please specify your custom struggle
                   </Label>
                   <p className="text-sm text-gray-500 mt-1 mb-2">
                     Tell us about your unique morning challenge
