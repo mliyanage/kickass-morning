@@ -138,22 +138,21 @@ export default function Personalization() {
       // Handle goals array (backward compatibility)
       if (Array.isArray(personalizationData.goals)) {
         setGoals(personalizationData.goals);
-      } else if ((personalizationData as any).goal) {
+      } else if (personalizationData.goal) {
         // Handle legacy single goal data
-        setGoals([(personalizationData as any).goal as GoalType]);
+        setGoals([personalizationData.goal as GoalType]);
       } else {
         setGoals([]);
       }
       
       setOtherGoal(personalizationData.otherGoal || "");
-      setGoalDescription(personalizationData.goalDescription || "");
       
       // Handle struggles array (backward compatibility)
       if (Array.isArray(personalizationData.struggles)) {
         setStruggles(personalizationData.struggles);
-      } else if ((personalizationData as any).struggle) {
+      } else if (personalizationData.struggle) {
         // Handle legacy single struggle data
-        setStruggles([(personalizationData as any).struggle as StruggleType]);
+        setStruggles([personalizationData.struggle as StruggleType]);
       } else {
         setStruggles([]);
       }
