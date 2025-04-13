@@ -589,8 +589,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           callRetry: validatedData.callRetry,
           advanceNotice: validatedData.advanceNotice,
           // We keep the goal, struggle and voice from personalization
-          goalType: personalization.goals?.[0] || personalization.goal, // Use first goal from array or fallback to legacy
-          struggleType: personalization.struggles?.[0] || personalization.struggle, // Use first struggle from array or fallback to legacy
+          goalType: personalization.goals?.[0] || (personalization as any).goal, // Use first goal from array or fallback to legacy
+          struggleType: personalization.struggles?.[0] || (personalization as any).struggle, // Use first struggle from array or fallback to legacy
           voiceId: personalization.voice
         });
         
@@ -643,8 +643,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         date: validatedData.date,
         callRetry: validatedData.callRetry,
         advanceNotice: validatedData.advanceNotice,
-        goalType: personalization.goals?.[0] || personalization.goal, // Use first goal from array or fallback to legacy
-        struggleType: personalization.struggles?.[0] || personalization.struggle, // Use first struggle from array or fallback to legacy
+        goalType: personalization.goals?.[0] || (personalization as any).goal, // Use first goal from array or fallback to legacy
+        struggleType: personalization.struggles?.[0] || (personalization as any).struggle, // Use first struggle from array or fallback to legacy
         voiceId: personalization.voice,
         isActive: true
       });
