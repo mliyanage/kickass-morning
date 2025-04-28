@@ -37,11 +37,14 @@ export interface IStorage {
   getUserSchedules(userId: number): Promise<Schedule[]>;
   updateScheduleStatus(id: number, isActive: boolean): Promise<Schedule | undefined>;
   updateSchedule(id: number, data: any): Promise<Schedule | undefined>;
+  getPendingSchedules(currentTime?: Date): Promise<Schedule[]>; // Get schedules that should be called now
+  updateLastCalledTime(scheduleId: number, time?: Date): Promise<void>; // Update last called time for a schedule
   
   // Call history related
   createCallHistory(data: any): Promise<CallHistoryEntry>;
   getCallHistory(id: number): Promise<CallHistoryEntry | undefined>;
   getUserCallHistory(userId: number): Promise<CallHistoryEntry[]>;
+  updateCallStatus(callSid: string, status: CallStatus, recordingUrl?: string): Promise<void>; // Update status based on webhook
 }
 
 export class MemStorage implements IStorage {
@@ -425,6 +428,68 @@ export class MemStorage implements IStorage {
       .filter((call) => call.userId === userId)
       // Sort by call time (descending)
       .sort((a, b) => new Date(b.callTime).getTime() - new Date(a.callTime).getTime());
+  }
+  
+  // New methods for scheduler
+  async getPendingSchedules(currentTime: Date = new Date()): Promise<Schedule[]> {
+    const now = currentTime;
+    const currentDay = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][now.getDay()];
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    
+    // Format current time as HH:MM for comparison
+    const currentTimeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+    
+    return Array.from(this.schedules.values()).filter(schedule => {
+      // Only consider active schedules
+      if (!schedule.isActive) return false;
+      
+      // Check if this schedule has been called recently (within last 5 minutes)
+      const lastCalled = schedule.lastCalled ? new Date(schedule.lastCalled) : null;
+      if (lastCalled && (now.getTime() - lastCalled.getTime() < 5 * 60 * 1000)) {
+        return false;
+      }
+      
+      // For recurring schedules, check if current day is in weekdays and time matches
+      if (schedule.isRecurring) {
+        const weekdays = Array.isArray(schedule.weekdays) 
+          ? schedule.weekdays 
+          : (schedule.weekdays?.split(',') || []);
+          
+        return weekdays.includes(currentDay) && schedule.wakeupTime === currentTimeStr;
+      }
+      
+      // For one-time schedules, check if date and time match
+      if (!schedule.isRecurring && schedule.date) {
+        const scheduleDate = new Date(schedule.date);
+        return scheduleDate.toDateString() === now.toDateString() && 
+               schedule.wakeupTime === currentTimeStr;
+      }
+      
+      return false;
+    });
+  }
+  
+  async updateLastCalledTime(scheduleId: number, time: Date = new Date()): Promise<void> {
+    const schedule = this.schedules.get(scheduleId);
+    if (schedule) {
+      schedule.lastCalled = time.toISOString();
+      this.schedules.set(scheduleId, schedule);
+    }
+  }
+  
+  async updateCallStatus(callSid: string, status: CallStatus, recordingUrl?: string): Promise<void> {
+    // Find call history entry by callSid
+    for (const [id, callEntry] of this.callHistory.entries()) {
+      if (callEntry.callSid === callSid) {
+        callEntry.status = status;
+        if (recordingUrl) {
+          callEntry.recordingUrl = recordingUrl;
+        }
+        this.callHistory.set(id, callEntry);
+        return;
+      }
+    }
   }
 }
 
