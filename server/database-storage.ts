@@ -14,7 +14,7 @@ import {
   callHistory
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, lt, gt, desc, sql } from "drizzle-orm";
+import { eq, and, or, lt, gt, desc, sql } from "drizzle-orm";
 import { IStorage } from "./storage";
 
 export class DatabaseStorage implements IStorage {
@@ -448,5 +448,111 @@ export class DatabaseStorage implements IStorage {
       .from(callHistory)
       .where(eq(callHistory.userId, userId))
       .orderBy(desc(callHistory.callTime));
+  }
+
+  // New methods for scheduler
+  async getPendingSchedules(currentTime: Date = new Date()): Promise<Schedule[]> {
+    // We'll implement timezone-aware schedule detection using SQL
+    try {
+      console.log("Checking for pending schedules at", currentTime.toISOString());
+      
+      const currentDay = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][currentTime.getDay()];
+      const currentTimeStr = currentTime.toTimeString().substring(0, 5); // HH:MM format
+      
+      console.log(`Current day: ${currentDay}, Current time: ${currentTimeStr}`);
+      
+      // Use select() instead of execute() for type safety
+      // For recurring schedules
+      const recurringSchedules = await db
+        .select()
+        .from(schedules)
+        .innerJoin(users, eq(schedules.userId, users.id))
+        .where(
+          and(
+            eq(schedules.isActive, true),
+            eq(schedules.isRecurring, true),
+            sql`${schedules.weekdays} LIKE ${`%${currentDay}%`}`,
+            eq(schedules.wakeupTime, currentTimeStr),
+            // Handle the last_called condition
+            or(
+              sql`${schedules.lastCalled} IS NULL`,
+              sql`${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'`
+            )
+          )
+        );
+      
+      // For one-time schedules
+      const todayStr = currentTime.toISOString().split('T')[0]; // YYYY-MM-DD format
+      const oneTimeSchedules = await db
+        .select()
+        .from(schedules)
+        .innerJoin(users, eq(schedules.userId, users.id))
+        .where(
+          and(
+            eq(schedules.isActive, true),
+            eq(schedules.isRecurring, false),
+            eq(schedules.date, todayStr),
+            eq(schedules.wakeupTime, currentTimeStr),
+            // Handle the last_called condition
+            or(
+              sql`${schedules.lastCalled} IS NULL`,
+              sql`${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'`
+            )
+          )
+        );
+      
+      // Extract just the schedule objects and combine results
+      const results = [
+        ...recurringSchedules.map(r => r.schedules),
+        ...oneTimeSchedules.map(r => r.schedules)
+      ];
+      
+      console.log(`Found ${results.length} pending schedules (${recurringSchedules.length} recurring, ${oneTimeSchedules.length} one-time)`);
+      
+      // Process each schedule to convert comma-separated values to arrays
+      return results.map(schedule => {
+        // Handle weekdays conversion
+        const updatedSchedule = { ...schedule };
+        if (typeof updatedSchedule.weekdays === 'string') {
+          updatedSchedule.weekdays = updatedSchedule.weekdays.split(',');
+        }
+        return updatedSchedule;
+      });
+    } catch (error) {
+      console.error("Error checking pending schedules:", error);
+      return [];
+    }
+  }
+  
+  async updateLastCalledTime(scheduleId: number, time: Date = new Date()): Promise<void> {
+    try {
+      await db
+        .update(schedules)
+        .set({
+          lastCalled: time.toISOString(), // Convert Date to ISO string for storage
+          updatedAt: new Date()
+        } as any) // Type assertion to avoid TypeScript errors
+        .where(eq(schedules.id, scheduleId));
+      
+      console.log(`Updated last called time for schedule ${scheduleId} to ${time.toISOString()}`);
+    } catch (error) {
+      console.error(`Error updating last called time for schedule ${scheduleId}:`, error);
+    }
+  }
+  
+  async updateCallStatus(callSid: string, status: CallStatus, recordingUrl?: string): Promise<void> {
+    try {
+      // Find the call history entry by call SID using a raw SQL query
+      // since our schema doesn't include callSid as a column in our TypeScript definitions
+      const updateQuery = recordingUrl 
+        ? sql`UPDATE call_history SET status = ${status}, recording_url = ${recordingUrl} WHERE call_sid = ${callSid}`
+        : sql`UPDATE call_history SET status = ${status} WHERE call_sid = ${callSid}`;
+      
+      await db.execute(updateQuery);
+      
+      console.log(`Updated call status for SID ${callSid} to ${status}`);
+    } catch (error) {
+      console.error(`Error updating call status for SID ${callSid}:`, error);
+    }
   }
 }

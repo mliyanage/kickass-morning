@@ -84,6 +84,7 @@ export const schedules = pgTable("schedules", {
   struggleType: text("struggle_type").notNull(),
   voiceId: text("voice_id").notNull(),
   isActive: boolean("is_active").default(true),
+  lastCalled: timestamp("last_called"),  // When the schedule was last used to make a call
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
