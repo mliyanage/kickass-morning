@@ -925,6 +925,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Twilio webhook for call status updates
+  app.post("/api/webhooks/twilio/status", async (req: Request, res: Response) => {
+    try {
+      console.log("Received Twilio webhook:", req.body);
+      
+      // Extract data from the webhook
+      const { CallSid, CallStatus, RecordingUrl } = req.body;
+      
+      if (!CallSid) {
+        return res.status(400).json({ message: "Missing CallSid parameter" });
+      }
+      
+      // Map Twilio call status to our status enum
+      let status: CallStatus;
+      switch (CallStatus) {
+        case 'completed':
+          status = CallStatus.ANSWERED;
+          break;
+        case 'no-answer':
+        case 'busy':
+          status = CallStatus.MISSED;
+          break;
+        case 'failed':
+        case 'canceled':
+          status = CallStatus.FAILED;
+          break;
+        default:
+          // For statuses like 'ringing', 'in-progress', don't update yet
+          console.log(`Ignoring interim Twilio status update: ${CallStatus}`);
+          return res.sendStatus(200);
+      }
+      
+      // Update the call status in the database
+      await storage.updateCallStatus(CallSid, status, RecordingUrl);
+      
+      // Respond to Twilio
+      res.sendStatus(200);
+    } catch (error) {
+      console.error("Error handling Twilio webhook:", error);
+      // Always return 200 to Twilio even if we have an error
+      res.sendStatus(200);
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
 
