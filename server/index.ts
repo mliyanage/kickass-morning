@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import { fileURLToPath } from 'url';
+import { startCallScheduler, startCleanupScheduler } from "./scheduler";
 
 // Create dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -75,5 +76,20 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Start the schedulers
+    try {
+      log("Starting scheduled tasks...");
+      
+      // Start the call scheduler to check for pending calls every minute
+      startCallScheduler();
+      
+      // Start the cleanup scheduler to remove old audio files
+      startCleanupScheduler();
+      
+      log("Scheduled tasks started successfully");
+    } catch (error) {
+      console.error("Failed to start scheduled tasks:", error);
+    }
   });
 })();
