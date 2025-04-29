@@ -474,26 +474,25 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(schedules.isActive, true),
             eq(schedules.isRecurring, true),
-            sql`${schedules.weekdays} LIKE ${`%${currentDay}%`}`,
+            sql`${schedules.weekdays} LIKE ${'%' + currentDay + '%'}`,
             // Time window: wakeup_time is between 10 minutes ago and now
             sql`${schedules.wakeupTime} >= ${tenMinutesAgoStr} AND ${schedules.wakeupTime} <= ${currentTimeStr}`,
-            // Only consider schedules that:
+            // Only consider schedules that either:
             or(
               // Have never been called before
               sql`${schedules.lastCalled} IS NULL`,
-              // OR were called more than 5 minutes ago AND didn't succeed
+              // Were called more than 5 minutes ago
+              sql`${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'`
+            ),
+            // And if they've been called before, make sure it wasn't successfully answered
+            or(
+              sql`${schedules.lastCallStatus} IS NULL`,
+              sql`${schedules.lastCallStatus} != ${CallStatus.ANSWERED}`,
               and(
-                sql`${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'`,
+                eq(schedules.callRetry, true),
                 or(
-                  // Either we don't know the status yet
-                  sql`${schedules.lastCallStatus} IS NULL`,
-                  // Or it wasn't successfully answered
-                  sql`${schedules.lastCallStatus} != '${CallStatus.ANSWERED}'`,
-                  // And if they have callRetry enabled, also include failed calls
-                  and(
-                    eq(schedules.callRetry, true),
-                    sql`${schedules.lastCallStatus} = '${CallStatus.FAILED}' OR ${schedules.lastCallStatus} = '${CallStatus.MISSED}'`
-                  )
+                  sql`${schedules.lastCallStatus} = ${CallStatus.FAILED}`,
+                  sql`${schedules.lastCallStatus} = ${CallStatus.MISSED}`
                 )
               )
             )
@@ -513,23 +512,22 @@ export class DatabaseStorage implements IStorage {
             eq(schedules.date, todayStr),
             // Time window: wakeup_time is between 10 minutes ago and now
             sql`${schedules.wakeupTime} >= ${tenMinutesAgoStr} AND ${schedules.wakeupTime} <= ${currentTimeStr}`,
-            // Only consider schedules that:
+            // Only consider schedules that either:
             or(
               // Have never been called before
               sql`${schedules.lastCalled} IS NULL`,
-              // OR were called more than 5 minutes ago AND didn't succeed
+              // Were called more than 5 minutes ago
+              sql`${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'`
+            ),
+            // And if they've been called before, make sure it wasn't successfully answered
+            or(
+              sql`${schedules.lastCallStatus} IS NULL`,
+              sql`${schedules.lastCallStatus} != ${CallStatus.ANSWERED}`,
               and(
-                sql`${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'`,
+                eq(schedules.callRetry, true),
                 or(
-                  // Either we don't know the status yet
-                  sql`${schedules.lastCallStatus} IS NULL`,
-                  // Or it wasn't successfully answered
-                  sql`${schedules.lastCallStatus} != '${CallStatus.ANSWERED}'`,
-                  // And if they have callRetry enabled, also include failed calls
-                  and(
-                    eq(schedules.callRetry, true),
-                    sql`${schedules.lastCallStatus} = '${CallStatus.FAILED}' OR ${schedules.lastCallStatus} = '${CallStatus.MISSED}'`
-                  )
+                  sql`${schedules.lastCallStatus} = ${CallStatus.FAILED}`,
+                  sql`${schedules.lastCallStatus} = ${CallStatus.MISSED}`
                 )
               )
             )

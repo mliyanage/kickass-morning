@@ -60,6 +60,7 @@ export async function makeCall(
   status: CallStatus;
   duration: number | null;
   recordingUrl: string | null;
+  callSid?: string;
 }> {
   try {
     // In development mode, just simulate success
@@ -79,6 +80,7 @@ export async function makeCall(
           status: CallStatus.ANSWERED,
           duration: 60, // Simulate a 60-second call
           recordingUrl: audioResult.url,
+          callSid: "MOCK_" + Math.random().toString(36).substring(2, 12),
         };
       } catch (error: any) {
         log(`Error generating mock audio: ${error.message}`, "twilio");
@@ -88,6 +90,7 @@ export async function makeCall(
           status: CallStatus.ANSWERED,
           duration: 60,
           recordingUrl: "https://example.com/mock-recording.mp3",
+          callSid: "MOCK_ERROR_" + Math.random().toString(36).substring(2, 12),
         };
       }
     }
@@ -131,9 +134,10 @@ export async function makeCall(
 
     // Return the call results
     return {
-      status: CallStatus.ANSWERED, // Optimistic assumption
+      status: CallStatus.PENDING, // Initial status - will be updated by webhook
       duration: null, // We don't know the duration yet
       recordingUrl: audioResult.url, // Store the relative URL for our own records
+      callSid: call.sid, // Store the Twilio Call SID for tracking
     };
   } catch (error: any) {
     console.error("Error making call:", error);
@@ -146,6 +150,7 @@ export async function makeCall(
       status: CallStatus.FAILED,
       duration: null,
       recordingUrl: null,
+      callSid: `ERROR_${Date.now()}`,
     };
   }
 }
