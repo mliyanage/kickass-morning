@@ -452,32 +452,19 @@ export class DatabaseStorage implements IStorage {
 
   // New methods for scheduler
   async getPendingSchedules(currentTime: Date = new Date()): Promise<Schedule[]> {
-    // We'll implement timezone-aware schedule detection using SQL with a time window for resilience
+    // We'll fetch all active schedules first, then filter based on timezone conversion
     try {
       console.log("Checking for pending schedules at", currentTime.toISOString());
       
-      const currentDay = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][currentTime.getDay()];
-      const currentTimeStr = currentTime.toTimeString().substring(0, 5); // HH:MM format
-      
-      // Calculate times for our 10-minute window
-      const tenMinutesAgo = new Date(currentTime.getTime() - 10 * 60 * 1000);
-      const tenMinutesAgoStr = tenMinutesAgo.toTimeString().substring(0, 5);
-      
-      console.log(`Current day: ${currentDay}, Current time window: ${tenMinutesAgoStr} to ${currentTimeStr}`);
-      
-      // For recurring schedules - using a time window instead of exact time match
-      const recurringSchedules = await db
+      // Get all active schedules - we'll filter them in memory with timezone awareness
+      const allActiveSchedules = await db
         .select()
         .from(schedules)
         .innerJoin(users, eq(schedules.userId, users.id))
         .where(
           and(
             eq(schedules.isActive, true),
-            eq(schedules.isRecurring, true),
-            sql`${schedules.weekdays} LIKE ${'%' + currentDay + '%'}`,
-            // Time window: wakeup_time is between 10 minutes ago and now
-            sql`${schedules.wakeupTime} >= ${tenMinutesAgoStr} AND ${schedules.wakeupTime} <= ${currentTimeStr}`,
-            // Only consider schedules that either:
+            // Check for call status/retry rules - these apply regardless of timezone
             or(
               // Have never been called before
               sql`${schedules.lastCalled} IS NULL`,
@@ -499,52 +486,79 @@ export class DatabaseStorage implements IStorage {
           )
         );
       
-      // For one-time schedules - similar logic but for non-recurring schedules
-      const todayStr = currentTime.toISOString().split('T')[0]; // YYYY-MM-DD format
-      const oneTimeSchedules = await db
-        .select()
-        .from(schedules)
-        .innerJoin(users, eq(schedules.userId, users.id))
-        .where(
-          and(
-            eq(schedules.isActive, true),
-            eq(schedules.isRecurring, false),
-            eq(schedules.date, todayStr),
-            // Time window: wakeup_time is between 10 minutes ago and now
-            sql`${schedules.wakeupTime} >= ${tenMinutesAgoStr} AND ${schedules.wakeupTime} <= ${currentTimeStr}`,
-            // Only consider schedules that either:
-            or(
-              // Have never been called before
-              sql`${schedules.lastCalled} IS NULL`,
-              // Were called more than 5 minutes ago
-              sql`${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'`
-            ),
-            // And if they've been called before, make sure it wasn't successfully answered
-            or(
-              sql`${schedules.lastCallStatus} IS NULL`,
-              sql`${schedules.lastCallStatus} != ${CallStatus.ANSWERED}`,
-              and(
-                eq(schedules.callRetry, true),
-                or(
-                  sql`${schedules.lastCallStatus} = ${CallStatus.FAILED}`,
-                  sql`${schedules.lastCallStatus} = ${CallStatus.MISSED}`
-                )
-              )
-            )
-          )
-        );
+      // Extract schedules from join results
+      const allSchedules = allActiveSchedules.map(r => r.schedules);
+      console.log(`Found ${allSchedules.length} active schedules to check against timezones`);
       
-      // Extract just the schedule objects and combine results
-      const results = [
-        ...recurringSchedules.map(r => r.schedules),
-        ...oneTimeSchedules.map(r => r.schedules)
-      ];
+      // Import the required functions from date-fns-tz
+      const { zonedTimeToUtc, utcToZonedTime, format } = await import('date-fns-tz');
+      const { getDay } = await import('date-fns');
       
-      console.log(`Found ${results.length} pending schedules (${recurringSchedules.length} recurring, ${oneTimeSchedules.length} one-time)`);
+      // Current date in UTC for reference
+      const now = currentTime;
+      const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
       
-      // Process each schedule to convert comma-separated values to arrays
-      // But return as-is for type compatibility with the rest of the system
-      return results;
+      // Filter schedules based on timezone comparison
+      const pendingSchedules = allSchedules.filter(schedule => {
+        try {
+          // Get the current time in the user's timezone
+          const userTimeZone = schedule.timezone;
+          const userLocalTime = utcToZonedTime(now, userTimeZone);
+          const userLocalTimeMinus10 = utcToZonedTime(tenMinutesAgo, userTimeZone);
+          
+          // Format times for comparison with the schedule's wakeup time
+          const userCurrentTimeStr = format(userLocalTime, 'HH:mm');
+          const userTenMinutesAgoStr = format(userLocalTimeMinus10, 'HH:mm');
+          
+          // Get day of week in user's timezone (0-6, where 0 is Sunday)
+          const userDayOfWeek = getDay(userLocalTime);
+          const userDayStr = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][userDayOfWeek];
+          
+          // For debugging
+          console.log(`Schedule ${schedule.id}: User timezone=${userTimeZone}, ` +
+                      `local time=${userCurrentTimeStr}, day=${userDayStr}, ` +
+                      `wakeup time=${schedule.wakeupTime}, weekdays=${schedule.weekdays}`);
+          
+          // For recurring schedules, check if today is one of the scheduled days
+          if (schedule.isRecurring) {
+            const weekdaysArray = typeof schedule.weekdays === 'string' 
+              ? schedule.weekdays.split(',') 
+              : schedule.weekdays;
+              
+            const isDayMatch = weekdaysArray.includes(userDayStr);
+            if (!isDayMatch) {
+              console.log(`Schedule ${schedule.id}: Day doesn't match (user day: ${userDayStr}, schedule days: ${weekdaysArray})`);
+              return false;
+            }
+          } else {
+            // For one-time schedules, check if today is the scheduled date
+            const todayStr = format(userLocalTime, 'yyyy-MM-dd');
+            if (schedule.date !== todayStr) {
+              console.log(`Schedule ${schedule.id}: Date doesn't match (user date: ${todayStr}, schedule date: ${schedule.date})`);
+              return false;
+            }
+          }
+          
+          // Check if the current time is within the wakeup window
+          const isTimeMatch = schedule.wakeupTime >= userTenMinutesAgoStr && 
+                             schedule.wakeupTime <= userCurrentTimeStr;
+                             
+          if (!isTimeMatch) {
+            console.log(`Schedule ${schedule.id}: Time doesn't match (user time window: ${userTenMinutesAgoStr}-${userCurrentTimeStr}, wakeup time: ${schedule.wakeupTime})`);
+          } else {
+            console.log(`Schedule ${schedule.id}: MATCH! Time to wake up!`);
+          }
+          
+          return isTimeMatch;
+        } catch (error) {
+          console.error(`Error processing timezone for schedule ${schedule.id}:`, error);
+          return false; // Skip this schedule if there's an error
+        }
+      });
+      
+      console.log(`Found ${pendingSchedules.length} pending schedules after timezone processing`);
+      
+      return pendingSchedules;
     } catch (error) {
       console.error("Error checking pending schedules:", error);
       return [];
