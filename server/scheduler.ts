@@ -3,7 +3,7 @@ import { storage } from "./storage";
 import { CallStatus } from "@shared/schema";
 import { makeCall } from "./twilio";
 import { generateVoiceMessage } from "./openai";
-import { generateSpeechAudio } from "./openai";
+import { generateAudioFile, cleanupOldAudioFiles } from "./audio-utils";
 import path from "path";
 import fs from "fs";
 
@@ -108,17 +108,22 @@ async function processScheduledCalls() {
           goalDescription // Pass as otherGoal
         );
 
-        // We'll skip the audio generation for now since there's a type issue between
-        // our generateSpeechAudio (which returns Buffer) and what our makeCall expects
+        // Generate an audio file from the message text
+        console.log(`Generating audio for message: ${messageText.substring(0, 100)}...`);
         
-        // Instead, we'll just use the text directly for the call
-        console.log(`Using text message for call: ${messageText.substring(0, 100)}...`);
-
+        let audioUrl: string | null = null;
+        try {
+          // Use our new utility to generate and save the audio file
+          const audioResult = await generateAudioFile(messageText, schedule.voiceId);
+          audioUrl = audioResult.url;
+          console.log(`Generated audio file at ${audioResult.filePath}, available at ${audioUrl}`);
+        } catch (error) {
+          console.error('Failed to generate audio for call:', error);
+          // Continue with text only if audio generation fails
+        }
+        
         // Make the call
-        console.log(`Making call to ${user.phone} with text message`);
-        
-        // No audio file needed for now
-        // const audioUrl = `/audio-cache/${path.basename(audioFilePath)}`;
+        console.log(`Making call to ${user.phone} with ${audioUrl ? 'audio' : 'text'} message`);
         
         // Create a history record before making the call
         const callHistory = await storage.createCallHistory({
@@ -130,12 +135,16 @@ async function processScheduledCalls() {
         });
         
         // Make the call with Twilio
-        // Note: the actual makeCall function requires a message and voiceId, not an audioFilePath
-        // We need to modify the approach here - either update the Twilio function or change our approach
+        // Use the generated message text if we have audio, otherwise use a fallback message
+        let messageToUse = messageText;
         
-        // For now, we'll create our own TwiML message
-        const message = `This is your scheduled wake-up call for ${schedule.wakeupTime}`;
-        const callResult = await makeCall(user.phone, message, schedule.voiceId);
+        // If we couldn't generate the audio, use a simpler message
+        if (!audioUrl) {
+          messageToUse = `Good morning! This is your scheduled wake-up call for ${schedule.wakeupTime}. Time to start your day and focus on your ${mainGoal} goals.`;
+        }
+        
+        // Make the call
+        const callResult = await makeCall(user.phone, messageToUse, schedule.voiceId);
 
         // Update the last called time for this schedule
         await storage.updateLastCalledTime(schedule.id);
@@ -157,39 +166,8 @@ async function processScheduledCalls() {
  * This should be run periodically to prevent disk space issues
  */
 export async function cleanupTempAudioFiles() {
-  const audioDirectory = path.join(process.cwd(), "audio-cache");
-  
-  // Ensure directory exists
-  if (!fs.existsSync(audioDirectory)) {
-    console.log("Audio directory doesn't exist, nothing to clean up");
-    return;
-  }
-  
-  try {
-    // Get all files in the directory
-    const files = fs.readdirSync(audioDirectory);
-    
-    // Get current time
-    const now = new Date().getTime();
-    
-    // Delete files older than 24 hours
-    let deletedCount = 0;
-    for (const file of files) {
-      const filePath = path.join(audioDirectory, file);
-      const stats = fs.statSync(filePath);
-      
-      // Check if file is older than 24 hours
-      const fileAge = (now - stats.mtime.getTime()) / (1000 * 60 * 60); // Age in hours
-      if (fileAge > 24) {
-        fs.unlinkSync(filePath);
-        deletedCount++;
-      }
-    }
-    
-    console.log(`Cleaned up ${deletedCount} old audio files`);
-  } catch (error) {
-    console.error("Error cleaning up audio files:", error);
-  }
+  // Use the utility function from audio-utils.ts
+  await cleanupOldAudioFiles(24);
 }
 
 // Schedule cleanup to run once a day
