@@ -452,17 +452,20 @@ export class DatabaseStorage implements IStorage {
 
   // New methods for scheduler
   async getPendingSchedules(currentTime: Date = new Date()): Promise<Schedule[]> {
-    // We'll implement timezone-aware schedule detection using SQL
+    // We'll implement timezone-aware schedule detection using SQL with a time window for resilience
     try {
       console.log("Checking for pending schedules at", currentTime.toISOString());
       
       const currentDay = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][currentTime.getDay()];
       const currentTimeStr = currentTime.toTimeString().substring(0, 5); // HH:MM format
       
-      console.log(`Current day: ${currentDay}, Current time: ${currentTimeStr}`);
+      // Calculate times for our 10-minute window
+      const tenMinutesAgo = new Date(currentTime.getTime() - 10 * 60 * 1000);
+      const tenMinutesAgoStr = tenMinutesAgo.toTimeString().substring(0, 5);
       
-      // Use select() instead of execute() for type safety
-      // For recurring schedules
+      console.log(`Current day: ${currentDay}, Current time window: ${tenMinutesAgoStr} to ${currentTimeStr}`);
+      
+      // For recurring schedules - using a time window instead of exact time match
       const recurringSchedules = await db
         .select()
         .from(schedules)
@@ -472,16 +475,32 @@ export class DatabaseStorage implements IStorage {
             eq(schedules.isActive, true),
             eq(schedules.isRecurring, true),
             sql`${schedules.weekdays} LIKE ${`%${currentDay}%`}`,
-            eq(schedules.wakeupTime, currentTimeStr),
-            // Handle the last_called condition
+            // Time window: wakeup_time is between 10 minutes ago and now
+            sql`${schedules.wakeupTime} >= ${tenMinutesAgoStr} AND ${schedules.wakeupTime} <= ${currentTimeStr}`,
+            // Only consider schedules that:
             or(
+              // Have never been called before
               sql`${schedules.lastCalled} IS NULL`,
-              sql`${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'`
+              // OR were called more than 5 minutes ago AND didn't succeed
+              and(
+                sql`${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'`,
+                or(
+                  // Either we don't know the status yet
+                  sql`${schedules.lastCallStatus} IS NULL`,
+                  // Or it wasn't successfully answered
+                  sql`${schedules.lastCallStatus} != '${CallStatus.ANSWERED}'`,
+                  // And if they have callRetry enabled, also include failed calls
+                  and(
+                    eq(schedules.callRetry, true),
+                    sql`${schedules.lastCallStatus} = '${CallStatus.FAILED}' OR ${schedules.lastCallStatus} = '${CallStatus.MISSED}'`
+                  )
+                )
+              )
             )
           )
         );
       
-      // For one-time schedules
+      // For one-time schedules - similar logic but for non-recurring schedules
       const todayStr = currentTime.toISOString().split('T')[0]; // YYYY-MM-DD format
       const oneTimeSchedules = await db
         .select()
@@ -492,11 +511,27 @@ export class DatabaseStorage implements IStorage {
             eq(schedules.isActive, true),
             eq(schedules.isRecurring, false),
             eq(schedules.date, todayStr),
-            eq(schedules.wakeupTime, currentTimeStr),
-            // Handle the last_called condition
+            // Time window: wakeup_time is between 10 minutes ago and now
+            sql`${schedules.wakeupTime} >= ${tenMinutesAgoStr} AND ${schedules.wakeupTime} <= ${currentTimeStr}`,
+            // Only consider schedules that:
             or(
+              // Have never been called before
               sql`${schedules.lastCalled} IS NULL`,
-              sql`${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'`
+              // OR were called more than 5 minutes ago AND didn't succeed
+              and(
+                sql`${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'`,
+                or(
+                  // Either we don't know the status yet
+                  sql`${schedules.lastCallStatus} IS NULL`,
+                  // Or it wasn't successfully answered
+                  sql`${schedules.lastCallStatus} != '${CallStatus.ANSWERED}'`,
+                  // And if they have callRetry enabled, also include failed calls
+                  and(
+                    eq(schedules.callRetry, true),
+                    sql`${schedules.lastCallStatus} = '${CallStatus.FAILED}' OR ${schedules.lastCallStatus} = '${CallStatus.MISSED}'`
+                  )
+                )
+              )
             )
           )
         );
@@ -510,31 +545,32 @@ export class DatabaseStorage implements IStorage {
       console.log(`Found ${results.length} pending schedules (${recurringSchedules.length} recurring, ${oneTimeSchedules.length} one-time)`);
       
       // Process each schedule to convert comma-separated values to arrays
-      return results.map(schedule => {
-        // Handle weekdays conversion
-        const updatedSchedule = { ...schedule };
-        if (typeof updatedSchedule.weekdays === 'string') {
-          updatedSchedule.weekdays = updatedSchedule.weekdays.split(',');
-        }
-        return updatedSchedule;
-      });
+      // But return as-is for type compatibility with the rest of the system
+      return results;
     } catch (error) {
       console.error("Error checking pending schedules:", error);
       return [];
     }
   }
   
-  async updateLastCalledTime(scheduleId: number, time: Date = new Date()): Promise<void> {
+  async updateLastCalledTime(
+    scheduleId: number, 
+    time: Date = new Date(), 
+    callStatus: CallStatus = CallStatus.PENDING,
+    callSid?: string
+  ): Promise<void> {
     try {
       await db
         .update(schedules)
         .set({
           lastCalled: time.toISOString(), // Convert Date to ISO string for storage
+          lastCallStatus: callStatus,
+          lastCallSid: callSid || null,
           updatedAt: new Date()
         } as any) // Type assertion to avoid TypeScript errors
         .where(eq(schedules.id, scheduleId));
       
-      console.log(`Updated last called time for schedule ${scheduleId} to ${time.toISOString()}`);
+      console.log(`Updated last called time for schedule ${scheduleId} to ${time.toISOString()} with status ${callStatus}`);
     } catch (error) {
       console.error(`Error updating last called time for schedule ${scheduleId}:`, error);
     }
@@ -542,13 +578,35 @@ export class DatabaseStorage implements IStorage {
   
   async updateCallStatus(callSid: string, status: CallStatus, recordingUrl?: string): Promise<void> {
     try {
-      // Find the call history entry by call SID using a raw SQL query
-      // since our schema doesn't include callSid as a column in our TypeScript definitions
+      // Step 1: Update the call history record
       const updateQuery = recordingUrl 
         ? sql`UPDATE call_history SET status = ${status}, recording_url = ${recordingUrl} WHERE call_sid = ${callSid}`
         : sql`UPDATE call_history SET status = ${status} WHERE call_sid = ${callSid}`;
       
       await db.execute(updateQuery);
+      
+      // Step 2: Find the related schedule using the callSid
+      // First, get the call history entry to find the schedule ID
+      const result = await db.execute(
+        sql`SELECT schedule_id FROM call_history WHERE call_sid = ${callSid}`
+      );
+      
+      // Extract the result from the QueryResult
+      const rows = result as any;
+      
+      // Step 3: If we found a related schedule, update its last call status too
+      if (rows && rows.length > 0 && rows[0].schedule_id) {
+        const scheduleId = rows[0].schedule_id;
+        await db
+          .update(schedules)
+          .set({
+            lastCallStatus: status,
+            updatedAt: new Date()
+          } as any)
+          .where(eq(schedules.id, scheduleId));
+        
+        console.log(`Updated schedule ${scheduleId} last call status to ${status}`);
+      }
       
       console.log(`Updated call status for SID ${callSid} to ${status}`);
     } catch (error) {

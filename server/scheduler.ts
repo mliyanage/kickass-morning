@@ -146,8 +146,13 @@ async function processScheduledCalls() {
         // Make the call
         const callResult = await makeCall(user.phone, messageToUse, schedule.voiceId);
 
-        // Update the last called time for this schedule
-        await storage.updateLastCalledTime(schedule.id);
+        // Update the last called time and status for this schedule
+        await storage.updateLastCalledTime(
+          schedule.id,           // Schedule ID
+          new Date(),            // Current time
+          CallStatus.PENDING,    // Initial status
+          callResult?.callSid    // Twilio Call SID if available
+        );
 
         // Log success
         console.log(`Call successfully sent to ${user.phone}, status: ${callResult.status}`);

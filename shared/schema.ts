@@ -85,6 +85,8 @@ export const schedules = pgTable("schedules", {
   voiceId: text("voice_id").notNull(),
   isActive: boolean("is_active").default(true),
   lastCalled: timestamp("last_called"),  // When the schedule was last used to make a call
+  lastCallStatus: text("last_call_status"), // Status of the last call (ANSWERED, MISSED, FAILED)
+  lastCallSid: text("last_call_sid"),    // Twilio SID of the last call for tracking
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
