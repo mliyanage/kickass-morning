@@ -138,9 +138,9 @@ export default function ScheduleCall() {
         return {
           id: 12,
           userId: 3,
-          wakeupTime: "20:00",
+          wakeupTime: "19:30",
           timezone: "Australia/Sydney",
-          weekdays: ["sat"],
+          weekdays: ["sat", "fri"],
           isRecurring: true,
           date: null,
           callRetry: true,
@@ -197,7 +197,9 @@ export default function ScheduleCall() {
       
       // First, update the simple fields
       setEditingScheduleId(scheduleToEdit.id);
+      console.log("Setting wakeup time to:", scheduleToEdit.wakeupTime);
       setWakeupTime(scheduleToEdit.wakeupTime || "06:30");
+      console.log("Setting timezone to:", scheduleToEdit.timezone);
       setTimezone(scheduleToEdit.timezone || "America/New_York");
       setIsRecurring(scheduleToEdit.isRecurring !== undefined ? scheduleToEdit.isRecurring : true);
       if (scheduleToEdit.date) {
