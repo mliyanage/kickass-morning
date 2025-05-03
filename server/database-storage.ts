@@ -771,19 +771,31 @@ export class DatabaseStorage implements IStorage {
     callSid?: string
   ): Promise<void> {
     try {
-      await db
-        .update(schedules)
-        .set({
-          lastCalled: time.toISOString(), // Convert Date to ISO string for storage
-          lastCallStatus: callStatus,
-          lastCallSid: callSid || null,
-          updatedAt: new Date()
-        } as any) // Type assertion to avoid TypeScript errors
-        .where(eq(schedules.id, scheduleId));
+      // For now use raw SQL to avoid type conversion issues
+      const lastCalledDate = time instanceof Date ? time : new Date();
+      const isoString = lastCalledDate.toISOString();
       
-      console.log(`Updated last called time for schedule ${scheduleId} to ${time.toISOString()} with status ${callStatus}`);
+      console.log(`Updating schedule ${scheduleId} with lastCalled:`, isoString, 'status:', callStatus, 'SID:', callSid);
+      
+      const updateQuery = sql`
+        UPDATE schedules 
+        SET last_called = ${isoString}::timestamp,
+            last_call_status = ${callStatus}, 
+            last_call_sid = ${callSid || null},
+            updated_at = NOW()
+        WHERE id = ${scheduleId}
+      `;
+      
+      await db.execute(updateQuery);
+      
+      console.log(`Updated last called time for schedule ${scheduleId} to ${isoString} with status ${callStatus}`);
     } catch (error) {
       console.error(`Error updating last called time for schedule ${scheduleId}:`, error);
+      // Print more details to debug the issue
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+        console.error('Error stack:', error.stack);
+      }
     }
   }
   
@@ -808,13 +820,16 @@ export class DatabaseStorage implements IStorage {
       // Step 3: If we found a related schedule, update its last call status too
       if (rows && rows.length > 0 && rows[0].schedule_id) {
         const scheduleId = rows[0].schedule_id;
-        await db
-          .update(schedules)
-          .set({
-            lastCallStatus: status,
-            updatedAt: new Date()
-          } as any)
-          .where(eq(schedules.id, scheduleId));
+        
+        // Use raw SQL to avoid type conversion issues
+        const scheduleUpdateQuery = sql`
+          UPDATE schedules 
+          SET last_call_status = ${status}, 
+              updated_at = NOW()
+          WHERE id = ${scheduleId}
+        `;
+        
+        await db.execute(scheduleUpdateQuery);
         
         console.log(`Updated schedule ${scheduleId} last call status to ${status}`);
       }
@@ -822,6 +837,10 @@ export class DatabaseStorage implements IStorage {
       console.log(`Updated call status for SID ${callSid} to ${status}`);
     } catch (error) {
       console.error(`Error updating call status for SID ${callSid}:`, error);
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+        console.error('Error stack:', error.stack);
+      }
     }
   }
 }

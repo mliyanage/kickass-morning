@@ -147,12 +147,32 @@ async function processScheduledCalls() {
         const callResult = await makeCall(user.phone, messageToUse, schedule.voiceId);
 
         // Update the last called time and status for this schedule
-        await storage.updateLastCalledTime(
-          schedule.id,           // Schedule ID
-          new Date(),            // Current time
-          CallStatus.PENDING,    // Initial status
-          callResult?.callSid    // Twilio Call SID if available
-        );
+        const currentTime = new Date();
+        console.log(`Updating schedule ${schedule.id} last called time:`, currentTime, typeof currentTime);
+        
+        try {
+          await storage.updateLastCalledTime(
+            schedule.id,           // Schedule ID
+            currentTime,           // Current time
+            CallStatus.PENDING,    // Initial status
+            callResult?.callSid    // Twilio Call SID if available
+          );
+        } catch (error) {
+          console.error(`Failed to update last called time for schedule ${schedule.id}:`, error);
+          
+          // Try with an ISO string directly as a fallback
+          try {
+            console.log("Attempting fallback with ISO string...");
+            await storage.updateLastCalledTime(
+              schedule.id,
+              new Date(), // Fresh date object
+              CallStatus.PENDING,
+              callResult?.callSid
+            );
+          } catch (fallbackError) {
+            console.error("Fallback also failed:", fallbackError);
+          }
+        }
 
         // Log success
         console.log(`Call successfully sent to ${user.phone}, status: ${callResult.status}`);
