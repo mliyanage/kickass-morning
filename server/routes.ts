@@ -559,8 +559,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Check if schedule exists and belongs to user
         const existingSchedule = await storage.getSchedule(scheduleId);
         console.log("Existing schedule found:", existingSchedule);
-        if (!existingSchedule || existingSchedule.userId !== req.session.userId) {
+        if (!existingSchedule) {
           return res.status(404).json({ message: "Schedule not found." });
+        }
+        
+        if (existingSchedule.userId !== req.session.userId) {
+          return res.status(403).json({ message: "You don't have permission to update this schedule." });
         }
         
         // Get user's personalization data
@@ -579,8 +583,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("Weekdays already a string:", formattedWeekdays);
         }
         
-        // Update the schedule
-        const updatedSchedule = await storage.updateSchedule(scheduleId, {
+        // Keep original goal, struggle and voice if they exist
+        const updateData = {
           wakeupTime: validatedData.wakeupTime,
           timezone: validatedData.timezone,
           weekdays: formattedWeekdays,
@@ -588,11 +592,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           date: validatedData.date,
           callRetry: validatedData.callRetry,
           advanceNotice: validatedData.advanceNotice,
-          // We keep the goal, struggle and voice from personalization
-          goalType: personalization.goals[0],
-          struggleType: personalization.struggles[0],
-          voiceId: personalization.voice
-        });
+          // Keep existing values if present, otherwise use from personalization
+          goalType: existingSchedule.goalType || personalization.goals[0],
+          struggleType: existingSchedule.struggleType || personalization.struggles[0],
+          voiceId: existingSchedule.voiceId || personalization.voice
+        };
+        
+        console.log("Updating schedule with data:", updateData);
+        
+        // Update the schedule
+        const updatedSchedule = await storage.updateSchedule(scheduleId, updateData);
         
         res.status(200).json({
           message: "Schedule updated successfully.",

@@ -141,11 +141,15 @@ export default function ScheduleCall() {
       console.log("Found schedule for editing:", schedule);
       if (schedule) {
         console.log("Schedule weekdays from API:", schedule.weekdays, "Type:", typeof schedule.weekdays);
+      } else {
+        console.error("Schedule not found for ID:", scheduleIdToEdit);
       }
       
       return schedule;
     },
     enabled: !!scheduleIdToEdit && !!userData?.authenticated,
+    // Prevent stale data by not caching
+    gcTime: 0
   });
 
   // Set form data from the schedule we're editing
@@ -282,6 +286,7 @@ export default function ScheduleCall() {
       advanceNotice
     };
     
+    console.log(`${editingScheduleId ? "Updating" : "Creating"} schedule:`, scheduleData);
     scheduleMutation.mutate(scheduleData);
   };
 
