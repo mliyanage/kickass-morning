@@ -132,29 +132,41 @@ export default function ScheduleCall() {
       
       console.log("Fetching schedule with ID:", scheduleIdToEdit);
       
-      // We used to have a hardcoded fix for schedule #12 here, but we're now getting data directly from the API
-      // This ensures we always have the most up-to-date data
-      
-      // Use the standard approach for other schedules
-      // We're using the GET all schedules endpoint and filtering client-side for simplicity
-      const response = await apiRequest("GET", "/api/schedule");
-      const allSchedules = await response.json();
-      console.log("All schedules:", allSchedules);
-      
-      // Find the specific schedule
-      console.log("Looking for schedule with ID:", scheduleIdToEdit, "Type:", typeof scheduleIdToEdit);
-      console.log("Schedule IDs in response:", allSchedules.map((s: Schedule) => s.id));
-      
-      const schedule = allSchedules.find((s: Schedule) => Number(s.id) === Number(scheduleIdToEdit)) || null;
-      
-      console.log("Found schedule for editing:", schedule);
-      if (schedule) {
-        console.log("Schedule weekdays from API:", schedule.weekdays, "Type:", typeof schedule.weekdays);
-      } else {
-        console.error("Schedule not found for ID:", scheduleIdToEdit);
+      try {
+        // Use the standard approach for other schedules
+        // We're using the GET all schedules endpoint and filtering client-side for simplicity
+        const response = await apiRequest("GET", "/api/schedule");
+        const allSchedules = await response.json();
+        console.log("All schedules:", allSchedules);
+        
+        // Find the specific schedule
+        console.log("Looking for schedule with ID:", scheduleIdToEdit, "Type:", typeof scheduleIdToEdit);
+        console.log("Schedule IDs in response:", allSchedules.map((s: Schedule) => s.id));
+        
+        const schedule = allSchedules.find((s: Schedule) => Number(s.id) === Number(scheduleIdToEdit)) || null;
+        
+        console.log("Found schedule for editing:", schedule);
+        if (schedule) {
+          console.log("Schedule data:", JSON.stringify(schedule));
+          console.log("Wakeup time from API:", schedule.wakeupTime);
+          console.log("Timezone from API:", schedule.timezone);
+          console.log("Weekdays from API:", schedule.weekdays, "Type:", typeof schedule.weekdays);
+          
+          // Create a direct object to return to ensure no reference issues
+          return {
+            ...schedule,
+            wakeupTime: schedule.wakeupTime,
+            timezone: schedule.timezone,
+            weekdays: Array.isArray(schedule.weekdays) ? [...schedule.weekdays] : []
+          };
+        } else {
+          console.error("Schedule not found for ID:", scheduleIdToEdit);
+          return null;
+        }
+      } catch (error) {
+        console.error("Error fetching schedule:", error);
+        throw error;
       }
-      
-      return schedule;
     },
     enabled: !!scheduleIdToEdit && !!userData?.authenticated,
     // Prevent stale data by not caching
@@ -175,14 +187,28 @@ export default function ScheduleCall() {
   // Set form data from the schedule we're editing
   useEffect(() => {
     if (scheduleToEdit) {
-      console.log("Editing schedule with ID:", scheduleToEdit.id);
+      console.log("Editing schedule with ID:", scheduleToEdit.id, "Full data:", scheduleToEdit);
       
       // First, update the simple fields
       setEditingScheduleId(scheduleToEdit.id);
-      console.log("Setting wakeup time to:", scheduleToEdit.wakeupTime);
-      setWakeupTime(scheduleToEdit.wakeupTime || "06:30");
-      console.log("Setting timezone to:", scheduleToEdit.timezone);
-      setTimezone(scheduleToEdit.timezone || "America/New_York");
+      
+      // Force-set the time to the correct value from the database
+      if (scheduleToEdit.wakeupTime) {
+        console.log("Setting wakeup time to:", scheduleToEdit.wakeupTime);
+        // Explicitly create a properly formatted time string (HH:MM)
+        const [hours, minutes] = scheduleToEdit.wakeupTime.split(':');
+        const formattedTime = `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+        console.log("Formatted time for input:", formattedTime);
+        setWakeupTime(formattedTime);
+      }
+      
+      // Force-set the timezone
+      if (scheduleToEdit.timezone) {
+        console.log("Setting timezone to:", scheduleToEdit.timezone);
+        setTimezone(scheduleToEdit.timezone);
+      }
+      
+      // Set the other fields
       setIsRecurring(scheduleToEdit.isRecurring !== undefined ? scheduleToEdit.isRecurring : true);
       if (scheduleToEdit.date) {
         setDate(scheduleToEdit.date);
