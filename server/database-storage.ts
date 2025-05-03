@@ -20,9 +20,23 @@ import { IStorage } from "./storage";
 // Helper function to get timezone offset in format +/-HH:MM
 function getTimezoneOffset(timezone: string): string {
   try {
-    // Get the current date in the specified timezone
+    // This is the current time in UTC
     const now = new Date();
-    const formatter = new Intl.DateTimeFormat('en-US', {
+    
+    // Format it once in UTC
+    const utcFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    
+    // And once in the target timezone
+    const tzFormatter = new Intl.DateTimeFormat('en-US', {
       timeZone: timezone,
       year: 'numeric',
       month: '2-digit',
@@ -30,23 +44,51 @@ function getTimezoneOffset(timezone: string): string {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: false,
-      timeZoneName: 'short'
+      hour12: false
     });
     
-    // Get the formatted date which includes the timezone abbreviation
-    const formattedDate = formatter.format(now);
+    // Get the parts of both
+    const utcParts = utcFormatter.formatToParts(now);
+    const tzParts = tzFormatter.formatToParts(now);
     
-    // Extract the timezone abbreviation (like EDT, PST, etc.)
-    const tzAbbr = formattedDate.split(' ').pop();
+    // Extract hours and minutes
+    const utcHour = parseInt(utcParts.find(part => part.type === 'hour')?.value || '0', 10);
+    const utcMinute = parseInt(utcParts.find(part => part.type === 'minute')?.value || '0', 10);
+    const tzHour = parseInt(tzParts.find(part => part.type === 'hour')?.value || '0', 10);
+    const tzMinute = parseInt(tzParts.find(part => part.type === 'minute')?.value || '0', 10);
     
-    // Get the timezone offset in minutes
-    const tzOffset = -now.getTimezoneOffset();
-    const hours = Math.floor(Math.abs(tzOffset) / 60);
-    const minutes = Math.abs(tzOffset) % 60;
+    // Compare dates to handle midnight crossing
+    const utcDay = parseInt(utcParts.find(part => part.type === 'day')?.value || '0', 10);
+    const tzDay = parseInt(tzParts.find(part => part.type === 'day')?.value || '0', 10);
+    
+    // Calculate offset in minutes
+    let offsetMinutes = (tzHour * 60 + tzMinute) - (utcHour * 60 + utcMinute);
+    
+    // Handle day crossing scenarios
+    if (tzDay > utcDay || (tzDay === 1 && utcDay > 27)) {
+      // Timezone is ahead by a day
+      offsetMinutes += 24 * 60;
+    } else if (utcDay > tzDay || (utcDay === 1 && tzDay > 27)) {
+      // Timezone is behind by a day
+      offsetMinutes -= 24 * 60;
+    }
+    
+    // Calculate hours and minutes of offset
+    const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
+    const offsetRemainingMinutes = Math.abs(offsetMinutes) % 60;
     
     // Format the offset as +/-HH:MM
-    return `${tzOffset >= 0 ? '+' : '-'}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    const sign = offsetMinutes >= 0 ? '+' : '-';
+    const result = `${sign}${offsetHours.toString().padStart(2, '0')}:${offsetRemainingMinutes.toString().padStart(2, '0')}`;
+    
+    // Log detailed offset calculation for debugging
+    console.log(`[TIMEZONE DEBUG] Calculated offset for ${timezone}:`);
+    console.log(`  UTC:  Day ${utcDay}, Time ${utcHour}:${utcMinute}`);
+    console.log(`  Local: Day ${tzDay}, Time ${tzHour}:${tzMinute}`);
+    console.log(`  Offset minutes: ${offsetMinutes}`);
+    console.log(`  Formatted offset: ${result}`);
+    
+    return result;
   } catch (error) {
     console.error(`Error getting timezone offset for ${timezone}:`, error);
     return '+00:00'; // Default to UTC if there's an error
