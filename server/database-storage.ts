@@ -373,12 +373,68 @@ export class DatabaseStorage implements IStorage {
 
   // Schedule related methods
   async createSchedule(data: any): Promise<Schedule> {
-    const [schedule] = await db
-      .insert(schedules)
-      .values(data)
-      .returning();
-    
-    return schedule;
+    try {
+      // Convert weekdays array to comma-separated string for storage
+      const weekdaysStr = Array.isArray(data.weekdays) ? data.weekdays.join(',') : data.weekdays;
+      
+      // Convert local time to UTC time for scheduling
+      const { zonedTimeToUtc, format } = await import('date-fns-tz');
+      
+      // Create a date object with the wake-up time in the user's timezone
+      const timeComponents = data.wakeupTime.split(':').map(n => parseInt(n, 10));
+      const today = new Date();
+      today.setHours(timeComponents[0], timeComponents[1], 0, 0);
+      
+      // Convert to UTC
+      const utcTime = zonedTimeToUtc(today, data.timezone);
+      const wakeupTimeUTC = format(utcTime, 'HH:mm');
+      
+      // For one-time schedules, also convert the date
+      let dateUTC = null;
+      if (!data.isRecurring && data.date) {
+        // Create a date object in local timezone
+        const [year, month, day] = data.date.split('-').map(n => parseInt(n, 10));
+        const localDate = new Date(year, month - 1, day); // Month is 0-indexed
+        localDate.setHours(timeComponents[0], timeComponents[1], 0, 0);
+        
+        // Convert to UTC date
+        const utcDate = zonedTimeToUtc(localDate, data.timezone);
+        dateUTC = format(utcDate, 'yyyy-MM-dd');
+      }
+      
+      console.log(`Creating schedule: Local time ${data.wakeupTime} (${data.timezone}) -> UTC time ${wakeupTimeUTC}`);
+      if (dateUTC) {
+        console.log(`One-time schedule: Local date ${data.date} -> UTC date ${dateUTC}`);
+      }
+      
+      // Insert schedule with both local and UTC times
+      const [schedule] = await db
+        .insert(schedules)
+        .values({
+          userId: data.userId,
+          wakeupTime: data.wakeupTime,       // Local time (for display)
+          wakeupTimeUTC: wakeupTimeUTC,      // UTC time (for scheduling)
+          timezone: data.timezone,
+          weekdays: weekdaysStr,
+          isRecurring: data.isRecurring,
+          date: data.date || null,           // Local date (for display)
+          dateUTC: dateUTC,                  // UTC date (for scheduling)
+          callRetry: data.callRetry,
+          advanceNotice: data.advanceNotice,
+          goalType: data.goalType,
+          struggleType: data.struggleType,
+          voiceId: data.voiceId,
+          isActive: data.isActive !== undefined ? data.isActive : true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      
+      return schedule;
+    } catch (error) {
+      console.error("Error creating schedule:", error);
+      throw error;
+    }
   }
 
   async getSchedule(id: number): Promise<Schedule | undefined> {
@@ -391,16 +447,77 @@ export class DatabaseStorage implements IStorage {
   }
   
   async updateSchedule(id: number, data: any): Promise<Schedule | undefined> {
-    const [schedule] = await db
-      .update(schedules)
-      .set({ 
-        ...data,
-        updatedAt: new Date() 
-      })
-      .where(eq(schedules.id, id))
-      .returning();
-    
-    return schedule;
+    try {
+      // Check if we're updating time or timezone related fields
+      const needsUTCUpdate = data.wakeupTime || data.timezone || data.date || 
+                            (data.isRecurring !== undefined && !data.isRecurring);
+
+      let updateData = { ...data, updatedAt: new Date() };
+      
+      if (needsUTCUpdate) {
+        // Get current schedule data
+        const currentSchedule = await this.getSchedule(id);
+        if (!currentSchedule) {
+          throw new Error(`Schedule with id ${id} not found`);
+        }
+
+        // Prepare data for UTC conversion
+        const { zonedTimeToUtc, format } = await import('date-fns-tz');
+        const timezone = data.timezone || currentSchedule.timezone;
+        const wakeupTime = data.wakeupTime || currentSchedule.wakeupTime;
+
+        // Convert time to UTC
+        const timeComponents = wakeupTime.split(':').map(n => parseInt(n, 10));
+        const today = new Date();
+        today.setHours(timeComponents[0], timeComponents[1], 0, 0);
+        
+        const utcTime = zonedTimeToUtc(today, timezone);
+        const wakeupTimeUTC = format(utcTime, 'HH:mm');
+        
+        // Handle date for one-time schedules
+        let dateUTC = null;
+        const isRecurring = data.isRecurring !== undefined ? data.isRecurring : currentSchedule.isRecurring;
+        const date = data.date || currentSchedule.date;
+        
+        if (!isRecurring && date) {
+          const [year, month, day] = date.split('-').map(n => parseInt(n, 10));
+          const localDate = new Date(year, month - 1, day);
+          localDate.setHours(timeComponents[0], timeComponents[1], 0, 0);
+          
+          const utcDate = zonedTimeToUtc(localDate, timezone);
+          dateUTC = format(utcDate, 'yyyy-MM-dd');
+        }
+        
+        console.log(`Updating schedule ${id}: Local time ${wakeupTime} (${timezone}) -> UTC time ${wakeupTimeUTC}`);
+        if (dateUTC) {
+          console.log(`One-time schedule: Local date ${date} -> UTC date ${dateUTC}`);
+        }
+        
+        // Add UTC fields to update data
+        updateData = {
+          ...updateData,
+          wakeupTimeUTC,
+          dateUTC
+        };
+      }
+      
+      // If weekdays is an array, convert to string
+      if (Array.isArray(updateData.weekdays)) {
+        updateData.weekdays = updateData.weekdays.join(',');
+      }
+      
+      // Update the schedule
+      const [schedule] = await db
+        .update(schedules)
+        .set(updateData)
+        .where(eq(schedules.id, id))
+        .returning();
+      
+      return schedule;
+    } catch (error) {
+      console.error(`Error updating schedule ${id}:`, error);
+      throw error;
+    }
   }
 
   async getUserSchedules(userId: number): Promise<Schedule[]> {
@@ -450,21 +567,118 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(callHistory.callTime));
   }
 
-  // New methods for scheduler
+  /**
+   * Update all existing schedules to include UTC times based on their local times
+   * This is a one-time migration function that should be run after adding the UTC columns
+   */
+  async migrateSchedulesToUTC(): Promise<void> {
+    try {
+      const { zonedTimeToUtc, format } = await import('date-fns-tz');
+      
+      // Get all schedules that don't have UTC times set
+      const schedulesToUpdate = await db
+        .select()
+        .from(schedules)
+        .where(sql`${schedules.wakeupTimeUTC} IS NULL`);
+      
+      console.log(`Found ${schedulesToUpdate.length} schedules to migrate to UTC`);
+      
+      // Update each schedule
+      for (const schedule of schedulesToUpdate) {
+        try {
+          // Create reference date using today's date with the schedule's time
+          // For example: '2025-04-29T05:30:00' for a 5:30 AM wakeup time
+          const timeComponents = schedule.wakeupTime.split(':').map(n => parseInt(n, 10));
+          const today = new Date();
+          today.setHours(timeComponents[0], timeComponents[1], 0, 0);
+          
+          // Convert local time to UTC
+          const utcTime = zonedTimeToUtc(today, schedule.timezone);
+          const utcTimeStr = format(utcTime, 'HH:mm');
+          
+          // For one-time schedules, also convert the date
+          let dateUTC = null;
+          if (!schedule.isRecurring && schedule.date) {
+            // Create a date object in local timezone
+            const [year, month, day] = schedule.date.split('-').map(n => parseInt(n, 10));
+            const localDate = new Date(year, month - 1, day); // Month is 0-indexed
+            localDate.setHours(timeComponents[0], timeComponents[1], 0, 0);
+            
+            // Convert to UTC date
+            const utcDate = zonedTimeToUtc(localDate, schedule.timezone);
+            dateUTC = format(utcDate, 'yyyy-MM-dd');
+          }
+          
+          // Update the schedule with UTC time
+          await db
+            .update(schedules)
+            .set({
+              wakeupTimeUTC: utcTimeStr,
+              dateUTC: dateUTC,
+              updatedAt: new Date()
+            })
+            .where(eq(schedules.id, schedule.id));
+          
+          console.log(`Migrated schedule ${schedule.id}: Local time ${schedule.wakeupTime} (${schedule.timezone}) -> UTC time ${utcTimeStr}`);
+        } catch (error) {
+          console.error(`Error migrating schedule ${schedule.id} to UTC:`, error);
+        }
+      }
+      
+      console.log('UTC migration complete');
+    } catch (error) {
+      console.error('Error migrating schedules to UTC:', error);
+    }
+  }
+
+  // New methods for scheduler using UTC times
   async getPendingSchedules(currentTime: Date = new Date()): Promise<Schedule[]> {
-    // We'll fetch all active schedules first, then filter based on timezone conversion
     try {
       console.log("Checking for pending schedules at", currentTime.toISOString());
       
-      // Get all active schedules - we'll filter them in memory with timezone awareness
-      const allActiveSchedules = await db
+      // First, ensure all schedules have UTC times
+      const schedulesWithoutUTC = await db
+        .select()
+        .from(schedules)
+        .where(sql`${schedules.wakeupTimeUTC} IS NULL`)
+        .limit(1);
+      
+      if (schedulesWithoutUTC.length > 0) {
+        console.log("Found schedules without UTC times. Running one-time migration...");
+        await this.migrateSchedulesToUTC();
+      }
+      
+      // Get current UTC time formatted as HH:MM
+      const currentUTCTimeStr = currentTime.toISOString().substring(11, 16);
+      
+      // Calculate time 10 minutes ago for the window
+      const tenMinutesAgo = new Date(currentTime.getTime() - 10 * 60 * 1000);
+      const tenMinutesAgoUTCStr = tenMinutesAgo.toISOString().substring(11, 16);
+      
+      // Current day of week in UTC (0-6, starting with Sunday)
+      const currentUTCDayOfWeek = currentTime.getUTCDay();
+      const currentUTCDayStr = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][currentUTCDayOfWeek];
+      
+      // Current date in UTC (YYYY-MM-DD)
+      const currentUTCDateStr = currentTime.toISOString().split('T')[0];
+      
+      console.log(`Current UTC time: ${currentUTCTimeStr}, day: ${currentUTCDayStr}, date: ${currentUTCDateStr}`);
+      console.log(`Time window: ${tenMinutesAgoUTCStr} to ${currentUTCTimeStr}`);
+      
+      // Query for pending schedules using UTC fields
+      const pendingRecurringSchedules = await db
         .select()
         .from(schedules)
         .innerJoin(users, eq(schedules.userId, users.id))
         .where(
           and(
             eq(schedules.isActive, true),
-            // Check for call status/retry rules - these apply regardless of timezone
+            eq(schedules.isRecurring, true),
+            // Check if today is one of the scheduled days
+            sql`${schedules.weekdays} LIKE ${'%' + currentUTCDayStr + '%'}`,
+            // Check if current time is within the window
+            sql`${schedules.wakeupTimeUTC} >= ${tenMinutesAgoUTCStr} AND ${schedules.wakeupTimeUTC} <= ${currentUTCTimeStr}`,
+            // Only consider schedules that:
             or(
               // Have never been called before
               sql`${schedules.lastCalled} IS NULL`,
@@ -486,79 +700,50 @@ export class DatabaseStorage implements IStorage {
           )
         );
       
-      // Extract schedules from join results
-      const allSchedules = allActiveSchedules.map(r => r.schedules);
-      console.log(`Found ${allSchedules.length} active schedules to check against timezones`);
+      // For one-time schedules, check the UTC date and time
+      const pendingOneTimeSchedules = await db
+        .select()
+        .from(schedules)
+        .innerJoin(users, eq(schedules.userId, users.id))
+        .where(
+          and(
+            eq(schedules.isActive, true),
+            eq(schedules.isRecurring, false),
+            // Check if today is the scheduled date in UTC
+            eq(schedules.dateUTC, currentUTCDateStr),
+            // Check if current time is within the window
+            sql`${schedules.wakeupTimeUTC} >= ${tenMinutesAgoUTCStr} AND ${schedules.wakeupTimeUTC} <= ${currentUTCTimeStr}`,
+            // Only consider schedules that:
+            or(
+              // Have never been called before
+              sql`${schedules.lastCalled} IS NULL`,
+              // Were called more than 5 minutes ago
+              sql`${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'`
+            ),
+            // And if they've been called before, make sure it wasn't successfully answered
+            or(
+              sql`${schedules.lastCallStatus} IS NULL`,
+              sql`${schedules.lastCallStatus} != ${CallStatus.ANSWERED}`,
+              and(
+                eq(schedules.callRetry, true),
+                or(
+                  sql`${schedules.lastCallStatus} = ${CallStatus.FAILED}`,
+                  sql`${schedules.lastCallStatus} = ${CallStatus.MISSED}`
+                )
+              )
+            )
+          )
+        );
       
-      // Import the required functions from date-fns-tz
-      const { zonedTimeToUtc, utcToZonedTime, format } = await import('date-fns-tz');
-      const { getDay } = await import('date-fns');
+      // Extract just the schedule objects and combine results
+      const results = [
+        ...pendingRecurringSchedules.map(r => r.schedules),
+        ...pendingOneTimeSchedules.map(r => r.schedules)
+      ];
       
-      // Current date in UTC for reference
-      const now = currentTime;
-      const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
+      console.log(`Found ${results.length} pending schedules in UTC (${pendingRecurringSchedules.length} recurring, ${pendingOneTimeSchedules.length} one-time)`);
       
-      // Filter schedules based on timezone comparison
-      const pendingSchedules = allSchedules.filter(schedule => {
-        try {
-          // Get the current time in the user's timezone
-          const userTimeZone = schedule.timezone;
-          const userLocalTime = utcToZonedTime(now, userTimeZone);
-          const userLocalTimeMinus10 = utcToZonedTime(tenMinutesAgo, userTimeZone);
-          
-          // Format times for comparison with the schedule's wakeup time
-          const userCurrentTimeStr = format(userLocalTime, 'HH:mm');
-          const userTenMinutesAgoStr = format(userLocalTimeMinus10, 'HH:mm');
-          
-          // Get day of week in user's timezone (0-6, where 0 is Sunday)
-          const userDayOfWeek = getDay(userLocalTime);
-          const userDayStr = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][userDayOfWeek];
-          
-          // For debugging
-          console.log(`Schedule ${schedule.id}: User timezone=${userTimeZone}, ` +
-                      `local time=${userCurrentTimeStr}, day=${userDayStr}, ` +
-                      `wakeup time=${schedule.wakeupTime}, weekdays=${schedule.weekdays}`);
-          
-          // For recurring schedules, check if today is one of the scheduled days
-          if (schedule.isRecurring) {
-            const weekdaysArray = typeof schedule.weekdays === 'string' 
-              ? schedule.weekdays.split(',') 
-              : schedule.weekdays;
-              
-            const isDayMatch = weekdaysArray.includes(userDayStr);
-            if (!isDayMatch) {
-              console.log(`Schedule ${schedule.id}: Day doesn't match (user day: ${userDayStr}, schedule days: ${weekdaysArray})`);
-              return false;
-            }
-          } else {
-            // For one-time schedules, check if today is the scheduled date
-            const todayStr = format(userLocalTime, 'yyyy-MM-dd');
-            if (schedule.date !== todayStr) {
-              console.log(`Schedule ${schedule.id}: Date doesn't match (user date: ${todayStr}, schedule date: ${schedule.date})`);
-              return false;
-            }
-          }
-          
-          // Check if the current time is within the wakeup window
-          const isTimeMatch = schedule.wakeupTime >= userTenMinutesAgoStr && 
-                             schedule.wakeupTime <= userCurrentTimeStr;
-                             
-          if (!isTimeMatch) {
-            console.log(`Schedule ${schedule.id}: Time doesn't match (user time window: ${userTenMinutesAgoStr}-${userCurrentTimeStr}, wakeup time: ${schedule.wakeupTime})`);
-          } else {
-            console.log(`Schedule ${schedule.id}: MATCH! Time to wake up!`);
-          }
-          
-          return isTimeMatch;
-        } catch (error) {
-          console.error(`Error processing timezone for schedule ${schedule.id}:`, error);
-          return false; // Skip this schedule if there's an error
-        }
-      });
-      
-      console.log(`Found ${pendingSchedules.length} pending schedules after timezone processing`);
-      
-      return pendingSchedules;
+      return results;
     } catch (error) {
       console.error("Error checking pending schedules:", error);
       return [];

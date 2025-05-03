@@ -73,11 +73,13 @@ export const voices = pgTable("voices", {
 export const schedules = pgTable("schedules", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  wakeupTime: text("wakeup_time").notNull(),
+  wakeupTime: text("wakeup_time").notNull(),     // User's local time (for display)
+  wakeupTimeUTC: text("wakeup_time_utc"),        // UTC time (for scheduling) - nullable for migration
   timezone: text("timezone").notNull(),
   weekdays: text("weekdays").notNull(),
   isRecurring: boolean("is_recurring").default(true),
-  date: text("date"),
+  date: text("date"),              // Local date (for display)
+  dateUTC: text("date_utc"),       // UTC date (for scheduling one-time calls)
   callRetry: boolean("call_retry").default(true),
   advanceNotice: boolean("advance_notice").default(false),
   goalType: text("goal_type").notNull(),
