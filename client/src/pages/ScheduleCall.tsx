@@ -86,7 +86,9 @@ export default function ScheduleCall() {
   const getScheduleIdFromUrl = useCallback(() => {
     const url = new URL(window.location.href);
     const id = url.searchParams.get('id');
-    return id ? parseInt(id, 10) : null;
+    console.log("URL parameter 'id':", id);
+    const parsedId = id ? parseInt(id, 10) : null;
+    return parsedId;
   }, []);
   
   // Schedule state
@@ -149,8 +151,19 @@ export default function ScheduleCall() {
     },
     enabled: !!scheduleIdToEdit && !!userData?.authenticated,
     // Prevent stale data by not caching
-    gcTime: 0
+    gcTime: 0,
+    staleTime: 0, // Always fetch fresh data for schedule edits
+    refetchOnMount: true, // Refetch when component mounts
+    refetchOnWindowFocus: false // Don't refetch on window focus
   });
+
+  // Set initial editing state - needed to ensure the form knows it's in edit mode immediately
+  useEffect(() => {
+    if (scheduleIdToEdit) {
+      console.log("Setting initial editing ID state:", scheduleIdToEdit);
+      setEditingScheduleId(scheduleIdToEdit);
+    }
+  }, [scheduleIdToEdit]);
 
   // Set form data from the schedule we're editing
   useEffect(() => {
@@ -159,14 +172,14 @@ export default function ScheduleCall() {
       
       // First, update the simple fields
       setEditingScheduleId(scheduleToEdit.id);
-      setWakeupTime(scheduleToEdit.wakeupTime);
-      setTimezone(scheduleToEdit.timezone);
-      setIsRecurring(scheduleToEdit.isRecurring);
+      setWakeupTime(scheduleToEdit.wakeupTime || "06:30");
+      setTimezone(scheduleToEdit.timezone || "America/New_York");
+      setIsRecurring(scheduleToEdit.isRecurring !== undefined ? scheduleToEdit.isRecurring : true);
       if (scheduleToEdit.date) {
         setDate(scheduleToEdit.date);
       }
-      setCallRetry(scheduleToEdit.callRetry);
-      setAdvanceNotice(scheduleToEdit.advanceNotice);
+      setCallRetry(scheduleToEdit.callRetry !== undefined ? scheduleToEdit.callRetry : true);
+      setAdvanceNotice(scheduleToEdit.advanceNotice !== undefined ? scheduleToEdit.advanceNotice : false);
       
       // Now handle the weekdays separately
       let weekdaysArray: string[] = [];
@@ -292,12 +305,12 @@ export default function ScheduleCall() {
 
 
 
-  // Show loading state while checking phone verification
-  if (isLoading || isUserDataLoading) {
+  // Show loading state while checking phone verification or loading schedule data
+  if (isLoading || isUserDataLoading || (scheduleIdToEdit && isLoadingSchedule)) {
     return (
       <DashboardLayout>
         <div className="text-center py-16">
-          <p>Loading...</p>
+          <p>{scheduleIdToEdit ? "Loading schedule data..." : "Loading..."}</p>
         </div>
       </DashboardLayout>
     );
