@@ -138,7 +138,7 @@ export default function ScheduleCall() {
         return {
           id: 12,
           userId: 3,
-          wakeupTime: "19:30",
+          wakeupTime: "18:30",
           timezone: "Australia/Sydney",
           weekdays: ["sat", "fri"],
           isRecurring: true,
@@ -378,10 +378,17 @@ export default function ScheduleCall() {
                       id="wakeup-time" 
                       type="time" 
                       value={wakeupTime}
-                      onChange={(e) => setWakeupTime(e.target.value)}
+                      onChange={(e) => {
+                        console.log("Time input changed from", wakeupTime, "to", e.target.value);
+                        setWakeupTime(e.target.value);
+                      }}
                       className="mt-1"
                       required
                     />
+                    <div className="text-xs text-gray-500 mt-1">
+                      Current value: {wakeupTime} (24h format) 
+                      {wakeupTime && ` = ${new Date(`2023-01-01T${wakeupTime}:00`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`}
+                    </div>
                   </div>
                   
                   <div className="sm:col-span-3">
