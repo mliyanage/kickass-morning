@@ -132,26 +132,8 @@ export default function ScheduleCall() {
       
       console.log("Fetching schedule with ID:", scheduleIdToEdit);
       
-      // HARDCODED FIX: If we're editing schedule 12, use this data
-      if (Number(scheduleIdToEdit) === 12) {
-        console.log("Special handling for schedule #12");
-        return {
-          id: 12,
-          userId: 3,
-          wakeupTime: "18:30",
-          timezone: "Australia/Sydney",
-          weekdays: ["sat", "fri"],
-          isRecurring: true,
-          date: null,
-          callRetry: true,
-          advanceNotice: false,
-          goalType: GoalType.STUDY,
-          struggleType: StruggleType.TIRED,
-          voiceId: "elon-musk",
-          isActive: true,
-          createdAt: "2025-05-03T09:54:26.890Z"
-        };
-      }
+      // We used to have a hardcoded fix for schedule #12 here, but we're now getting data directly from the API
+      // This ensures we always have the most up-to-date data
       
       // Use the standard approach for other schedules
       // We're using the GET all schedules endpoint and filtering client-side for simplicity
