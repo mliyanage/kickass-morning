@@ -32,7 +32,7 @@ export function startCallScheduler() {
   });
 
   // Also run immediately on startup
-  processScheduledCalls().catch(error => {
+  processScheduledCalls().catch((error) => {
     console.error("Error in initial call scheduler run:", error);
   });
 
@@ -45,7 +45,7 @@ export function startCallScheduler() {
  */
 async function processScheduledCalls() {
   console.log("Processing scheduled calls at", new Date().toISOString());
-  
+
   try {
     // Get all pending schedules
     const pendingSchedules = await storage.getPendingSchedules();
@@ -54,12 +54,16 @@ async function processScheduledCalls() {
     // Process each schedule
     for (const schedule of pendingSchedules) {
       try {
-        console.log(`Processing schedule ${schedule.id} for user ${schedule.userId}`);
-        
+        console.log(
+          `Processing schedule ${schedule.id} for user ${schedule.userId}`,
+        );
+
         // Get the user
         const user = await storage.getUser(schedule.userId);
         if (!user) {
-          console.error(`User ${schedule.userId} not found for schedule ${schedule.id}`);
+          console.error(
+            `User ${schedule.userId} not found for schedule ${schedule.id}`,
+          );
           continue;
         }
 
@@ -77,15 +81,17 @@ async function processScheduledCalls() {
         }
 
         // Extract goals from schedule
-        const goalTypes = typeof schedule.goalType === 'string' 
-          ? schedule.goalType.split(',') 
-          : [schedule.goalType];
-        const mainGoal = goalTypes[0]; 
-        
+        const goalTypes =
+          typeof schedule.goalType === "string"
+            ? schedule.goalType.split(",")
+            : [schedule.goalType];
+        const mainGoal = goalTypes[0];
+
         // Extract struggles from schedule
-        const struggleTypes = typeof schedule.struggleType === 'string'
-          ? schedule.struggleType.split(',')
-          : [schedule.struggleType];
+        const struggleTypes =
+          typeof schedule.struggleType === "string"
+            ? schedule.struggleType.split(",")
+            : [schedule.struggleType];
         const mainStruggle = struggleTypes[0];
 
         // Get any custom goal description if available
@@ -95,71 +101,65 @@ async function processScheduledCalls() {
         }
 
         // Generate voice message
-        console.log(`Generating voice message for user ${user.id} with voice ${schedule.voiceId}, goal: ${mainGoal}, struggle: ${mainStruggle}`);
-        
+        console.log(
+          `Generating voice message for user ${user.id} with voice ${schedule.voiceId}, goal: ${mainGoal}, struggle: ${mainStruggle}`,
+        );
+
         // Convert single strings to arrays for the API
         const goalsArray = [mainGoal as any]; // Type assertion
         const strugglesArray = [mainStruggle as any]; // Type assertion
-        
+
         const messageText = await generateVoiceMessage(
           goalsArray,
           strugglesArray,
           user.name, // Can be null
-          goalDescription // Pass as otherGoal
+          goalDescription, // Pass as otherGoal
         );
 
         // Generate an audio file from the message text
-        console.log(`Generating audio for message: ${messageText.substring(0, 100)}...`);
-        
-        let audioUrl: string | null = null;
-        try {
-          // Use our new utility to generate and save the audio file
-          const audioResult = await generateAudioFile(messageText, schedule.voiceId);
-          audioUrl = audioResult.url;
-          console.log(`Generated audio file at ${audioResult.filePath}, available at ${audioUrl}`);
-        } catch (error) {
-          console.error('Failed to generate audio for call:', error);
-          // Continue with text only if audio generation fails
-        }
-        
+        console.log(
+          `Generating audio for message: ${messageText.substring(0, 100)}...`,
+        );
+
         // Make the call
-        console.log(`Making call to ${user.phone} with ${audioUrl ? 'audio' : 'text'} message`);
-        
+        const callResult = await makeCall(
+          user.phone,
+          messageText,
+          schedule.voiceId,
+        );
+
         // Create a history record before making the call
         const callHistory = await storage.createCallHistory({
           userId: user.id,
           scheduleId: schedule.id,
           callTime: new Date(),
           voice: schedule.voiceId,
-          status: CallStatus.PENDING
+          status: callResult.status as CallStatus,
+          duration: callResult.duration,
+          recordingUrl: callResult.recordingUrl,
         });
-        
-        // Make the call with Twilio
-        // Use the generated message text if we have audio, otherwise use a fallback message
-        let messageToUse = messageText;
-        
-        // If we couldn't generate the audio, use a simpler message
-        if (!audioUrl) {
-          messageToUse = `Good morning! This is your scheduled wake-up call for ${schedule.wakeupTime}. Time to start your day and focus on your ${mainGoal} goals.`;
-        }
-        
-        // Make the call
-        const callResult = await makeCall(user.phone, messageToUse, schedule.voiceId);
 
         // Update the last called time and status for this schedule
         const currentTime = new Date();
-        console.log(`Updating schedule ${schedule.id} last called time:`, currentTime, typeof currentTime);
-        
+        console.log(
+          `Updating schedule ${schedule.id} last called time:`,
+          currentTime,
+          typeof currentTime,
+        );
+
         try {
           await storage.updateLastCalledTime(
-            schedule.id,           // Schedule ID
-            currentTime,           // Current time
-            CallStatus.PENDING,    // Initial status
-            callResult?.callSid    // Twilio Call SID if available
+            schedule.id, // Schedule ID
+            currentTime, // Current time
+            CallStatus.PENDING, // Initial status
+            callResult?.callSid, // Twilio Call SID if available
           );
         } catch (error) {
-          console.error(`Failed to update last called time for schedule ${schedule.id}:`, error);
-          
+          console.error(
+            `Failed to update last called time for schedule ${schedule.id}:`,
+            error,
+          );
+
           // Try with an ISO string directly as a fallback
           try {
             console.log("Attempting fallback with ISO string...");
@@ -167,7 +167,7 @@ async function processScheduledCalls() {
               schedule.id,
               new Date(), // Fresh date object
               CallStatus.PENDING,
-              callResult?.callSid
+              callResult?.callSid,
             );
           } catch (fallbackError) {
             console.error("Fallback also failed:", fallbackError);
@@ -175,8 +175,9 @@ async function processScheduledCalls() {
         }
 
         // Log success
-        console.log(`Call successfully sent to ${user.phone}, status: ${callResult.status}`);
-
+        console.log(
+          `Call successfully sent to ${user.phone}, status: ${callResult.status}`,
+        );
       } catch (error) {
         console.error(`Error processing schedule ${schedule.id}:`, error);
       }
@@ -205,7 +206,7 @@ export function startCleanupScheduler() {
       console.error("Error in cleanup scheduler:", error);
     }
   });
-  
+
   console.log("Cleanup scheduler started successfully");
   return job;
 }
