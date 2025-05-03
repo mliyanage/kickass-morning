@@ -840,6 +840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.session.userId!,
         callTime: new Date(),
         voice: personalization.voice,
+        callSid: call.callSid, // Add the Twilio Call SID
         status: call.status as CallStatus,
         duration: call.duration,
         recordingUrl: call.recordingUrl

@@ -134,6 +134,7 @@ async function processScheduledCalls() {
           scheduleId: schedule.id,
           callTime: new Date(),
           voice: schedule.voiceId,
+          callSid: callResult.callSid, // Add the Twilio Call SID
           status: callResult.status as CallStatus,
           duration: callResult.duration,
           recordingUrl: callResult.recordingUrl,

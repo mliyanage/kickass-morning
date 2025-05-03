@@ -630,6 +630,7 @@ export class DatabaseStorage implements IStorage {
 
   // Call history related methods
   async createCallHistory(data: any): Promise<CallHistoryEntry> {
+    // Ensure callSid is included in the data if provided
     const [callHistoryEntry] = await db
       .insert(callHistory)
       .values(data)
