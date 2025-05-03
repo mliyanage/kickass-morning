@@ -613,88 +613,12 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(callHistory.callTime));
   }
 
-  /**
-   * Update all existing schedules to include UTC times based on their local times
-   * This is a one-time migration function that should be run after adding the UTC columns
-   */
-  async migrateSchedulesToUTC(): Promise<void> {
-    try {
-      const { format } = await import('date-fns-tz');
-      
-      // Get all schedules that don't have UTC times set
-      const schedulesToUpdate = await db
-        .select()
-        .from(schedules)
-        .where(sql`${schedules.wakeupTimeUTC} IS NULL`);
-      
-      console.log(`Found ${schedulesToUpdate.length} schedules to migrate to UTC`);
-      
-      // Update each schedule
-      for (const schedule of schedulesToUpdate) {
-        try {
-          // Get timezone offset
-          const tzOffset = getTimezoneOffset(schedule.timezone);
-          
-          // Create a date string in the user's timezone
-          const timeComponents = schedule.wakeupTime.split(':').map((n: string) => parseInt(n, 10));
-          const today = new Date();
-          const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-          const timezonedDateStr = `${dateStr}T${schedule.wakeupTime}:00${tzOffset}`;
-          
-          // Parse it as a UTC time
-          const utcTime = new Date(timezonedDateStr);
-          const wakeupTimeUTC = utcTime.toISOString().substring(11, 16); // Extract HH:MM in UTC
-          
-          // For one-time schedules, also convert the date
-          let dateUTC = null;
-          if (!schedule.isRecurring && schedule.date) {
-            // Create a date string with the scheduled date and time
-            const [year, month, day] = schedule.date.split('-').map((n: string) => parseInt(n, 10));
-            const localDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${schedule.wakeupTime}:00${tzOffset}`;
-            
-            // Parse it as a UTC time and extract the date
-            const utcDate = new Date(localDateStr);
-            dateUTC = utcDate.toISOString().substring(0, 10); // YYYY-MM-DD format
-          }
-          
-          // Update the schedule with UTC time
-          await db
-            .update(schedules)
-            .set({
-              wakeupTimeUTC: wakeupTimeUTC,
-              dateUTC: dateUTC,
-              updatedAt: new Date()
-            })
-            .where(eq(schedules.id, schedule.id));
-          
-          console.log(`Migrated schedule ${schedule.id}: Local time ${schedule.wakeupTime} (${schedule.timezone}) -> UTC time ${wakeupTimeUTC}`);
-        } catch (error) {
-          console.error(`Error migrating schedule ${schedule.id} to UTC:`, error);
-        }
-      }
-      
-      console.log('UTC migration complete');
-    } catch (error) {
-      console.error('Error migrating schedules to UTC:', error);
-    }
-  }
+  
 
   // New methods for scheduler using UTC times
   async getPendingSchedules(currentTime: Date = new Date()): Promise<Schedule[]> {
     try {
       console.log("Checking for pending schedules at", currentTime.toISOString());
-      
-      // First, ensure all schedules have UTC times
-      const schedulesWithoutUTC = await db
-        .select()
-        .from(schedules)
-        .where(sql`${schedules.wakeupTimeUTC} IS NULL`)
-        .limit(1);
-      
-      if (schedulesWithoutUTC.length > 0) {
-        console.log("Found schedules without UTC times. Running one-time migration...");
-        await this.migrateSchedulesToUTC();
-      }
       
       // Get current UTC time formatted as HH:MM
       const currentUTCTimeStr = currentTime.toISOString().substring(11, 16);
