@@ -1,0 +1,74 @@
+ScheduleCall.tsx?t=1746273398157:149 Error fetching schedule: TypeError: response.json is not a function
+    at queryFn (ScheduleCall.tsx?t=1746273398157:127:45)
+queryFn @ ScheduleCall.tsx?t=1746273398157:149
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=6818a6a2:840
+run @ @tanstack_react-query.js?v=6818a6a2:494
+start @ @tanstack_react-query.js?v=6818a6a2:536
+fetch @ @tanstack_react-query.js?v=6818a6a2:926
+executeFetch_fn @ @tanstack_react-query.js?v=6818a6a2:2211
+onSubscribe @ @tanstack_react-query.js?v=6818a6a2:1898
+subscribe @ @tanstack_react-query.js?v=6818a6a2:24
+(anonymous) @ @tanstack_react-query.js?v=6818a6a2:3022
+subscribeToStore @ chunk-RPCDYKBN.js?v=6818a6a2:11984
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=6818a6a2:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=6818a6a2:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=6818a6a2:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=6818a6a2:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=6818a6a2:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=6818a6a2:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=6818a6a2:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=6818a6a2:19416
+commitRoot @ chunk-RPCDYKBN.js?v=6818a6a2:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=6818a6a2:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=6818a6a2:9119
+flushSync @ chunk-RPCDYKBN.js?v=6818a6a2:18959
+scheduleRefresh @ chunk-RPCDYKBN.js?v=6818a6a2:20004
+(anonymous) @ @react-refresh:267
+performReactRefresh @ @react-refresh:256
+(anonymous) @ @react-refresh:677
+setTimeout
+(anonymous) @ @react-refresh:666
+validateRefreshBoundaryAndEnqueueUpdate @ @react-refresh:728
+(anonymous) @ ScheduleCall.tsx?t=1746273398157:773
+(anonymous) @ client:34
+(anonymous) @ client:218
+(anonymous) @ client:193
+queueUpdate @ client:193
+await in queueUpdate
+(anonymous) @ client:642
+handleMessage @ client:640
+(anonymous) @ client:550Understand this error
+ScheduleCall.tsx:89 URL parameter 'id': 12
+ScheduleCall.tsx:89 URL parameter 'id': 12
+ScheduleCall.tsx:89 URL parameter 'id': 12
+ScheduleCall.tsx:114 selectedDays changed: []
+ScheduleCall.tsx:133 Fetching schedule with ID: 12
+ScheduleCall.tsx:182 Setting initial editing ID state: 12
+ScheduleCall.tsx:89 URL parameter 'id': 12
+ScheduleCall.tsx:167 Error fetching schedule: TypeError: response.json is not a function
+    at queryFn (ScheduleCall.tsx:139:45)
+queryFn @ ScheduleCall.tsx:167
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=6818a6a2:840
+run @ @tanstack_react-query.js?v=6818a6a2:494
+start @ @tanstack_react-query.js?v=6818a6a2:536
+fetch @ @tanstack_react-query.js?v=6818a6a2:926
+executeFetch_fn @ @tanstack_react-query.js?v=6818a6a2:2211
+onSubscribe @ @tanstack_react-query.js?v=6818a6a2:1898
+subscribe @ @tanstack_react-query.js?v=6818a6a2:24
+(anonymous) @ @tanstack_react-query.js?v=6818a6a2:3022
+subscribeToStore @ chunk-RPCDYKBN.js?v=6818a6a2:11984
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=6818a6a2:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=6818a6a2:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=6818a6a2:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=6818a6a2:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=6818a6a2:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=6818a6a2:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=6818a6a2:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=6818a6a2:19416
+commitRoot @ chunk-RPCDYKBN.js?v=6818a6a2:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=6818a6a2:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=6818a6a2:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=6818a6a2:18627Understand this error
+ScheduleCall.tsx:89 URL parameter 'id': 12

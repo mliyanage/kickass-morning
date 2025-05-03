@@ -91,19 +91,36 @@ export default function ScheduleCall() {
     return parsedId;
   }, []);
   
-  // Schedule state
-  const [wakeupTime, setWakeupTime] = useState("06:30");
-  const [timezone, setTimezone] = useState("America/New_York");
+  // Schedule state with custom setters that log changes
+  const [wakeupTime, _setWakeupTime] = useState("06:30");
+  const setWakeupTime = (value: string) => {
+    console.log("Setting wakeup time state to:", value);
+    _setWakeupTime(value);
+  };
+  
+  const [timezone, _setTimezone] = useState("America/New_York");
+  const setTimezone = (value: string) => {
+    console.log("Setting timezone state to:", value);
+    _setTimezone(value);
+  };
+  
   // For new schedules, initialize with workdays (Mon-Fri)
   // For edit mode, this will be overwritten when schedule data loads
-  const [selectedDays, setSelectedDays] = useState<string[]>(() => {
+  const [selectedDays, _setSelectedDays] = useState<string[]>(() => {
     const scheduleId = getScheduleIdFromUrl();
     if (!scheduleId) {
       // Default selection for new schedules only
+      console.log("Initializing with default weekdays for new schedule");
       return ["mon", "tue", "wed", "thu", "fri"];  
     }
+    console.log("Initializing with empty weekdays for edit mode");
     return []; // Empty for edit mode, will be populated from data
   });
+  
+  const setSelectedDays = (value: string[]) => {
+    console.log("Setting selectedDays state to:", value);
+    _setSelectedDays(value);
+  };
   const [isRecurring, setIsRecurring] = useState(true);
   const [date, setDate] = useState("");
   const [callRetry, setCallRetry] = useState(true);
@@ -135,7 +152,17 @@ export default function ScheduleCall() {
       try {
         // Use the standard approach for other schedules
         // We're using the GET all schedules endpoint and filtering client-side for simplicity
-        const response = await apiRequest("GET", "/api/schedule");
+        const response = await fetch('/api/schedule', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Error fetching schedules: ${response.status} ${response.statusText}`);
+        }
+        
         const allSchedules = await response.json();
         console.log("All schedules:", allSchedules);
         
