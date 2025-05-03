@@ -17,6 +17,42 @@ import { db } from "./db";
 import { eq, and, or, lt, gt, desc, sql } from "drizzle-orm";
 import { IStorage } from "./storage";
 
+// Helper function to get timezone offset in format +/-HH:MM
+function getTimezoneOffset(timezone: string): string {
+  try {
+    // Get the current date in the specified timezone
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+      timeZoneName: 'short'
+    });
+    
+    // Get the formatted date which includes the timezone abbreviation
+    const formattedDate = formatter.format(now);
+    
+    // Extract the timezone abbreviation (like EDT, PST, etc.)
+    const tzAbbr = formattedDate.split(' ').pop();
+    
+    // Get the timezone offset in minutes
+    const tzOffset = -now.getTimezoneOffset();
+    const hours = Math.floor(Math.abs(tzOffset) / 60);
+    const minutes = Math.abs(tzOffset) % 60;
+    
+    // Format the offset as +/-HH:MM
+    return `${tzOffset >= 0 ? '+' : '-'}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  } catch (error) {
+    console.error(`Error getting timezone offset for ${timezone}:`, error);
+    return '+00:00'; // Default to UTC if there's an error
+  }
+}
+
 export class DatabaseStorage implements IStorage {
   // User related methods
   async getUser(id: number): Promise<User | undefined> {
@@ -378,28 +414,34 @@ export class DatabaseStorage implements IStorage {
       const weekdaysStr = Array.isArray(data.weekdays) ? data.weekdays.join(',') : data.weekdays;
       
       // Convert local time to UTC time for scheduling
-      const { zonedTimeToUtc, format } = await import('date-fns-tz');
+      const { format } = await import('date-fns-tz');
+      
+      // Get timezone offset
+      const tzOffset = getTimezoneOffset(data.timezone);
       
       // Create a date object with the wake-up time in the user's timezone
-      const timeComponents = data.wakeupTime.split(':').map(n => parseInt(n, 10));
+      const timeComponents = data.wakeupTime.split(':').map((n: string) => parseInt(n, 10));
       const today = new Date();
       today.setHours(timeComponents[0], timeComponents[1], 0, 0);
       
-      // Convert to UTC
-      const utcTime = zonedTimeToUtc(today, data.timezone);
-      const wakeupTimeUTC = format(utcTime, 'HH:mm');
+      // Create a date string in the user's timezone
+      const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const timezonedDateStr = `${dateStr}T${data.wakeupTime}:00${tzOffset}`;
+      
+      // Parse it as a UTC time
+      const utcTime = new Date(timezonedDateStr);
+      const wakeupTimeUTC = utcTime.toISOString().substring(11, 16); // HH:MM format
       
       // For one-time schedules, also convert the date
       let dateUTC = null;
       if (!data.isRecurring && data.date) {
-        // Create a date object in local timezone
-        const [year, month, day] = data.date.split('-').map(n => parseInt(n, 10));
-        const localDate = new Date(year, month - 1, day); // Month is 0-indexed
-        localDate.setHours(timeComponents[0], timeComponents[1], 0, 0);
+        // Create a date string with the scheduled date and time
+        const [year, month, day] = data.date.split('-').map((n: string) => parseInt(n, 10));
+        const localDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${data.wakeupTime}:00${tzOffset}`;
         
-        // Convert to UTC date
-        const utcDate = zonedTimeToUtc(localDate, data.timezone);
-        dateUTC = format(utcDate, 'yyyy-MM-dd');
+        // Parse as UTC date
+        const utcDate = new Date(localDateStr);
+        dateUTC = utcDate.toISOString().substring(0, 10); // YYYY-MM-DD format
       }
       
       console.log(`Creating schedule: Local time ${data.wakeupTime} (${data.timezone}) -> UTC time ${wakeupTimeUTC}`);
@@ -462,17 +504,20 @@ export class DatabaseStorage implements IStorage {
         }
 
         // Prepare data for UTC conversion
-        const { zonedTimeToUtc, format } = await import('date-fns-tz');
         const timezone = data.timezone || currentSchedule.timezone;
         const wakeupTime = data.wakeupTime || currentSchedule.wakeupTime;
-
-        // Convert time to UTC
-        const timeComponents = wakeupTime.split(':').map(n => parseInt(n, 10));
-        const today = new Date();
-        today.setHours(timeComponents[0], timeComponents[1], 0, 0);
         
-        const utcTime = zonedTimeToUtc(today, timezone);
-        const wakeupTimeUTC = format(utcTime, 'HH:mm');
+        // Get timezone offset
+        const tzOffset = getTimezoneOffset(timezone);
+
+        // Convert time to UTC using ISO string format with timezone offset
+        const today = new Date();
+        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const timezonedDateStr = `${dateStr}T${wakeupTime}:00${tzOffset}`;
+        
+        // Parse as UTC time
+        const utcTime = new Date(timezonedDateStr);
+        const wakeupTimeUTC = utcTime.toISOString().substring(11, 16); // Extract HH:MM in UTC
         
         // Handle date for one-time schedules
         let dateUTC = null;
@@ -480,12 +525,13 @@ export class DatabaseStorage implements IStorage {
         const date = data.date || currentSchedule.date;
         
         if (!isRecurring && date) {
-          const [year, month, day] = date.split('-').map(n => parseInt(n, 10));
-          const localDate = new Date(year, month - 1, day);
-          localDate.setHours(timeComponents[0], timeComponents[1], 0, 0);
+          // Create a date string with the scheduled date and time
+          const [year, month, day] = date.split('-').map((n: string) => parseInt(n, 10));
+          const localDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${wakeupTime}:00${tzOffset}`;
           
-          const utcDate = zonedTimeToUtc(localDate, timezone);
-          dateUTC = format(utcDate, 'yyyy-MM-dd');
+          // Parse as UTC date
+          const utcDate = new Date(localDateStr);
+          dateUTC = utcDate.toISOString().substring(0, 10); // YYYY-MM-DD format
         }
         
         console.log(`Updating schedule ${id}: Local time ${wakeupTime} (${timezone}) -> UTC time ${wakeupTimeUTC}`);
@@ -573,7 +619,7 @@ export class DatabaseStorage implements IStorage {
    */
   async migrateSchedulesToUTC(): Promise<void> {
     try {
-      const { zonedTimeToUtc, format } = await import('date-fns-tz');
+      const { format } = await import('date-fns-tz');
       
       // Get all schedules that don't have UTC times set
       const schedulesToUpdate = await db
@@ -586,40 +632,42 @@ export class DatabaseStorage implements IStorage {
       // Update each schedule
       for (const schedule of schedulesToUpdate) {
         try {
-          // Create reference date using today's date with the schedule's time
-          // For example: '2025-04-29T05:30:00' for a 5:30 AM wakeup time
-          const timeComponents = schedule.wakeupTime.split(':').map(n => parseInt(n, 10));
-          const today = new Date();
-          today.setHours(timeComponents[0], timeComponents[1], 0, 0);
+          // Get timezone offset
+          const tzOffset = getTimezoneOffset(schedule.timezone);
           
-          // Convert local time to UTC
-          const utcTime = zonedTimeToUtc(today, schedule.timezone);
-          const utcTimeStr = format(utcTime, 'HH:mm');
+          // Create a date string in the user's timezone
+          const timeComponents = schedule.wakeupTime.split(':').map((n: string) => parseInt(n, 10));
+          const today = new Date();
+          const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+          const timezonedDateStr = `${dateStr}T${schedule.wakeupTime}:00${tzOffset}`;
+          
+          // Parse it as a UTC time
+          const utcTime = new Date(timezonedDateStr);
+          const wakeupTimeUTC = utcTime.toISOString().substring(11, 16); // Extract HH:MM in UTC
           
           // For one-time schedules, also convert the date
           let dateUTC = null;
           if (!schedule.isRecurring && schedule.date) {
-            // Create a date object in local timezone
-            const [year, month, day] = schedule.date.split('-').map(n => parseInt(n, 10));
-            const localDate = new Date(year, month - 1, day); // Month is 0-indexed
-            localDate.setHours(timeComponents[0], timeComponents[1], 0, 0);
+            // Create a date string with the scheduled date and time
+            const [year, month, day] = schedule.date.split('-').map((n: string) => parseInt(n, 10));
+            const localDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${schedule.wakeupTime}:00${tzOffset}`;
             
-            // Convert to UTC date
-            const utcDate = zonedTimeToUtc(localDate, schedule.timezone);
-            dateUTC = format(utcDate, 'yyyy-MM-dd');
+            // Parse it as a UTC time and extract the date
+            const utcDate = new Date(localDateStr);
+            dateUTC = utcDate.toISOString().substring(0, 10); // YYYY-MM-DD format
           }
           
           // Update the schedule with UTC time
           await db
             .update(schedules)
             .set({
-              wakeupTimeUTC: utcTimeStr,
+              wakeupTimeUTC: wakeupTimeUTC,
               dateUTC: dateUTC,
               updatedAt: new Date()
             })
             .where(eq(schedules.id, schedule.id));
           
-          console.log(`Migrated schedule ${schedule.id}: Local time ${schedule.wakeupTime} (${schedule.timezone}) -> UTC time ${utcTimeStr}`);
+          console.log(`Migrated schedule ${schedule.id}: Local time ${schedule.wakeupTime} (${schedule.timezone}) -> UTC time ${wakeupTimeUTC}`);
         } catch (error) {
           console.error(`Error migrating schedule ${schedule.id} to UTC:`, error);
         }
