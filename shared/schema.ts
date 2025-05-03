@@ -101,6 +101,7 @@ export const callHistory = pgTable("call_history", {
   callTime: timestamp("call_time").notNull(),
   voice: text("voice").notNull(),
   status: text("status").notNull(),
+  callSid: text("call_sid"),        // Twilio call SID for tracking
   duration: integer("duration"),
   recordingUrl: text("recording_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
