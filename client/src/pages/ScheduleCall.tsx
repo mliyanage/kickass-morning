@@ -138,7 +138,10 @@ export default function ScheduleCall() {
       console.log("All schedules:", allSchedules);
       
       // Find the specific schedule
-      const schedule = allSchedules.find((s: Schedule) => s.id === scheduleIdToEdit) || null;
+      console.log("Looking for schedule with ID:", scheduleIdToEdit, "Type:", typeof scheduleIdToEdit);
+      console.log("Schedule IDs in response:", allSchedules.map((s: Schedule) => s.id));
+      
+      const schedule = allSchedules.find((s: Schedule) => Number(s.id) === Number(scheduleIdToEdit)) || null;
       
       console.log("Found schedule for editing:", schedule);
       if (schedule) {
@@ -184,14 +187,27 @@ export default function ScheduleCall() {
       // Now handle the weekdays separately
       let weekdaysArray: string[] = [];
       
+      console.log("Processing weekdays data:", scheduleToEdit.weekdays);
+      
       // Handle different formats of weekdays - could be array or string
       if (Array.isArray(scheduleToEdit.weekdays)) {
         weekdaysArray = [...scheduleToEdit.weekdays];
         console.log("Weekdays is already an array:", weekdaysArray);
       } else if (typeof scheduleToEdit.weekdays === 'string') {
-        weekdaysArray = scheduleToEdit.weekdays.split(','); 
+        // Split by comma if it's a comma-separated string
+        if (scheduleToEdit.weekdays.includes(',')) {
+          weekdaysArray = scheduleToEdit.weekdays.split(','); 
+        } else {
+          // Otherwise it's a single day
+          weekdaysArray = [scheduleToEdit.weekdays];
+        }
         console.log("Converted weekdays string to array:", weekdaysArray);
       }
+      
+      // Make sure we can recognize all the days - trim any whitespace
+      weekdaysArray = weekdaysArray.map(day => day.trim());
+      
+      console.log("Final weekdays array before setting state:", weekdaysArray);
       
       // Set the weekdays all at once instead of clearing first - this avoids the hooks issue
       if (weekdaysArray.length > 0) {
