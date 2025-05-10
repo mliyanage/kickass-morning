@@ -16,7 +16,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import VoiceCard from "@/components/VoiceCard";
 import SelectionCard from "@/components/SelectionCard";
-import { PersonalizationData, GoalType, StruggleType } from "@shared/schema";
+import { GoalType, StruggleType } from "@shared/schema";
+import { PersonalizationData } from "@/types";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { 
   Settings,
@@ -147,7 +148,7 @@ export default function Personalization() {
         setGoals(personalizationData.goals);
       } else if (personalizationData.goal) {
         // Handle legacy single goal data
-        setGoals([personalizationData.goal as GoalType]);
+        setGoals([personalizationData.goal]);
       } else {
         setGoals([]);
       }
@@ -160,7 +161,7 @@ export default function Personalization() {
         setStruggles(personalizationData.struggles);
       } else if (personalizationData.struggle) {
         // Handle legacy single struggle data
-        setStruggles([personalizationData.struggle as StruggleType]);
+        setStruggles([personalizationData.struggle]);
       } else {
         setStruggles([]);
       }

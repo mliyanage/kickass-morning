@@ -150,20 +150,8 @@ export default function ScheduleCall() {
       console.log("Fetching schedule with ID:", scheduleIdToEdit);
       
       try {
-        // Use the standard approach for other schedules
-        // We're using the GET all schedules endpoint and filtering client-side for simplicity
-        const response = await fetch('/api/schedule', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Error fetching schedules: ${response.status} ${response.statusText}`);
-        }
-        
-        const allSchedules = await response.json();
+        // Use the apiRequest helper which handles errors and json parsing consistently
+        const allSchedules = await apiRequest('GET', '/api/schedule');
         console.log("All schedules:", allSchedules);
         
         // Find the specific schedule
