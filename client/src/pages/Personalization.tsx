@@ -144,7 +144,7 @@ export default function Personalization() {
       setHasExistingData(true);
       
       // Handle goals array (backward compatibility)
-      if (Array.isArray(personalizationData.goals)) {
+      if (personalizationData.goals && Array.isArray(personalizationData.goals)) {
         setGoals(personalizationData.goals);
       } else if (personalizationData.goal) {
         // Handle legacy single goal data
@@ -157,7 +157,7 @@ export default function Personalization() {
       setGoalDescription(personalizationData.goalDescription || "");
       
       // Handle struggles array (backward compatibility)
-      if (Array.isArray(personalizationData.struggles)) {
+      if (personalizationData.struggles && Array.isArray(personalizationData.struggles)) {
         setStruggles(personalizationData.struggles);
       } else if (personalizationData.struggle) {
         // Handle legacy single struggle data
