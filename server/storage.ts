@@ -489,8 +489,10 @@ export class MemStorage implements IStorage {
   }
   
   async updateCallStatus(callSid: string, status: CallStatus, recordingUrl?: string): Promise<void> {
-    // Find call history entry by callSid using a manual iteration approach
+    // Step 1: Update call history entry by callSid using a manual iteration approach
     // that avoids TypeScript Map.entries() compatibility issues
+    let scheduleId: number | null = null;
+    
     this.callHistory.forEach((callEntry, id) => {
       if (callEntry.callSid === callSid) {
         callEntry.status = status;
@@ -498,8 +500,21 @@ export class MemStorage implements IStorage {
           callEntry.recordingUrl = recordingUrl;
         }
         this.callHistory.set(id, callEntry);
+        
+        // Store the schedule ID for the second step
+        scheduleId = callEntry.scheduleId;
       }
     });
+    
+    // Step 2: If we found a scheduleId, update the schedule's last call status too
+    if (scheduleId !== null) {
+      const schedule = this.schedules.get(scheduleId);
+      if (schedule) {
+        schedule.lastCallStatus = status;
+        this.schedules.set(scheduleId, schedule);
+        console.log(`Updated schedule ${scheduleId} last call status to ${status}`);
+      }
+    }
   }
 }
 

@@ -141,14 +141,14 @@ async function processScheduledCalls() {
         console.log(
           `Updating schedule ${schedule.id} last called time:`,
           currentTime,
-          typeof currentTime,
+          `with status: ${call.status}`,
         );
 
         try {
           await storage.updateLastCalledTime(
             schedule.id, // Schedule ID
             currentTime, // Current time
-            CallStatus.PENDING, // Initial status
+            call.status, // Use the actual call status from makeCall result
             call.callSid, // Twilio Call SID from the makeCall result
           );
         } catch (error) {
@@ -163,7 +163,7 @@ async function processScheduledCalls() {
             await storage.updateLastCalledTime(
               schedule.id,
               new Date(), // Fresh date object
-              CallStatus.PENDING,
+              call.status, // Use the actual call status from makeCall result
               call.callSid,
             );
           } catch (fallbackError) {
@@ -171,10 +171,16 @@ async function processScheduledCalls() {
           }
         }
 
-        // Log success
-        console.log(
-          `Call successfully sent to ${user.phone}, status: ${call.status}`,
-        );
+        // Log call result with appropriate message based on status
+        if (call.status === CallStatus.FAILED) {
+          console.log(
+            `Call attempt to ${user.phone} failed with status: ${call.status}`,
+          );
+        } else {
+          console.log(
+            `Call successfully sent to ${user.phone}, status: ${call.status}`,
+          );
+        }
       } catch (error) {
         console.error(`Error processing schedule ${schedule.id}:`, error);
       }
