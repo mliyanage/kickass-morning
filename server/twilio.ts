@@ -128,6 +128,17 @@ export async function makeCall(
       from: twilioPhoneNumber,
       to,
       record: true,
+      statusCallback:
+        "https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/api/webhooks/twilio/status",
+      statusCallbackEvent: [
+        "initiated",
+        "answered",
+        "completed",
+        "busy",
+        "failed",
+        "no-answer",
+      ],
+      statusCallbackMethod: "POST",
     });
 
     log(`Call initiated with SID: ${call.sid}`, "twilio");

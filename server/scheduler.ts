@@ -122,11 +122,7 @@ async function processScheduledCalls() {
         );
 
         // Make the call
-        const callResult = await makeCall(
-          user.phone,
-          messageText,
-          schedule.voiceId,
-        );
+        const call = await makeCall(user.phone, messageText, schedule.voiceId);
 
         // Create a history record before making the call
         const callHistory = await storage.createCallHistory({
@@ -134,10 +130,10 @@ async function processScheduledCalls() {
           scheduleId: schedule.id,
           callTime: new Date(),
           voice: schedule.voiceId,
-          callSid: callResult.callSid, // Add the Twilio Call SID
-          status: callResult.status as CallStatus,
-          duration: callResult.duration,
-          recordingUrl: callResult.recordingUrl,
+          status: call.status as CallStatus,
+          duration: call.duration,
+          recordingUrl: call.recordingUrl,
+          callSid: call.callSid, // Add the Twilio Call SID
         });
 
         // Update the last called time and status for this schedule

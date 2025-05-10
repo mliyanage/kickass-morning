@@ -78,32 +78,39 @@ const voices = [
       "https://images.unsplash.com/photo-1552058544-f2b08422138a?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80",
   },
   {
-    id: "elon-musk",
-    name: "Elon Musk",
-    category: "Entrepreneur & Innovator",
+    id: "liam",
+    name: "Liam",
+    category: "Professional Motivational Coach",
     imageUrl:
-      "https://images.unsplash.com/photo-1566753323558-f4e0952af115?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80",
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80",
   },
   {
-    id: "oprah-winfrey",
-    name: "Oprah Winfrey",
-    category: "Media Executive & Philanthropist",
+    id: "lily",
+    name: "Lily",
+    category: "Wellness & Mindfulness Guide",
     imageUrl:
-      "https://images.unsplash.com/photo-1579503841516-e0bd7fca5faa?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80",
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80",
   },
   {
-    id: "david-goggins",
-    name: "David Goggins",
-    category: "Ultramarathon Runner & Motivator",
+    id: "bill",
+    name: "Bill",
+    category: "Business & Productivity Expert",
     imageUrl:
-      "https://images.unsplash.com/photo-1507398941214-572c25f4b1dc?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80",
+      "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80",
   },
   {
-    id: "steve-jobs",
-    name: "Steve Jobs",
-    category: "Technology Visionary",
+    id: "todd-thomas",
+    name: "Todd Thomas",
+    category: "Performance Psychology Coach",
     imageUrl:
-      "https://images.unsplash.com/photo-1556157382-97eda2d62296?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80",
+      "https://images.unsplash.com/photo-1531384441138-2736e62e0919?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80",
+  },
+  {
+    id: "radio-station",
+    name: "Radio Station",
+    category: "Energetic Morning Show Host",
+    imageUrl:
+      "https://images.unsplash.com/photo-1589903308904-1010c2294adc?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80",
   },
 ];
 
@@ -870,10 +877,11 @@ export default function Personalization() {
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Voice Personality Guide</h4>
                 <ul className="text-xs text-gray-600 space-y-1.5">
                   <li><span className="font-medium">Jocko Willink:</span> Direct, disciplined approach with no-excuses motivation</li>
-                  <li><span className="font-medium">Elon Musk:</span> Future-focused, innovation-oriented, analytical motivation</li>
-                  <li><span className="font-medium">Oprah Winfrey:</span> Compassionate, empowering, inspirational guidance</li>
-                  <li><span className="font-medium">David Goggins:</span> Intense, challenge-oriented, mental toughness focus</li>
-                  <li><span className="font-medium">Steve Jobs:</span> Visionary, perfection-seeking, passion-driven motivation</li>
+                  <li><span className="font-medium">Liam:</span> Warm, encouraging tone with positive reinforcement</li>
+                  <li><span className="font-medium">Lily:</span> Calm, nurturing guidance focused on balance and well-being</li>
+                  <li><span className="font-medium">Bill:</span> Practical, goal-oriented approach with clear action steps</li>
+                  <li><span className="font-medium">Todd Thomas:</span> Energetic, psychology-based motivation techniques</li>
+                  <li><span className="font-medium">Radio Station:</span> Upbeat, entertaining style like a morning radio show</li>
                 </ul>
               </div>
 
