@@ -27,39 +27,83 @@ export default function VoiceCard({
   const { toast } = useToast();
   const [isPlaying, setIsPlaying] = useState(false);
   const [playProgress, setPlayProgress] = useState(0);
-  const playDuration = 3; // seconds
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   
-  // Play animation when previewing the voice
+  // Create audio element when component mounts
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    audioRef.current = new Audio();
     
-    if (isPlaying) {
-      setPlayProgress(0);
-      interval = setInterval(() => {
-        setPlayProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            setIsPlaying(false);
-            return 0;
-          }
-          return prev + (100 / (playDuration * 10)); // Update 10 times per second
-        });
-      }, 100);
-    }
+    // Add event listeners
+    const audio = audioRef.current;
+    audio.addEventListener('ended', handleAudioEnded);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('error', handleAudioError);
     
     return () => {
-      if (interval) clearInterval(interval);
+      // Cleanup
+      if (audio) {
+        audio.pause();
+        audio.removeEventListener('ended', handleAudioEnded);
+        audio.removeEventListener('timeupdate', handleTimeUpdate);
+        audio.removeEventListener('error', handleAudioError);
+      }
     };
-  }, [isPlaying, playDuration]);
+  }, []);
+  
+  // Handle audio events
+  const handleAudioEnded = () => {
+    setIsPlaying(false);
+    setPlayProgress(0);
+  };
+  
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      const progress = (audioRef.current.currentTime / audioRef.current.duration) * 100;
+      setPlayProgress(progress);
+    }
+  };
+  
+  const handleAudioError = () => {
+    toast({
+      variant: "destructive",
+      title: "Audio Error",
+      description: "Could not play the audio file. Please try again.",
+    });
+    setIsPlaying(false);
+  };
 
   const previewVoiceMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest("POST", "/api/voice/preview", { voiceId: id });
     },
-    onSuccess: () => {
-      setIsPlaying(true);
-      // In a real implementation, you would play the audio here
-      // For now we just simulate playback with the progress bar
+    onSuccess: (response) => {
+      // Check if we received an audio URL in the response
+      if (response.audioUrl) {
+        // Set the audio source
+        if (audioRef.current) {
+          audioRef.current.src = response.audioUrl;
+          audioRef.current.play()
+            .then(() => {
+              setIsPlaying(true);
+              setAudioUrl(response.audioUrl);
+            })
+            .catch(error => {
+              console.error("Error playing audio:", error);
+              toast({
+                variant: "destructive",
+                title: "Failed to play audio",
+                description: "Could not play the voice preview. Please try again.",
+              });
+            });
+        }
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Audio Not Available",
+          description: "No audio preview is available for this voice.",
+        });
+      }
     },
     onError: (error) => {
       toast({
@@ -74,9 +118,28 @@ export default function VoiceCard({
     e.preventDefault();
     e.stopPropagation();
     
-    if (isPlaying) return;
+    if (isPlaying) {
+      // If already playing, pause the audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      }
+      return;
+    }
     
-    previewVoiceMutation.mutate();
+    if (audioUrl && audioRef.current) {
+      // If we already have the audio URL, just play it
+      audioRef.current.play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch(error => {
+          console.error("Error playing audio:", error);
+        });
+    } else {
+      // Otherwise, fetch the audio URL
+      previewVoiceMutation.mutate();
+    }
   };
 
   return (
@@ -113,22 +176,30 @@ export default function VoiceCard({
             </div>
           </div>
           
-          {isPlaying && (
-            <div className="mt-2">
-              <Progress value={playProgress} className="h-1" />
-            </div>
-          )}
-          
           <div className="mt-2 flex items-center">
             <button 
               type="button" 
               className={`inline-flex items-center text-xs px-2 py-1 rounded-full ${isPlaying ? 'bg-primary/10 text-primary' : 'text-primary hover:bg-primary/5'}`}
               onClick={handlePreviewVoice}
-              disabled={isPlaying || previewVoiceMutation.isPending}
+              disabled={previewVoiceMutation.isPending}
             >
-              <Volume2 size={14} className="mr-1" />
-              {isPlaying ? "Playing..." : previewVoiceMutation.isPending ? "Loading..." : "Preview voice"}
+              {isPlaying ? (
+                <>
+                  <Pause size={14} className="mr-1" />
+                  Stop
+                </>
+              ) : (
+                <>
+                  <Volume2 size={14} className="mr-1" />
+                  {previewVoiceMutation.isPending ? "Loading..." : "Preview voice"}
+                </>
+              )}
             </button>
+            {isPlaying && (
+              <div className="ml-2 w-24">
+                <Progress value={playProgress} className="h-1" />
+              </div>
+            )}
           </div>
         </div>
       </label>
