@@ -489,19 +489,17 @@ export class MemStorage implements IStorage {
   }
   
   async updateCallStatus(callSid: string, status: CallStatus, recordingUrl?: string): Promise<void> {
-    // Find call history entry by callSid
-    // Use a more compatible approach for iterating through Map entries
-    const entries: [number, CallHistoryEntry][] = [];
-    for (const [id, callEntry] of entries) {
+    // Find call history entry by callSid using a manual iteration approach
+    // that avoids TypeScript Map.entries() compatibility issues
+    this.callHistory.forEach((callEntry, id) => {
       if (callEntry.callSid === callSid) {
         callEntry.status = status;
         if (recordingUrl) {
           callEntry.recordingUrl = recordingUrl;
         }
         this.callHistory.set(id, callEntry);
-        return;
       }
-    }
+    });
   }
 }
 
