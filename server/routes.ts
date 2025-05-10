@@ -1115,7 +1115,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Map voice ID to filename
         // Note: some voice IDs use hyphens but files use underscores
         const voiceIdFormatted = voiceId.replace(/-/g, '_');
-        const audioFilePath = path.join(__dirname, '..', 'audio-cache', 'voice_preview', `${voiceIdFormatted}.mp3`);
+        // Use path.resolve for ES modules instead of __dirname
+        const audioFilePath = path.resolve('audio-cache', 'voice_preview', `${voiceIdFormatted}.mp3`);
         
         // Check if the file exists
         if (!fs.existsSync(audioFilePath)) {
@@ -1127,6 +1128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Voice preview found", 
           audioUrl: `/audio-cache/voice_preview/${voiceIdFormatted}.mp3`
         });
+        console.log(`Serving voice preview: ${voiceIdFormatted}.mp3`);
       } catch (error) {
         console.error("Voice preview error:", error);
         res
