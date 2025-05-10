@@ -38,7 +38,7 @@ export interface IStorage {
   updateScheduleStatus(id: number, isActive: boolean): Promise<Schedule | undefined>;
   updateSchedule(id: number, data: any): Promise<Schedule | undefined>;
   getPendingSchedules(currentTime?: Date): Promise<Schedule[]>; // Get schedules that should be called now
-  updateLastCalledTime(scheduleId: number, time?: Date): Promise<void>; // Update last called time for a schedule
+  updateLastCalledTime(scheduleId: number, time?: Date, callStatus?: CallStatus, callSid?: string): Promise<void>; // Update last called time for a schedule
   
   // Call history related
   createCallHistory(data: any): Promise<CallHistoryEntry>;
@@ -470,10 +470,19 @@ export class MemStorage implements IStorage {
     });
   }
   
-  async updateLastCalledTime(scheduleId: number, time: Date = new Date()): Promise<void> {
+  async updateLastCalledTime(
+    scheduleId: number, 
+    time: Date = new Date(), 
+    callStatus: CallStatus = CallStatus.PENDING,
+    callSid?: string
+  ): Promise<void> {
     const schedule = this.schedules.get(scheduleId);
     if (schedule) {
       schedule.lastCalled = time.toISOString();
+      schedule.lastCallStatus = callStatus;
+      if (callSid) {
+        schedule.lastCallSid = callSid;
+      }
       this.schedules.set(scheduleId, schedule);
     }
   }
