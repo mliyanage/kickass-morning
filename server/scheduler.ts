@@ -149,7 +149,7 @@ async function processScheduledCalls() {
             schedule.id, // Schedule ID
             currentTime, // Current time
             CallStatus.PENDING, // Initial status
-            callResult?.callSid, // Twilio Call SID if available
+            call.callSid, // Twilio Call SID from the makeCall result
           );
         } catch (error) {
           console.error(
@@ -164,7 +164,7 @@ async function processScheduledCalls() {
               schedule.id,
               new Date(), // Fresh date object
               CallStatus.PENDING,
-              callResult?.callSid,
+              call.callSid,
             );
           } catch (fallbackError) {
             console.error("Fallback also failed:", fallbackError);
@@ -173,7 +173,7 @@ async function processScheduledCalls() {
 
         // Log success
         console.log(
-          `Call successfully sent to ${user.phone}, status: ${callResult.status}`,
+          `Call successfully sent to ${user.phone}, status: ${call.status}`,
         );
       } catch (error) {
         console.error(`Error processing schedule ${schedule.id}:`, error);
