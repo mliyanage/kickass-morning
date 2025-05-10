@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Volume2 } from "lucide-react";
+import { CheckCircle, Volume2, Pause } from "lucide-react";
 
 interface VoiceCardProps {
   id: string;

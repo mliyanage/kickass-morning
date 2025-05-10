@@ -30,7 +30,6 @@ const voiceMap: Record<string, string> = {
   bill: "pqHfZKP75CvOlQylNhV4", // Deep male voice - "Arnold"
   "todd-thomas": "sflYrWiXii4ezPjNLQkp", // Neutral voice
   jocko: "pQ4UJV5rfb04U3utkvKW", // Jocko voice as requested
-  "jocko-willink": "pQ4UJV5rfb04U3utkvKW", // Alternative name for Jocko
   "radio-station": "QTGiyJvep6bcx4WD1qAq",
   default: "pNInz6obpgDQGcFmaJgB", // Default fallback
 };

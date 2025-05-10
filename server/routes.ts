@@ -4,6 +4,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import fs from "fs";
+import path from "path";
 import {
   loginUserSchema,
   insertUserSchema,
@@ -1110,11 +1112,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Voice ID is required." });
         }
 
-        // In a real application, we would generate a short preview audio
-        // For now, we'll just simulate success
-        res
-          .status(200)
-          .json({ message: "Voice preview generated successfully." });
+        // Map voice ID to filename
+        // Note: some voice IDs use hyphens but files use underscores
+        const voiceIdFormatted = voiceId.replace(/-/g, '_');
+        const audioFilePath = path.join(__dirname, '..', 'audio-cache', 'voice_preview', `${voiceIdFormatted}.mp3`);
+        
+        // Check if the file exists
+        if (!fs.existsSync(audioFilePath)) {
+          return res.status(404).json({ message: "Voice preview not found." });
+        }
+        
+        // Return the URL to the preview audio file
+        res.status(200).json({ 
+          message: "Voice preview found", 
+          audioUrl: `/audio-cache/voice_preview/${voiceIdFormatted}.mp3`
+        });
       } catch (error) {
         console.error("Voice preview error:", error);
         res
