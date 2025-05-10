@@ -1183,7 +1183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Missing CallSid parameter" });
         }
 
-        // Map Twilio call status to our status enum
+        // Map Twilio call status string to our CallStatus enum
         let status: CallStatus;
         switch (CallStatus) {
           case "completed":
