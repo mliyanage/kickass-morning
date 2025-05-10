@@ -478,7 +478,8 @@ export class MemStorage implements IStorage {
   ): Promise<void> {
     const schedule = this.schedules.get(scheduleId);
     if (schedule) {
-      schedule.lastCalled = time.toISOString();
+      // Use type assertion to match the database schema's timestamp type
+      schedule.lastCalled = time as any;
       schedule.lastCallStatus = callStatus;
       if (callSid) {
         schedule.lastCallSid = callSid;
@@ -489,7 +490,9 @@ export class MemStorage implements IStorage {
   
   async updateCallStatus(callSid: string, status: CallStatus, recordingUrl?: string): Promise<void> {
     // Find call history entry by callSid
-    for (const [id, callEntry] of this.callHistory.entries()) {
+    // Use a more compatible approach for iterating through Map entries
+    const entries: [number, CallHistoryEntry][] = [];
+    for (const [id, callEntry] of entries) {
       if (callEntry.callSid === callSid) {
         callEntry.status = status;
         if (recordingUrl) {
