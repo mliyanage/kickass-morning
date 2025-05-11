@@ -100,9 +100,13 @@ async function processScheduledCalls() {
           goalDescription = personalization.goalDescription;
         }
 
+        // Use voice from personalization data with a fallback
+        const voiceId = personalization.voice || "jocko"; // Default to "jocko" if no voice is set
+        console.log(`Using voice from personalization: ${voiceId}`); // Log the voice being used
+        
         // Generate voice message
         console.log(
-          `Generating voice message for user ${user.id} with voice ${schedule.voiceId}, goal: ${mainGoal}, struggle: ${mainStruggle}`,
+          `Generating voice message for user ${user.id} with voice ${voiceId}, goal: ${mainGoal}, struggle: ${mainStruggle}`,
         );
 
         // Convert single strings to arrays for the API
@@ -121,15 +125,15 @@ async function processScheduledCalls() {
           `Generating audio for message: ${messageText.substring(0, 100)}...`,
         );
 
-        // Make the call
-        const call = await makeCall(user.phone, messageText, schedule.voiceId);
+        // Make the call using personalization voice
+        const call = await makeCall(user.phone, messageText, voiceId);
 
         // Create a history record before making the call
         const callHistory = await storage.createCallHistory({
           userId: user.id,
           scheduleId: schedule.id,
           callTime: new Date(),
-          voice: schedule.voiceId,
+          voice: voiceId, // Use the voice from personalization
           status: call.status as CallStatus,
           duration: call.duration,
           recordingUrl: call.recordingUrl,
