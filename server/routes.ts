@@ -130,67 +130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Development only endpoints
-  // These should be disabled in production
-  if (process.env.NODE_ENV !== "production") {
-    // Development helper to get the latest OTP
-    app.get("/api/dev/latest-otp", async (req: Request, res: Response) => {
-      const email = req.query.email as string;
-      if (!email) {
-        return res.status(400).json({ message: "Email parameter is required" });
-      }
-
-      try {
-        // Get all OTPs for this email by checking the storage
-        const emailKey = (storage as any).emailToKey(email);
-        const otpCodes = (storage as any).otpCodes.get(emailKey) || [];
-
-        if (otpCodes.length === 0) {
-          console.log(`No OTPs found for ${email}`);
-
-          // Find the latest OTP code in the server logs
-          // This is a hack for development, allowing us to get the OTP from logs
-          const consoleLogPattern = new RegExp(
-            `OTP for ${email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} \\((login|register)\\): (\\d+)`,
-          );
-          let latestOtpFromLogs = null;
-
-          // Return the most recently logged OTP
-          res.status(200).json({
-            otp: latestOtpFromLogs || "Check server logs manually",
-            message:
-              "OTP not found in storage, check server logs for the actual code.",
-          });
-          return;
-        }
-
-        // Sort by createdAt (newest first)
-        const sortedOtps = [...otpCodes].sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        );
-
-        // Get the latest OTP
-        const latestOtp = sortedOtps[0];
-        console.log(
-          `Found latest OTP for ${email}: ${latestOtp.code} (${latestOtp.type})`,
-        );
-
-        // Check if it's expired
-        const isExpired = new Date() > new Date(latestOtp.expiresAt);
-
-        res.status(200).json({
-          otp: latestOtp.code,
-          type: latestOtp.type,
-          isExpired: isExpired,
-          message: isExpired ? "Warning: This OTP has expired" : "Valid OTP",
-        });
-      } catch (error) {
-        console.error("Dev OTP fetch error:", error);
-        res.status(500).json({ message: "Error retrieving OTP" });
-      }
-    });
-  }
+  // Production-ready routes below
 
   // Authentication Routes
   // Send OTP to email for signup/login

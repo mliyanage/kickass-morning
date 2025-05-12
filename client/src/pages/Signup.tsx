@@ -8,7 +8,6 @@ import { useLocation } from "wouter";
 import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
-import { DevOtpHelper } from "@/components/DevOtpHelper";
 
 export default function Signup() {
   const { toast } = useToast();
@@ -157,20 +156,6 @@ export default function Signup() {
                 <p className="text-sm text-gray-600">
                   We've sent a verification code to <span className="font-medium">{email}</span>
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  <strong>Development mode:</strong> Check the server console logs to see the OTP code
-                </p>
-                {process.env.NODE_ENV !== 'production' && import.meta.env.DEV && (
-                  <div className="mt-2">
-                    <DevOtpHelper email={email} />
-                    <p className="text-xs text-gray-500 mt-2">
-                      <strong>Current entered code:</strong><br/> 
-                      <span className="font-mono bg-gray-100 rounded px-2 py-1 mt-1 block">
-                        {otp || "Not entered yet"}
-                      </span>
-                    </p>
-                  </div>
-                )}
               </div>
               
               <div>
