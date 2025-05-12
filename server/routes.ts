@@ -20,6 +20,7 @@ import {
 import { generateOTP, getNextCallTime } from "./utils";
 import { sendSMS, makeCall } from "./twilio";
 import { generateVoiceMessage, generateSpeechAudio } from "./openai";
+import { sendOtpEmail } from "./email-utils";
 import * as nodeSchedule from "node-schedule";
 import session from "express-session";
 
@@ -158,11 +159,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes expiry
         });
 
-        // In a real app, we would send the OTP via email here
-        // For demo purposes, we'll just log it to console
-        // Add a timestamp for easier tracking
+        // Send the OTP via email using SendGrid
+        const isSignup = otpType === "register";
+        const emailSent = await sendOtpEmail(email, otp, isSignup);
+        
+        // Log for backup/debugging, but with masked OTP in production
+        const maskedOtp = process.env.NODE_ENV === "production" 
+          ? "******" 
+          : otp;
         console.log(
-          `[${new Date().toISOString()}] OTP for ${email} (${otpType}): ${otp}`,
+          `[${new Date().toISOString()}] OTP for ${email} (${otpType}): ${maskedOtp} - Email sent: ${emailSent ? "success" : "failed"}`
         );
 
         // Return success message depending on type

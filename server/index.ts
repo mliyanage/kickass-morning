@@ -4,6 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import { fileURLToPath } from 'url';
 import { startCallScheduler, startCleanupScheduler } from "./scheduler";
+import { initSendGrid } from "./email-utils";
 
 // Create dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -57,6 +58,9 @@ app.use((req, res, next) => {
     throw err;
   });
 
+  // Initialize SendGrid for email notifications
+  initSendGrid();
+  
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes

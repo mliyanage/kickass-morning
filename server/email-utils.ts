@@ -29,8 +29,8 @@ export function initSendGrid() {
 interface EmailParams {
   to: string;
   subject: string;
-  text?: string;
-  html?: string;
+  text: string;
+  html: string;
 }
 
 /**
@@ -50,8 +50,8 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       to: params.to,
       from: "notifications@kickassmorning.com", // Use your verified sender
       subject: params.subject,
-      text: params.text,
-      html: params.html,
+      text: params.text || '',
+      html: params.html || '',
     });
     console.log(`Email sent to ${params.to}`);
     return true;
