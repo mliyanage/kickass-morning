@@ -2,6 +2,7 @@ import { CallStatus } from "@shared/schema";
 import Twilio from "twilio";
 import { textToSpeech } from "./elevenlabs";
 import { log } from "./vite";
+import { getBaseUrl } from "./env-utils";
 
 // Initialize Twilio client (conditionally)
 const accountSid =
@@ -103,10 +104,7 @@ export async function makeCall(
     // Get the complete URL for the audio file
     // The audioResult.url is a relative path, we need to make it a fully qualified URL
     // For Twilio to access the file, it needs to be publicly accessible
-    const baseUrl = process.env.BASE_URL || 
-      (process.env.NODE_ENV === 'production' 
-        ? 'https://wakeup-genius-mliyanage1.replit.app' 
-        : 'https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev');
+    const baseUrl = getBaseUrl();
     const audioUrl = `${baseUrl}${audioResult.url}`;
 
     log(`Generated audio available at: ${audioUrl}`, "twilio");
@@ -129,7 +127,7 @@ export async function makeCall(
       from: twilioPhoneNumber,
       to,
       record: true,
-      statusCallback: `${baseUrl}/api/webhooks/twilio/status`,
+      statusCallback: `${getBaseUrl()}/api/webhooks/twilio/status`,
       statusCallbackEvent: [
         "initiated",
         "answered",

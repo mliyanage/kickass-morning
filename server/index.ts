@@ -5,10 +5,15 @@ import path from "path";
 import { fileURLToPath } from 'url';
 import { startCallScheduler, startCleanupScheduler } from "./scheduler";
 import { initSendGrid } from "./email-utils";
+import { detectEnvironment } from "./env-utils";
 
 // Create dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Detect environment early to log it
+const currentEnv = detectEnvironment();
+console.log(`Starting application in ${currentEnv} environment`);
 
 const app = express();
 app.use(express.json());
