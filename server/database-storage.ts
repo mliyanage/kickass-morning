@@ -846,31 +846,30 @@ export class DatabaseStorage implements IStorage {
             eq(schedules.dateUTC, currentUTCDateStr),
             // Check if current time is within the window
             sql`${schedules.wakeupTimeUTC} >= ${tenMinutesAgoUTCStr} AND ${schedules.wakeupTimeUTC} <= ${currentUTCTimeStr}`,
-            // Only consider schedules that:
-            or(
-              // Have never been called before
-              sql`${schedules.lastCalled} IS NULL`,
-              // Were called more than 5 minutes ago
-              sql`${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'`,
-            ),
+            // Only consider schedules that have never been called before OR were called more than 5 minutes ago
+            sql`(
+              ${schedules.lastCalled} IS NULL 
+              OR 
+              ${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'
+            )`,
+            
             // And if they've been called before, make sure it wasn't successfully answered
-            or(
-              sql`${schedules.lastCallStatus} IS NULL`,
-              sql`${schedules.lastCallStatus} != ${CallStatus.COMPLETED}`,
-              sql`${schedules.lastCallStatus} != ${CallStatus.INITIATED}`,
-              sql`${schedules.lastCallStatus} != ${CallStatus.IN_PROGRSS}`,
-              sql`${schedules.lastCallStatus} != ${CallStatus.QUEUED}`,
-              sql`${schedules.lastCallStatus} != ${CallStatus.RINGING}`,
-              and(
-                eq(schedules.callRetry, true),
-                or(
-                  sql`${schedules.lastCallStatus} = ${CallStatus.FAILED}`,
-                  sql`${schedules.lastCallStatus} = ${CallStatus.CANCELED}`,
-                  sql`${schedules.lastCallStatus} = ${CallStatus.BUSY}`,
-                  sql`${schedules.lastCallStatus} = ${CallStatus.NO_ANSWER}`,
-                ),
-              ),
-            ),
+            sql`(
+              ${schedules.lastCallStatus} IS NULL
+              OR 
+              ${schedules.lastCallStatus} != 'completed'
+              OR
+              (${schedules.callRetry} = true AND (
+                  ${schedules.lastCallStatus} = 'failed'
+                  OR
+                  ${schedules.lastCallStatus} = 'canceled'
+                  OR
+                  ${schedules.lastCallStatus} = 'busy'
+                  OR
+                  ${schedules.lastCallStatus} = 'no-answer'
+                )
+              )
+            )`,
           ),
         );
 
