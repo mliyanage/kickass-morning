@@ -644,15 +644,37 @@ export class DatabaseStorage implements IStorage {
 
         // Get timezone offset
         const tzOffset = getTimezoneOffset(timezone);
-
-        // Convert time to UTC using ISO string format with timezone offset
+        
+        // Calculate UTC time without using Date.toISOString() to avoid errors
+        // Handle special time cases (like midnight)
+        const [hours, minutes] = wakeupTime.split(':').map(n => parseInt(n, 10));
+        
+        // Get current date for timezone calculations
         const today = new Date();
-        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-        const timezonedDateStr = `${dateStr}T${wakeupTime}:00${tzOffset}`;
-
-        // Parse as UTC time
-        const utcTime = new Date(timezonedDateStr);
-        const wakeupTimeUTC = utcTime.toISOString().substring(11, 16); // Extract HH:MM in UTC
+        
+        // Create a date object with the target time
+        today.setHours(hours, minutes, 0, 0);
+        
+        // Calculate timezone offset in minutes
+        const offsetMatch = tzOffset.match(/([+-])(\d{2}):(\d{2})/);
+        if (!offsetMatch) {
+          console.error(`Invalid timezone offset format: ${tzOffset}`);
+        }
+        
+        const offsetSign = offsetMatch[1] === '+' ? -1 : 1; // Convert to UTC (opposite sign)
+        const offsetHours = parseInt(offsetMatch[2], 10);
+        const offsetMinutes = parseInt(offsetMatch[3], 10);
+        const totalOffsetMinutes = offsetSign * (offsetHours * 60 + offsetMinutes);
+        
+        // Apply offset to get UTC time
+        today.setMinutes(today.getMinutes() + totalOffsetMinutes);
+        
+        // Format as HH:MM
+        const utcHours = String(today.getUTCHours()).padStart(2, '0');
+        const utcMinutes = String(today.getUTCMinutes()).padStart(2, '0');
+        const wakeupTimeUTC = `${utcHours}:${utcMinutes}`;
+        
+        console.log(`Converted time: Local ${wakeupTime} → UTC ${wakeupTimeUTC} (offset: ${tzOffset})`);
 
         // Handle date for one-time schedules
         let dateUTC = null;
@@ -663,15 +685,27 @@ export class DatabaseStorage implements IStorage {
         const date = data.date || currentSchedule.date;
 
         if (!isRecurring && date) {
-          // Create a date string with the scheduled date and time
-          const [year, month, day] = date
-            .split("-")
-            .map((n: string) => parseInt(n, 10));
-          const localDateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${wakeupTime}:00${tzOffset}`;
-
-          // Parse as UTC date
-          const utcDate = new Date(localDateStr);
-          dateUTC = utcDate.toISOString().substring(0, 10); // YYYY-MM-DD format
+          try {
+            // Parse the date parts
+            const [year, month, day] = date
+              .split("-")
+              .map((n: string) => parseInt(n, 10));
+              
+            // Create a date object for the scheduled date
+            const scheduleDate = new Date(Date.UTC(year, month - 1, day));
+            
+            // Apply the same time offset calculation as for daily time
+            scheduleDate.setUTCHours(hours, minutes, 0, 0);
+            scheduleDate.setMinutes(scheduleDate.getMinutes() + totalOffsetMinutes);
+            
+            // Format the UTC date as YYYY-MM-DD
+            dateUTC = `${scheduleDate.getUTCFullYear()}-${String(scheduleDate.getUTCMonth() + 1).padStart(2, '0')}-${String(scheduleDate.getUTCDate()).padStart(2, '0')}`;
+            
+            console.log(`Converted date: Local ${date} → UTC ${dateUTC}`);
+          } catch (error) {
+            console.error(`Error converting date to UTC: ${date}`, error);
+            dateUTC = date; // Fallback to original date
+          }
         }
 
         console.log(
