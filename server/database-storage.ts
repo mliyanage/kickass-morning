@@ -810,25 +810,26 @@ export class DatabaseStorage implements IStorage {
             sql`${schedules.weekdays} LIKE ${"%" + currentUTCDayStr + "%"}`,
             // Check if current time is within the window
             sql`${schedules.wakeupTimeUTC} >= ${tenMinutesAgoUTCStr} AND ${schedules.wakeupTimeUTC} <= ${currentUTCTimeStr}`,
-            // Only consider schedules that:
-            or(
-              // Have never been called before
-              sql`${schedules.lastCalled} IS NULL`,
-              // Were called more than 5 minutes ago
-              sql`${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'`,
-            ),
+            // Only consider schedules that have never been called before OR were called more than 5 minutes ago
+            sql`(
+              ${schedules.lastCalled} IS NULL 
+              OR 
+              ${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'
+            )`,
+            
             // And if they've been called before, make sure it wasn't successfully answered
-            or(
-              sql`${schedules.lastCallStatus} IS NULL`,
-              sql`${schedules.lastCallStatus} != ${CallStatus.ANSWERED}`,
-              and(
-                eq(schedules.callRetry, true),
-                or(
-                  sql`${schedules.lastCallStatus} = ${CallStatus.FAILED}`,
-                  sql`${schedules.lastCallStatus} = ${CallStatus.MISSED}`,
-                ),
-              ),
-            ),
+            sql`(
+              ${schedules.lastCallStatus} IS NULL
+              OR
+              ${schedules.lastCallStatus} != 'answered'
+              OR
+              (${schedules.callRetry} = true AND (
+                  ${schedules.lastCallStatus} = 'failed'
+                  OR
+                  ${schedules.lastCallStatus} = 'missed'
+                )
+              )
+            )`,
           ),
         );
 
@@ -939,10 +940,16 @@ export class DatabaseStorage implements IStorage {
 
   async updateCallStatus(
     callSid: string,
-    status: CallStatus,
+    status: CallStatus | undefined,
     recordingUrl?: string,
   ): Promise<void> {
     try {
+      // Check if status is undefined
+      if (!status) {
+        console.error(`Cannot update call status for SID ${callSid}: status is undefined`);
+        return;
+      }
+      
       // Convert enum to string value to avoid SQL syntax errors
       const statusString = status.toString();
 
