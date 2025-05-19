@@ -642,52 +642,34 @@ export class DatabaseStorage implements IStorage {
         const timezone = data.timezone || currentSchedule.timezone;
         const wakeupTime = data.wakeupTime || currentSchedule.wakeupTime;
 
-        // Get timezone offset
+        // Get timezone offset string (e.g., "+10:00")
         const tzOffset = getTimezoneOffset(timezone);
         
-        // Calculate UTC time without using Date.toISOString() to avoid errors
-        // Handle special time cases (like midnight)
-        const [hours, minutes] = wakeupTime.split(':').map(n => parseInt(n, 10));
+        // Display timezone information for debugging
+        console.log(`[TIMEZONE DEBUG] Calculated offset for ${timezone}:`);
+        console.log(`  UTC:  Day ${new Date().getUTCDate()}, Time ${new Date().getUTCHours()}:${new Date().getUTCMinutes()}`);
+        console.log(`  Local: Day ${new Date().getDate()}, Time ${new Date().getHours()}:${new Date().getMinutes()}`);
+        console.log(`  Formatted offset: ${tzOffset}`);
         
-        // Get current date for timezone calculations
+        // Create an ISO date string with the timezone offset
         const today = new Date();
+        const dateStr = today.toISOString().substring(0, 10); // YYYY-MM-DD
+        const localTimeWithTz = `${dateStr}T${wakeupTime}:00${tzOffset}`;
         
-        // Create a date object with the target time
-        today.setHours(hours, minutes, 0, 0);
-        
-        // Calculate timezone offset in minutes - correctly handling Sydney timezone (UTC+10/+11)
-        console.log(`DEBUG: Calculating offset for timezone ${timezone}`);
-        
-        // Parse the timezone offset from the tzOffset string
-        let totalOffsetMinutes;
-        
-        const offsetMatch = tzOffset.match(/([+-])(\d{2}):(\d{2})/);
-        if (!offsetMatch) {
-          console.error(`Invalid timezone offset format: ${tzOffset}`);
-          totalOffsetMinutes = 0;
-        } else {
-          // For converting local time to UTC, we need to use the opposite sign
-          // If timezone is UTC+10, we subtract 10 hours to get UTC time
-          const offsetSign = offsetMatch[1] === '+' ? -1 : 1;
-          const offsetHours = parseInt(offsetMatch[2], 10);
-          const offsetMinutes = parseInt(offsetMatch[3], 10);
-          totalOffsetMinutes = offsetSign * (offsetHours * 60 + offsetMinutes);
+        // Create a Date object and extract the UTC time
+        let wakeupTimeUTC = '';
+        try {
+          const dateWithTz = new Date(localTimeWithTz);
+          const utcHours = String(dateWithTz.getUTCHours()).padStart(2, '0');
+          const utcMinutes = String(dateWithTz.getUTCMinutes()).padStart(2, '0');
+          wakeupTimeUTC = `${utcHours}:${utcMinutes}`;
+          
+          console.log(`[TIMEZONE DEBUG] Local time ${wakeupTime} in ${timezone} converted to UTC: ${wakeupTimeUTC}`);
+          console.log(`[TIMEZONE DEBUG] (Using ISO string: ${localTimeWithTz})`);
+        } catch (error) {
+          console.error('Error converting time to UTC:', error);
+          wakeupTimeUTC = wakeupTime; // Fallback to original time
         }
-        
-        console.log(`Using offset for ${timezone}: ${totalOffsetMinutes} minutes (${tzOffset})`);
-        
-        // Create a new Date to avoid modifying the original
-        const utcDate = new Date(today);
-        
-        // Apply offset to get UTC time
-        utcDate.setMinutes(utcDate.getMinutes() + totalOffsetMinutes);
-        
-        // Format as HH:MM
-        const utcHours = String(utcDate.getUTCHours()).padStart(2, '0');
-        const utcMinutes = String(utcDate.getUTCMinutes()).padStart(2, '0');
-        const wakeupTimeUTC = `${utcHours}:${utcMinutes}`;
-        
-        console.log(`Converted time: Local ${wakeupTime} → UTC ${wakeupTimeUTC} (offset: ${totalOffsetMinutes} minutes)`);
 
         // Handle date for one-time schedules
         let dateUTC = null;
