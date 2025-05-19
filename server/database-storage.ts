@@ -817,17 +817,25 @@ export class DatabaseStorage implements IStorage {
               ${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'
             )`,
             
-            // And if they've been called before, make sure it wasn't successfully answered
+            // And if they've been called before, make sure it wasn't successfully completed
             sql`(
               ${schedules.lastCallStatus} IS NULL
-              OR
-              ${schedules.lastCallStatus} != 'answered'
-              OR
+              OR 
               (${schedules.callRetry} = true AND (
                   ${schedules.lastCallStatus} = 'failed'
                   OR
-                  ${schedules.lastCallStatus} = 'missed'
-                )
+                  ${schedules.lastCallStatus} = 'busy'
+                  OR
+                  ${schedules.lastCallStatus} = 'no-answer'
+                  OR
+                  ${schedules.lastCallStatus} = 'canceled'
+              ))
+              OR
+              (${schedules.lastCallStatus} != 'completed' 
+               AND ${schedules.lastCallStatus} != 'in-progress'
+               AND ${schedules.lastCallStatus} != 'ringing'
+               AND ${schedules.lastCallStatus} != 'queued'
+               AND ${schedules.lastCallStatus} != 'initiated'
               )
             )`,
           ),
@@ -853,21 +861,25 @@ export class DatabaseStorage implements IStorage {
               ${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'
             )`,
             
-            // And if they've been called before, make sure it wasn't successfully answered
+            // And if they've been called before, make sure it wasn't successfully completed
             sql`(
               ${schedules.lastCallStatus} IS NULL
               OR 
-              ${schedules.lastCallStatus} != 'completed'
-              OR
               (${schedules.callRetry} = true AND (
                   ${schedules.lastCallStatus} = 'failed'
-                  OR
-                  ${schedules.lastCallStatus} = 'canceled'
                   OR
                   ${schedules.lastCallStatus} = 'busy'
                   OR
                   ${schedules.lastCallStatus} = 'no-answer'
-                )
+                  OR
+                  ${schedules.lastCallStatus} = 'canceled'
+              ))
+              OR
+              (${schedules.lastCallStatus} != 'completed' 
+               AND ${schedules.lastCallStatus} != 'in-progress'
+               AND ${schedules.lastCallStatus} != 'ringing'
+               AND ${schedules.lastCallStatus} != 'queued'
+               AND ${schedules.lastCallStatus} != 'initiated'
               )
             )`,
           ),

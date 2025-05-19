@@ -1122,17 +1122,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           `Mapping Twilio call status: "${CallStatus}" for call SID: ${CallSid}`,
         );
 
+        // Map Twilio status directly to our stored string values
+        // This approach avoids enum mismatches
         switch (CallStatus) {
           case "completed":
-            status = CallStatus.ANSWERED;
+            status = CallStatus.COMPLETED;
             break;
           case "no-answer":
+            status = CallStatus.NO_ANSWER;
+            break;
           case "busy":
-            status = CallStatus.MISSED;
+            status = CallStatus.BUSY;
             break;
           case "failed":
-          case "canceled":
             status = CallStatus.FAILED;
+            break;
+          case "canceled":
+            status = CallStatus.CANCELED;
             break;
           case "ringing":
             status = CallStatus.RINGING;
@@ -1146,12 +1152,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           case "initiated":
             status = CallStatus.INITIATED;
             break;
-          // For interim statuses, don't update with final status yet
-          //console.log(`Ignoring interim Twilio status update: ${CallStatus}`);
-          //return res.sendStatus(200);
           default:
             console.log(
-              `Unrecognized Twilio status: ${CallStatus}, mapping to FAILED`,
+              `Unrecognized Twilio status: "${CallStatus}", mapping to failed`,
             );
             status = CallStatus.FAILED; // Default to FAILED for unknown statuses
         }
