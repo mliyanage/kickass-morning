@@ -655,26 +655,52 @@ export class DatabaseStorage implements IStorage {
         // Create a date object with the target time
         today.setHours(hours, minutes, 0, 0);
         
-        // Calculate timezone offset in minutes
-        const offsetMatch = tzOffset.match(/([+-])(\d{2}):(\d{2})/);
-        if (!offsetMatch) {
-          console.error(`Invalid timezone offset format: ${tzOffset}`);
+        // Calculate timezone offset in minutes - correctly handling Sydney timezone (UTC+10/+11)
+        console.log(`DEBUG: Calculating offset for timezone ${timezone}`);
+        
+        // Use direct lookup for common timezones to ensure accuracy
+        let totalOffsetMinutes;
+        if (timezone === 'Australia/Sydney') {
+          // Sydney is UTC+10 (standard) or UTC+11 (daylight savings)
+          // Check if currently in daylight saving time
+          const now = new Date();
+          const jan = new Date(now.getFullYear(), 0, 1);
+          const jul = new Date(now.getFullYear(), 6, 1);
+          
+          // Use built-in JS to determine current offset
+          const stdTimezoneOffset = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+          const isDST = now.getTimezoneOffset() < stdTimezoneOffset;
+          
+          // Sydney offset: UTC+10 (600 minutes) or UTC+11 (660 minutes)
+          // Note: we're using the opposite sign because we're converting *to* UTC
+          totalOffsetMinutes = isDST ? -660 : -600;
+          console.log(`Using hardcoded offset for Sydney: ${totalOffsetMinutes} minutes (DST: ${isDST})`);
+        } else {
+          // Use regex parsing for other timezones
+          const offsetMatch = tzOffset.match(/([+-])(\d{2}):(\d{2})/);
+          if (!offsetMatch) {
+            console.error(`Invalid timezone offset format: ${tzOffset}`);
+            totalOffsetMinutes = 0;
+          } else {
+            const offsetSign = offsetMatch[1] === '+' ? -1 : 1; // Convert to UTC (opposite sign)
+            const offsetHours = parseInt(offsetMatch[2], 10);
+            const offsetMinutes = parseInt(offsetMatch[3], 10);
+            totalOffsetMinutes = offsetSign * (offsetHours * 60 + offsetMinutes);
+          }
         }
         
-        const offsetSign = offsetMatch[1] === '+' ? -1 : 1; // Convert to UTC (opposite sign)
-        const offsetHours = parseInt(offsetMatch[2], 10);
-        const offsetMinutes = parseInt(offsetMatch[3], 10);
-        const totalOffsetMinutes = offsetSign * (offsetHours * 60 + offsetMinutes);
+        // Create a new Date to avoid modifying the original
+        const utcDate = new Date(today);
         
         // Apply offset to get UTC time
-        today.setMinutes(today.getMinutes() + totalOffsetMinutes);
+        utcDate.setMinutes(utcDate.getMinutes() + totalOffsetMinutes);
         
         // Format as HH:MM
-        const utcHours = String(today.getUTCHours()).padStart(2, '0');
-        const utcMinutes = String(today.getUTCMinutes()).padStart(2, '0');
+        const utcHours = String(utcDate.getUTCHours()).padStart(2, '0');
+        const utcMinutes = String(utcDate.getUTCMinutes()).padStart(2, '0');
         const wakeupTimeUTC = `${utcHours}:${utcMinutes}`;
         
-        console.log(`Converted time: Local ${wakeupTime} → UTC ${wakeupTimeUTC} (offset: ${tzOffset})`);
+        console.log(`Converted time: Local ${wakeupTime} → UTC ${wakeupTimeUTC} (offset: ${totalOffsetMinutes} minutes)`);
 
         // Handle date for one-time schedules
         let dateUTC = null;
