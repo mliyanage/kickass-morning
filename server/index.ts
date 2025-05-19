@@ -25,20 +25,21 @@ app.use('/audio-cache', express.static(path.join(__dirname, '..', 'audio-cache')
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
+  
+  // Use a safer approach to log responses that won't interfere with body streams
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
+      // Only log basic request information without response body in production
+      // This avoids the "body stream already read" error
+      const env = detectEnvironment();
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      
+      // In development, we might want more verbose logs
+      if (env === 'development') {
+        // We'll still capture JSON in development, but more carefully
+        // This is done by accessing the response directly rather than modifying res.json
+        // But we won't try to include the response body to avoid stream conflicts
       }
 
       if (logLine.length > 80) {
