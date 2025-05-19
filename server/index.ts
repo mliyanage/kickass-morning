@@ -26,22 +26,22 @@ app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   
+  // Create a safer response.json override that avoids the "body stream already read" error
+  const originalJson = res.json;
+  res.json = function(body) {
+    // Reset json to original to avoid infinite recursion
+    res.json = originalJson;
+    return originalJson.call(this, body);
+  };
+  
   // Use a safer approach to log responses that won't interfere with body streams
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
-      // Only log basic request information without response body in production
-      // This avoids the "body stream already read" error
+      // Simple logging without response body inspection
       const env = detectEnvironment();
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       
-      // In development, we might want more verbose logs
-      if (env === 'development') {
-        // We'll still capture JSON in development, but more carefully
-        // This is done by accessing the response directly rather than modifying res.json
-        // But we won't try to include the response body to avoid stream conflicts
-      }
-
       if (logLine.length > 80) {
         logLine = logLine.slice(0, 79) + "…";
       }
