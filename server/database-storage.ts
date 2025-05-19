@@ -855,17 +855,18 @@ export class DatabaseStorage implements IStorage {
             // And if they've been called before, make sure it wasn't successfully answered
             or(
               sql`${schedules.lastCallStatus} IS NULL`,
-              sql`${schedules.lastCallStatus} != ${CallStatus.ANSWERED}`,
+              sql`${schedules.lastCallStatus} != ${CallStatus.COMPLETED}`,
               sql`${schedules.lastCallStatus} != ${CallStatus.INITIATED}`,
               sql`${schedules.lastCallStatus} != ${CallStatus.IN_PROGRSS}`,
-              sql`${schedules.lastCallStatus} != ${CallStatus.PENDING}`,
               sql`${schedules.lastCallStatus} != ${CallStatus.QUEUED}`,
               sql`${schedules.lastCallStatus} != ${CallStatus.RINGING}`,
               and(
                 eq(schedules.callRetry, true),
                 or(
                   sql`${schedules.lastCallStatus} = ${CallStatus.FAILED}`,
-                  sql`${schedules.lastCallStatus} = ${CallStatus.MISSED}`,
+                  sql`${schedules.lastCallStatus} = ${CallStatus.CANCELED}`,
+                  sql`${schedules.lastCallStatus} = ${CallStatus.BUSY}`,
+                  sql`${schedules.lastCallStatus} = ${CallStatus.NO_ANSWER}`,
                 ),
               ),
             ),

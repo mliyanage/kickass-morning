@@ -30,8 +30,6 @@ export enum StruggleType {
 
 export enum CallStatus {
   PENDING = "pending",
-  ANSWERED = "answered",
-  MISSED = "missed",
   FAILED = "failed",
   RINGING = "ringing",
   COMPLETED = "completed",
@@ -40,6 +38,7 @@ export enum CallStatus {
   IN_PROGRSS = "in-progress",
   QUEUED = "queued",
   INITIATED = "initiated",
+  CANCELED = "canceled",
 }
 
 // Users table
