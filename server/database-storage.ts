@@ -814,28 +814,19 @@ export class DatabaseStorage implements IStorage {
             sql`(
               ${schedules.lastCalled} IS NULL 
               OR 
-              ${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'
+              ${schedules.lastCalled} < NOW() - INTERVAL '2 minutes'
             )`,
-            
+
             // And if they've been called before, make sure it wasn't successfully completed
             sql`(
               ${schedules.lastCallStatus} IS NULL
               OR 
               (${schedules.callRetry} = true AND (
                   ${schedules.lastCallStatus} = 'failed'
-                  OR
-                  ${schedules.lastCallStatus} = 'busy'
-                  OR
-                  ${schedules.lastCallStatus} = 'no-answer'
-                  OR
-                  ${schedules.lastCallStatus} = 'canceled'
               ))
               OR
-              (${schedules.lastCallStatus} != 'completed' 
-               AND ${schedules.lastCallStatus} != 'in-progress'
-               AND ${schedules.lastCallStatus} != 'ringing'
-               AND ${schedules.lastCallStatus} != 'queued'
-               AND ${schedules.lastCallStatus} != 'initiated'
+              (${schedules.lastCallStatus} != 'initiated' 
+               AND ${schedules.lastCallStatus} != 'answered'
               )
             )`,
           ),
@@ -860,7 +851,7 @@ export class DatabaseStorage implements IStorage {
               OR 
               ${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'
             )`,
-            
+
             // And if they've been called before, make sure it wasn't successfully completed
             sql`(
               ${schedules.lastCallStatus} IS NULL
@@ -957,10 +948,12 @@ export class DatabaseStorage implements IStorage {
     try {
       // Check if status is undefined
       if (!status) {
-        console.error(`Cannot update call status for SID ${callSid}: status is undefined`);
+        console.error(
+          `Cannot update call status for SID ${callSid}: status is undefined`,
+        );
         return;
       }
-      
+
       // Convert enum to string value to avoid SQL syntax errors
       const statusString = status.toString();
 

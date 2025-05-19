@@ -128,17 +128,7 @@ export async function makeCall(
       to,
       record: true,
       statusCallback: `${getBaseUrl()}/api/webhooks/twilio/status`,
-      statusCallbackEvent: [
-        "initiated",
-        "answered",
-        "completed",
-        "busy",
-        "failed",
-        "no-answer",
-        "in-progress",
-        "ringing",
-        "queued",
-      ],
+      statusCallbackEvent: ["initiated", "answered"],
       statusCallbackMethod: "POST",
     });
 
