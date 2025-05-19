@@ -802,10 +802,15 @@ export class DatabaseStorage implements IStorage {
   
   async updateCallStatus(callSid: string, status: CallStatus, recordingUrl?: string): Promise<void> {
     try {
+      // Convert enum to string value to avoid SQL syntax errors
+      const statusString = status.toString();
+      
+      console.log(`Updating call status for SID ${callSid} to ${statusString}`);
+      
       // Step 1: Update the call history record
       const updateQuery = recordingUrl 
-        ? sql`UPDATE call_history SET status = ${status}, recording_url = ${recordingUrl} WHERE call_sid = ${callSid}`
-        : sql`UPDATE call_history SET status = ${status} WHERE call_sid = ${callSid}`;
+        ? sql`UPDATE call_history SET status = ${statusString}, recording_url = ${recordingUrl} WHERE call_sid = ${callSid}`
+        : sql`UPDATE call_history SET status = ${statusString} WHERE call_sid = ${callSid}`;
       
       await db.execute(updateQuery);
       
@@ -825,14 +830,14 @@ export class DatabaseStorage implements IStorage {
         // Use raw SQL to avoid type conversion issues
         const scheduleUpdateQuery = sql`
           UPDATE schedules 
-          SET last_call_status = ${status}, 
+          SET last_call_status = ${statusString}, 
               updated_at = NOW()
           WHERE id = ${scheduleId}
         `;
         
         await db.execute(scheduleUpdateQuery);
         
-        console.log(`Updated schedule ${scheduleId} last call status to ${status}`);
+        console.log(`Updated schedule ${scheduleId} last call status to ${statusString}`);
       }
       
       console.log(`Updated call status for SID ${callSid} to ${status}`);
