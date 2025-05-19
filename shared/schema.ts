@@ -1,4 +1,12 @@
-import { pgTable, text, serial, integer, boolean, timestamp, unique } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  unique,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -9,7 +17,7 @@ export enum GoalType {
   STUDY = "study",
   MEDITATION = "meditation",
   CREATIVE = "creative",
-  OTHER = "other"
+  OTHER = "other",
 }
 
 export enum StruggleType {
@@ -17,14 +25,21 @@ export enum StruggleType {
   LACK_OF_MOTIVATION = "lack_of_motivation",
   SNOOZE = "snooze",
   STAY_UP_LATE = "stay_up_late",
-  OTHER = "other"
+  OTHER = "other",
 }
 
 export enum CallStatus {
   PENDING = "pending",
   ANSWERED = "answered",
   MISSED = "missed",
-  FAILED = "failed"
+  FAILED = "failed",
+  RINGING = "ringing",
+  COMPLETED = "completed",
+  BUSY = "busy",
+  NO_ANSWER = "no-answer",
+  IN_PROGRSS = "in-progress",
+  QUEUED = "queued",
+  INITIATED = "initiated",
 }
 
 // Users table
@@ -40,23 +55,29 @@ export const users = pgTable("users", {
 });
 
 // User personalization preferences
-export const personalizations = pgTable("personalizations", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  goal: text("goal").notNull(), // Single goal in database
-  otherGoal: text("other_goal"),
-  goalDescription: text("goal_description"),
-  struggle: text("struggle").notNull(), // Single struggle in database
-  otherStruggle: text("other_struggle"),
-  voice: text("voice").notNull(),
-  customVoice: text("custom_voice"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-}, (table) => {
-  return {
-    userIdUnique: unique("personalizations_user_id_unique").on(table.userId),
-  };
-});
+export const personalizations = pgTable(
+  "personalizations",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    goal: text("goal").notNull(), // Single goal in database
+    otherGoal: text("other_goal"),
+    goalDescription: text("goal_description"),
+    struggle: text("struggle").notNull(), // Single struggle in database
+    otherStruggle: text("other_struggle"),
+    voice: text("voice").notNull(),
+    customVoice: text("custom_voice"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => {
+    return {
+      userIdUnique: unique("personalizations_user_id_unique").on(table.userId),
+    };
+  },
+);
 
 // Voice options
 export const voices = pgTable("voices", {
@@ -72,23 +93,25 @@ export const voices = pgTable("voices", {
 // Schedule for wakeup calls
 export const schedules = pgTable("schedules", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  wakeupTime: text("wakeup_time").notNull(),     // User's local time (for display)
-  wakeupTimeUTC: text("wakeup_time_utc"),        // UTC time (for scheduling) - nullable for migration
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  wakeupTime: text("wakeup_time").notNull(), // User's local time (for display)
+  wakeupTimeUTC: text("wakeup_time_utc"), // UTC time (for scheduling) - nullable for migration
   timezone: text("timezone").notNull(),
   weekdays: text("weekdays").notNull(),
   isRecurring: boolean("is_recurring").default(true),
-  date: text("date"),              // Local date (for display)
-  dateUTC: text("date_utc"),       // UTC date (for scheduling one-time calls)
+  date: text("date"), // Local date (for display)
+  dateUTC: text("date_utc"), // UTC date (for scheduling one-time calls)
   callRetry: boolean("call_retry").default(true),
   advanceNotice: boolean("advance_notice").default(false),
   goalType: text("goal_type").notNull(),
   struggleType: text("struggle_type").notNull(),
   voiceId: text("voice_id").notNull(),
   isActive: boolean("is_active").default(true),
-  lastCalled: timestamp("last_called"),  // When the schedule was last used to make a call
+  lastCalled: timestamp("last_called"), // When the schedule was last used to make a call
   lastCallStatus: text("last_call_status"), // Status of the last call (ANSWERED, MISSED, FAILED)
-  lastCallSid: text("last_call_sid"),    // Twilio SID of the last call for tracking
+  lastCallSid: text("last_call_sid"), // Twilio SID of the last call for tracking
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -97,11 +120,13 @@ export const schedules = pgTable("schedules", {
 export const callHistory = pgTable("call_history", {
   id: serial("id").primaryKey(),
   scheduleId: integer("schedule_id").references(() => schedules.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   callTime: timestamp("call_time").notNull(),
   voice: text("voice").notNull(),
   status: text("status").notNull(),
-  callSid: text("call_sid"),        // Twilio call SID for tracking
+  callSid: text("call_sid"), // Twilio call SID for tracking
   duration: integer("duration"),
   recordingUrl: text("recording_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -139,38 +164,54 @@ export const emailOtpSchema = z.object({
 
 // Schema for phone verification
 export const phoneVerificationSchema = z.object({
-  phone: z.string()
+  phone: z
+    .string()
     .min(6, "Phone number must include country code and at least 5 digits")
-    .regex(/^\+[1-9]\d{4,14}$/, "Phone number must be in E.164 format (e.g., +1234567890)")
+    .regex(
+      /^\+[1-9]\d{4,14}$/,
+      "Phone number must be in E.164 format (e.g., +1234567890)",
+    ),
 });
 
 // Schema for OTP verification
 export const otpVerificationSchema = z.object({
-  phone: z.string()
+  phone: z
+    .string()
     .min(6, "Phone number must include country code and at least 5 digits")
-    .regex(/^\+[1-9]\d{4,14}$/, "Phone number must be in E.164 format (e.g., +1234567890)"),
+    .regex(
+      /^\+[1-9]\d{4,14}$/,
+      "Phone number must be in E.164 format (e.g., +1234567890)",
+    ),
   otp: z.string().length(6, "OTP must be exactly 6 digits"),
 });
 
 // Schema for personalization
 export const personalizationSchema = z.object({
-  goals: z.array(z.enum([
-    GoalType.EXERCISE,
-    GoalType.PRODUCTIVITY,
-    GoalType.STUDY,
-    GoalType.MEDITATION,
-    GoalType.CREATIVE,
-    GoalType.OTHER
-  ])).min(1, "Select at least one goal"),
+  goals: z
+    .array(
+      z.enum([
+        GoalType.EXERCISE,
+        GoalType.PRODUCTIVITY,
+        GoalType.STUDY,
+        GoalType.MEDITATION,
+        GoalType.CREATIVE,
+        GoalType.OTHER,
+      ]),
+    )
+    .min(1, "Select at least one goal"),
   otherGoal: z.string().optional(),
   goalDescription: z.string().optional(),
-  struggles: z.array(z.enum([
-    StruggleType.TIRED,
-    StruggleType.LACK_OF_MOTIVATION,
-    StruggleType.SNOOZE,
-    StruggleType.STAY_UP_LATE,
-    StruggleType.OTHER
-  ])).min(1, "Select at least one struggle"),
+  struggles: z
+    .array(
+      z.enum([
+        StruggleType.TIRED,
+        StruggleType.LACK_OF_MOTIVATION,
+        StruggleType.SNOOZE,
+        StruggleType.STAY_UP_LATE,
+        StruggleType.OTHER,
+      ]),
+    )
+    .min(1, "Select at least one struggle"),
   otherStruggle: z.string().optional(),
   voice: z.string(),
   customVoice: z.string().optional(),

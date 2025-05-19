@@ -162,13 +162,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Send the OTP via email using SendGrid
         const isSignup = otpType === "register";
         const emailSent = await sendOtpEmail(email, otp, isSignup);
-        
+
         // Log for backup/debugging, but with masked OTP in production
-        const maskedOtp = process.env.NODE_ENV === "production" 
-          ? "******" 
-          : otp;
+        const maskedOtp =
+          process.env.NODE_ENV === "production" ? "******" : otp;
         console.log(
-          `[${new Date().toISOString()}] OTP for ${email} (${otpType}): ${maskedOtp} - Email sent: ${emailSent ? "success" : "failed"}`
+          `[${new Date().toISOString()}] OTP for ${email} (${otpType}): ${maskedOtp} - Email sent: ${emailSent ? "success" : "failed"}`,
         );
 
         // Return success message depending on type
@@ -183,11 +182,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (error) {
         console.error("Email OTP request error:", error);
-        res
-          .status(500)
-          .json({
-            message: "An error occurred while sending verification code.",
-          });
+        res.status(500).json({
+          message: "An error occurred while sending verification code.",
+        });
       }
     },
   );
@@ -491,21 +488,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(
               `[OTP Debug] User has active OTPs but entered incorrect code`,
             );
-            return res
-              .status(400)
-              .json({
-                message:
-                  "Incorrect verification code. Please check and try again.",
-              });
+            return res.status(400).json({
+              message:
+                "Incorrect verification code. Please check and try again.",
+            });
           }
 
           console.log(`[OTP Debug] OTP likely expired for ${phoneNumber}`);
-          return res
-            .status(400)
-            .json({
-              message:
-                "Verification code has expired. Please request a new code.",
-            });
+          return res.status(400).json({
+            message:
+              "Verification code has expired. Please request a new code.",
+          });
         }
 
         // Update user's phone number and verification status
@@ -570,11 +563,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .json({ message: "Invalid input data.", errors: error.errors });
         }
         console.error("Save personalization error:", error);
-        res
-          .status(500)
-          .json({
-            message: "An error occurred while saving personalization data.",
-          });
+        res.status(500).json({
+          message: "An error occurred while saving personalization data.",
+        });
       }
     },
   );
@@ -597,11 +588,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(200).json(personalization);
       } catch (error) {
         console.error("Get personalization error:", error);
-        res
-          .status(500)
-          .json({
-            message: "An error occurred while fetching personalization data.",
-          });
+        res.status(500).json({
+          message: "An error occurred while fetching personalization data.",
+        });
       }
     },
   );
@@ -635,11 +624,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           if (existingSchedule.userId !== req.session.userId) {
-            return res
-              .status(403)
-              .json({
-                message: "You don't have permission to update this schedule.",
-              });
+            return res.status(403).json({
+              message: "You don't have permission to update this schedule.",
+            });
           }
 
           // Get user's personalization data
@@ -910,11 +897,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(200).json({ message: "Tomorrow's call has been skipped." });
       } catch (error) {
         console.error("Skip tomorrow error:", error);
-        res
-          .status(500)
-          .json({
-            message: "An error occurred while processing your request.",
-          });
+        res.status(500).json({
+          message: "An error occurred while processing your request.",
+        });
       }
     },
   );
@@ -1059,26 +1044,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Use path.resolve for ES modules instead of __dirname
-        const audioFilePath = path.resolve('audio-cache', 'voice_preview', `${voiceId}.mp3`);
-        
+        const audioFilePath = path.resolve(
+          "audio-cache",
+          "voice_preview",
+          `${voiceId}.mp3`,
+        );
+
         // Check if the file exists
         if (!fs.existsSync(audioFilePath)) {
           return res.status(404).json({ message: "Voice preview not found." });
         }
-        
+
         // Return the URL to the preview audio file
-        res.status(200).json({ 
-          message: "Voice preview found", 
-          audioUrl: `/audio-cache/voice_preview/${voiceId}.mp3`
+        res.status(200).json({
+          message: "Voice preview found",
+          audioUrl: `/audio-cache/voice_preview/${voiceId}.mp3`,
         });
         console.log(`Serving voice preview: ${voiceId}.mp3`);
       } catch (error) {
         console.error("Voice preview error:", error);
-        res
-          .status(500)
-          .json({
-            message: "An error occurred while generating voice preview.",
-          });
+        res.status(500).json({
+          message: "An error occurred while generating voice preview.",
+        });
       }
     },
   );
@@ -1131,8 +1118,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Map Twilio call status string to our CallStatus enum
         let status: CallStatus;
-        console.log(`Mapping Twilio call status: "${CallStatus}" for call SID: ${CallSid}`);
-        
+        console.log(
+          `Mapping Twilio call status: "${CallStatus}" for call SID: ${CallSid}`,
+        );
+
         switch (CallStatus) {
           case "completed":
             status = CallStatus.ANSWERED;
@@ -1146,14 +1135,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status = CallStatus.FAILED;
             break;
           case "ringing":
+            status = CallStatus.RINGING;
+            break;
           case "in-progress":
+            status = CallStatus.IN_PROGRESS;
+            break;
           case "queued":
+            status = CallStatus.QUEUED;
+            break;
           case "initiated":
-            // For interim statuses, don't update with final status yet
-            console.log(`Ignoring interim Twilio status update: ${CallStatus}`);
-            return res.sendStatus(200);
+            status = CallStatus.INITIATED;
+            break;
+          // For interim statuses, don't update with final status yet
+          //console.log(`Ignoring interim Twilio status update: ${CallStatus}`);
+          //return res.sendStatus(200);
           default:
-            console.log(`Unrecognized Twilio status: ${CallStatus}, mapping to FAILED`);
+            console.log(
+              `Unrecognized Twilio status: ${CallStatus}, mapping to FAILED`,
+            );
             status = CallStatus.FAILED; // Default to FAILED for unknown statuses
         }
 

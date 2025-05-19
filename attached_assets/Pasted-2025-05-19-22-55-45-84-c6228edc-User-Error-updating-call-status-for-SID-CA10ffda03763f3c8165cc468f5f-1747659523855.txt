@@ -1,0 +1,92 @@
+2025-05-19 22:55:45.84
+c6228edc
+User
+Error updating call status for SID CA10ffda03763f3c8165cc468f5fc242d2: TypeError: Cannot read properties of undefined (reading 'toString')
+2025-05-19 22:55:45.84
+c6228edc
+User
+at DatabaseStorage.updateCallStatus (file:///home/runner/workspace/dist/index.js:1060:35)
+2025-05-19 22:55:45.84
+c6228edc
+User
+at file:///home/runner/workspace/dist/index.js:2283:23
+2025-05-19 22:55:45.84
+c6228edc
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2025-05-19 22:55:45.84
+c6228edc
+User
+at next (/home/runner/workspace/node_modules/express/lib/router/route.js:149:13)
+2025-05-19 22:55:45.84
+c6228edc
+User
+at Route.dispatch (/home/runner/workspace/node_modules/express/lib/router/route.js:119:3)
+2025-05-19 22:55:45.84
+c6228edc
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2025-05-19 22:55:45.84
+c6228edc
+User
+at /home/runner/workspace/node_modules/express/lib/router/index.js:284:15
+2025-05-19 22:55:45.84
+c6228edc
+User
+at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+2025-05-19 22:55:45.84
+c6228edc
+User
+at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+2025-05-19 22:55:45.84
+c6228edc
+User
+at file:///home/runner/workspace/dist/index.js:1535:5
+2025-05-19 22:55:45.84
+c6228edc
+User
+Error details: Cannot read properties of undefined (reading 'toString')
+2025-05-19 22:55:45.84
+c6228edc
+User
+Error stack: TypeError: Cannot read properties of undefined (reading 'toString')
+2025-05-19 22:55:45.84
+c6228edc
+User
+at DatabaseStorage.updateCallStatus (file:///home/runner/workspace/dist/index.js:1060:35)
+2025-05-19 22:55:45.84
+c6228edc
+User
+at file:///home/runner/workspace/dist/index.js:2283:23
+2025-05-19 22:55:45.84
+c6228edc
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2025-05-19 22:55:45.84
+c6228edc
+User
+at next (/home/runner/workspace/node_modules/express/lib/router/route.js:149:13)
+2025-05-19 22:55:45.84
+c6228edc
+User
+at Route.dispatch (/home/runner/workspace/node_modules/express/lib/router/route.js:119:3)
+2025-05-19 22:55:45.84
+c6228edc
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2025-05-19 22:55:45.84
+c6228edc
+User
+at /home/runner/workspace/node_modules/express/lib/router/index.js:284:15
+2025-05-19 22:55:45.84
+c6228edc
+User
+at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+2025-05-19 22:55:45.84
+c6228edc
+User
+at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+2025-05-19 22:55:45.84
+c6228edc
+User
+at file:///home/runner/workspace/dist/index.js:1535:5

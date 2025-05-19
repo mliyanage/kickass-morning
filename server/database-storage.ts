@@ -856,6 +856,11 @@ export class DatabaseStorage implements IStorage {
             or(
               sql`${schedules.lastCallStatus} IS NULL`,
               sql`${schedules.lastCallStatus} != ${CallStatus.ANSWERED}`,
+              sql`${schedules.lastCallStatus} != ${CallStatus.INITIATED}`,
+              sql`${schedules.lastCallStatus} != ${CallStatus.IN_PROGRSS}`,
+              sql`${schedules.lastCallStatus} != ${CallStatus.PENDING}`,
+              sql`${schedules.lastCallStatus} != ${CallStatus.QUEUED}`,
+              sql`${schedules.lastCallStatus} != ${CallStatus.RINGING}`,
               and(
                 eq(schedules.callRetry, true),
                 or(

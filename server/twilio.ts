@@ -135,6 +135,9 @@ export async function makeCall(
         "busy",
         "failed",
         "no-answer",
+        "in-progress",
+        "ringing",
+        "queued",
       ],
       statusCallbackMethod: "POST",
     });
