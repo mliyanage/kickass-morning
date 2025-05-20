@@ -981,16 +981,16 @@ export class DatabaseStorage implements IStorage {
     recordingUrl?: string,
   ): Promise<void> {
     try {
-      // Check if status is undefined
+      // Check if status is undefined and provide a fallback
       if (!status) {
         console.error(
-          `Cannot update call status for SID ${callSid}: status is undefined`,
+          `Call status is undefined for SID ${callSid}, using "pending" as fallback`,
         );
-        return;
+        status = CallStatus.PENDING;
       }
 
-      // Convert enum to string value to avoid SQL syntax errors
-      const statusString = status.toString();
+      // Use the string value directly to avoid toString() issues
+      const statusString = status;
 
       console.log(`Updating call status for SID ${callSid} to ${statusString}`);
 
