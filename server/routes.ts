@@ -1117,12 +1117,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Map Twilio call status string to our CallStatus enum
-        let status: CallStatus;
+        let status: CallStatus | undefined;
         console.log(
           `Mapping Twilio call status: "${CallStatus}" for call SID: ${CallSid}`,
         );
 
-        // Map Twilio status directly to our stored string values
+        // Map Twilio status string to our CallStatus enum
         // This approach avoids enum mismatches
         switch (CallStatus) {
           case "completed":
@@ -1158,6 +1158,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             );
             status = CallStatus.FAILED; // Default to FAILED for unknown statuses
         }
+        
+        console.log(`Mapped status: ${status}`); // Debug log to confirm mapping
 
         // Update the call status in the database
         await storage.updateCallStatus(CallSid, status, RecordingUrl);
