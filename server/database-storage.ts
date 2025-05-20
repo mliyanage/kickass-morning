@@ -869,7 +869,7 @@ export class DatabaseStorage implements IStorage {
               OR
               (${schedules.lastCallStatus} != 'initiated' 
                AND ${schedules.lastCallStatus} != 'answered'
-               AND ${schedules.lastCallStatus} != 'pending
+               AND ${schedules.lastCallStatus} != 'pending'
               )
             )`,
           ),
@@ -901,19 +901,11 @@ export class DatabaseStorage implements IStorage {
               OR 
               (${schedules.callRetry} = true AND (
                   ${schedules.lastCallStatus} = 'failed'
-                  OR
-                  ${schedules.lastCallStatus} = 'busy'
-                  OR
-                  ${schedules.lastCallStatus} = 'no-answer'
-                  OR
-                  ${schedules.lastCallStatus} = 'canceled'
               ))
               OR
-              (${schedules.lastCallStatus} != 'completed' 
-               AND ${schedules.lastCallStatus} != 'in-progress'
-               AND ${schedules.lastCallStatus} != 'ringing'
-               AND ${schedules.lastCallStatus} != 'queued'
-               AND ${schedules.lastCallStatus} != 'initiated'
+              (${schedules.lastCallStatus} != 'initiated' 
+               AND ${schedules.lastCallStatus} != 'answered'
+               AND ${schedules.lastCallStatus} != 'pending'
               )
             )`,
           ),
