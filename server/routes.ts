@@ -1128,17 +1128,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           case "completed":
             status = CallStatus.COMPLETED;
             break;
-          case "no-answer":
-            status = CallStatus.NO_ANSWER;
-            break;
-          case "busy":
-            status = CallStatus.BUSY;
-            break;
           case "failed":
             status = CallStatus.FAILED;
-            break;
-          case "canceled":
-            status = CallStatus.CANCELED;
             break;
           case "ringing":
             status = CallStatus.RINGING;
@@ -1152,13 +1143,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           case "initiated":
             status = CallStatus.INITIATED;
             break;
+          case "answered":
+            status = CallStatus.ANSWERED;
+            break;
           default:
             console.log(
               `Unrecognized Twilio status: "${CallStatus}", mapping to failed`,
             );
             status = CallStatus.FAILED; // Default to FAILED for unknown statuses
         }
-        
+
         console.log(`Mapped status: ${status}`); // Debug log to confirm mapping
 
         // Update the call status in the database

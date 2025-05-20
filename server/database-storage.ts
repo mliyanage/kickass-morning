@@ -644,30 +644,41 @@ export class DatabaseStorage implements IStorage {
 
         // Get timezone offset string (e.g., "+10:00")
         const tzOffset = getTimezoneOffset(timezone);
-        
+
         // Display timezone information for debugging
         console.log(`[TIMEZONE DEBUG] Calculated offset for ${timezone}:`);
-        console.log(`  UTC:  Day ${new Date().getUTCDate()}, Time ${new Date().getUTCHours()}:${new Date().getUTCMinutes()}`);
-        console.log(`  Local: Day ${new Date().getDate()}, Time ${new Date().getHours()}:${new Date().getMinutes()}`);
+        console.log(
+          `  UTC:  Day ${new Date().getUTCDate()}, Time ${new Date().getUTCHours()}:${new Date().getUTCMinutes()}`,
+        );
+        console.log(
+          `  Local: Day ${new Date().getDate()}, Time ${new Date().getHours()}:${new Date().getMinutes()}`,
+        );
         console.log(`  Formatted offset: ${tzOffset}`);
-        
+
         // Create an ISO date string with the timezone offset
         const today = new Date();
         const dateStr = today.toISOString().substring(0, 10); // YYYY-MM-DD
         const localTimeWithTz = `${dateStr}T${wakeupTime}:00${tzOffset}`;
-        
+
         // Create a Date object and extract the UTC time
-        let wakeupTimeUTC = '';
+        let wakeupTimeUTC = "";
         try {
           const dateWithTz = new Date(localTimeWithTz);
-          const utcHours = String(dateWithTz.getUTCHours()).padStart(2, '0');
-          const utcMinutes = String(dateWithTz.getUTCMinutes()).padStart(2, '0');
+          const utcHours = String(dateWithTz.getUTCHours()).padStart(2, "0");
+          const utcMinutes = String(dateWithTz.getUTCMinutes()).padStart(
+            2,
+            "0",
+          );
           wakeupTimeUTC = `${utcHours}:${utcMinutes}`;
-          
-          console.log(`[TIMEZONE DEBUG] Local time ${wakeupTime} in ${timezone} converted to UTC: ${wakeupTimeUTC}`);
-          console.log(`[TIMEZONE DEBUG] (Using ISO string: ${localTimeWithTz})`);
+
+          console.log(
+            `[TIMEZONE DEBUG] Local time ${wakeupTime} in ${timezone} converted to UTC: ${wakeupTimeUTC}`,
+          );
+          console.log(
+            `[TIMEZONE DEBUG] (Using ISO string: ${localTimeWithTz})`,
+          );
         } catch (error) {
-          console.error('Error converting time to UTC:', error);
+          console.error("Error converting time to UTC:", error);
           wakeupTimeUTC = wakeupTime; // Fallback to original time
         }
 
@@ -685,17 +696,19 @@ export class DatabaseStorage implements IStorage {
             const [year, month, day] = date
               .split("-")
               .map((n: string) => parseInt(n, 10));
-              
+
             // Create a date object for the scheduled date
             const scheduleDate = new Date(Date.UTC(year, month - 1, day));
-            
+
             // Apply the same time offset calculation as for daily time
             scheduleDate.setUTCHours(hours, minutes, 0, 0);
-            scheduleDate.setMinutes(scheduleDate.getMinutes() + totalOffsetMinutes);
-            
+            scheduleDate.setMinutes(
+              scheduleDate.getMinutes() + totalOffsetMinutes,
+            );
+
             // Format the UTC date as YYYY-MM-DD
-            dateUTC = `${scheduleDate.getUTCFullYear()}-${String(scheduleDate.getUTCMonth() + 1).padStart(2, '0')}-${String(scheduleDate.getUTCDate()).padStart(2, '0')}`;
-            
+            dateUTC = `${scheduleDate.getUTCFullYear()}-${String(scheduleDate.getUTCMonth() + 1).padStart(2, "0")}-${String(scheduleDate.getUTCDate()).padStart(2, "0")}`;
+
             console.log(`Converted date: Local ${date} → UTC ${dateUTC}`);
           } catch (error) {
             console.error(`Error converting date to UTC: ${date}`, error);
@@ -843,7 +856,7 @@ export class DatabaseStorage implements IStorage {
             sql`(
               ${schedules.lastCalled} IS NULL 
               OR 
-              ${schedules.lastCalled} < NOW() - INTERVAL '2 minutes'
+              ${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'
             )`,
 
             // And if they've been called before, make sure it wasn't successfully completed
@@ -856,6 +869,7 @@ export class DatabaseStorage implements IStorage {
               OR
               (${schedules.lastCallStatus} != 'initiated' 
                AND ${schedules.lastCallStatus} != 'answered'
+               AND ${schedules.lastCallStatus} != 'pending
               )
             )`,
           ),
