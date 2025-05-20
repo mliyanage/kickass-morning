@@ -1117,41 +1117,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Map Twilio call status string to our CallStatus enum
-        let status: CallStatus | undefined;
         console.log(
           `Mapping Twilio call status: "${CallStatus}" for call SID: ${CallSid}`,
         );
 
-        // Map Twilio status string to our CallStatus enum
-        // This approach avoids enum mismatches
+        // Use a string-based approach for clearer mapping
+        let statusString: string;
+        
         switch (CallStatus) {
           case "completed":
-            status = CallStatus.COMPLETED;
+            statusString = "completed";
+            break;
+          case "no-answer":
+            statusString = "no-answer";
+            break;
+          case "busy":
+            statusString = "busy";
             break;
           case "failed":
-            status = CallStatus.FAILED;
+            statusString = "failed";
+            break;
+          case "canceled":
+            statusString = "canceled";
             break;
           case "ringing":
-            status = CallStatus.RINGING;
+            statusString = "ringing";
             break;
           case "in-progress":
-            status = CallStatus.IN_PROGRESS;
+            statusString = "in-progress";
             break;
           case "queued":
-            status = CallStatus.QUEUED;
+            statusString = "queued";
             break;
           case "initiated":
-            status = CallStatus.INITIATED;
-            break;
-          case "answered":
-            status = CallStatus.ANSWERED;
+            statusString = "initiated";
             break;
           default:
+            statusString = "failed"; // Default to failed for unknown statuses
             console.log(
-              `Unrecognized Twilio status: "${CallStatus}", mapping to failed`,
+              `Unrecognized Twilio status: "${CallStatus}", mapped to ${statusString}`,
             );
-            status = CallStatus.FAILED; // Default to FAILED for unknown statuses
         }
+        
+        // Convert string to enum value
+        const status = statusString as CallStatus;
 
         console.log(`Mapped status: ${status}`); // Debug log to confirm mapping
 
