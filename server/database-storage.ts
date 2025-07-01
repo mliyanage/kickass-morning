@@ -948,20 +948,45 @@ export class DatabaseStorage implements IStorage {
         callSid,
       );
 
-      const updateQuery = sql`
-        UPDATE schedules 
-        SET last_called = ${isoString}::timestamp,
-            last_call_status = ${callStatus}, 
-            last_call_sid = ${callSid || null},
-            updated_at = NOW()
-        WHERE id = ${scheduleId}
-      `;
+      // Use explicit parameter binding to ensure CallSid is properly set
+      const updateQuery = callSid 
+        ? sql`
+          UPDATE schedules 
+          SET last_called = ${isoString}::timestamp,
+              last_call_status = ${callStatus}, 
+              last_call_sid = ${callSid},
+              updated_at = NOW()
+          WHERE id = ${scheduleId}
+        `
+        : sql`
+          UPDATE schedules 
+          SET last_called = ${isoString}::timestamp,
+              last_call_status = ${callStatus}, 
+              updated_at = NOW()
+          WHERE id = ${scheduleId}
+        `;
 
       await db.execute(updateQuery);
 
       console.log(
         `Updated last called time for schedule ${scheduleId} to ${isoString} with status ${callStatus}`,
       );
+
+      // Verify the update worked by checking the database
+      if (callSid) {
+        const verifyQuery = sql`
+          SELECT last_call_sid, last_call_status 
+          FROM schedules 
+          WHERE id = ${scheduleId}
+        `;
+        const verifyResult = await db.execute(verifyQuery);
+        const rows = verifyResult as any;
+        if (rows && rows.length > 0) {
+          console.log(
+            `Verification: Schedule ${scheduleId} now has CallSid: ${rows[0].last_call_sid}, Status: ${rows[0].last_call_status}`,
+          );
+        }
+      }
     } catch (error) {
       console.error(
         `Error updating last called time for schedule ${scheduleId}:`,
