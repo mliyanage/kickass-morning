@@ -128,19 +128,7 @@ async function processScheduledCalls() {
         // Make the call using personalization voice
         const call = await makeCall(user.phone, messageText, voiceId);
 
-        // Create a history record before making the call
-        const callHistory = await storage.createCallHistory({
-          userId: user.id,
-          scheduleId: schedule.id,
-          callTime: new Date(),
-          voice: voiceId, // Use the voice from personalization
-          status: call.status as CallStatus,
-          duration: call.duration,
-          recordingUrl: call.recordingUrl,
-          callSid: call.callSid, // Add the Twilio Call SID
-        });
-
-        // Update the last called time and status for this schedule
+        // Update the last called time and status for this schedule immediately after call
         const currentTime = new Date();
         console.log(
           `Updating schedule ${schedule.id} last called time:`,
@@ -174,6 +162,18 @@ async function processScheduledCalls() {
             console.error("Fallback also failed:", fallbackError);
           }
         }
+
+        // Create a history record after updating the schedule
+        const callHistory = await storage.createCallHistory({
+          userId: user.id,
+          scheduleId: schedule.id,
+          callTime: new Date(),
+          voice: voiceId, // Use the voice from personalization
+          status: call.status as CallStatus,
+          duration: call.duration,
+          recordingUrl: call.recordingUrl,
+          callSid: call.callSid, // Add the Twilio Call SID
+        });
 
         // Log call result with appropriate message based on status
         if (call.status === CallStatus.FAILED) {
