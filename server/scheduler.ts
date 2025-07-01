@@ -151,9 +151,9 @@ async function processScheduledCalls() {
         try {
           await storage.updateLastCalledTime(
             schedule.id, // Schedule ID
+            call.callSid, // Twilio Call SID from the makeCall result
             currentTime, // Current time
             call.status, // Use the actual call status from makeCall result
-            call.callSid, // Twilio Call SID from the makeCall result
           );
         } catch (error) {
           console.error(

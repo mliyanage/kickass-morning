@@ -64,9 +64,9 @@ export interface IStorage {
   getPendingSchedules(currentTime?: Date): Promise<Schedule[]>; // Get schedules that should be called now
   updateLastCalledTime(
     scheduleId: number,
+    callSid: string,
     time?: Date,
     callStatus?: CallStatus,
-    callSid?: string,
   ): Promise<void>; // Update last called time for a schedule
 
   // Call history related
@@ -583,18 +583,16 @@ export class MemStorage implements IStorage {
 
   async updateLastCalledTime(
     scheduleId: number,
+    callSid: string,
     time: Date = new Date(),
     callStatus: CallStatus = CallStatus.PENDING,
-    callSid?: string,
   ): Promise<void> {
     const schedule = this.schedules.get(scheduleId);
     if (schedule) {
       // Use type assertion to match the database schema's timestamp type
       schedule.lastCalled = time as any;
       schedule.lastCallStatus = callStatus;
-      if (callSid) {
-        schedule.lastCallSid = callSid;
-      }
+      schedule.lastCallSid = callSid;
       this.schedules.set(scheduleId, schedule);
     }
   }
