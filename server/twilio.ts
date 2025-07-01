@@ -61,7 +61,7 @@ export async function makeCall(
   status: CallStatus;
   duration: number | null;
   recordingUrl: string | null;
-  callSid?: string;
+  callSid: string;
 }> {
   try {
     // In development mode, just simulate success

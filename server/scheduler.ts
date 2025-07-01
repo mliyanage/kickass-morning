@@ -166,9 +166,9 @@ async function processScheduledCalls() {
             console.log("Attempting fallback with ISO string...");
             await storage.updateLastCalledTime(
               schedule.id,
+              call.callSid,
               new Date(), // Fresh date object
               call.status, // Use the actual call status from makeCall result
-              call.callSid,
             );
           } catch (fallbackError) {
             console.error("Fallback also failed:", fallbackError);
