@@ -148,19 +148,6 @@ async function processScheduledCalls() {
             `Failed to update last called time for schedule ${schedule.id}:`,
             error,
           );
-
-          // Try with an ISO string directly as a fallback
-          try {
-            console.log("Attempting fallback with ISO string...");
-            await storage.updateLastCalledTime(
-              schedule.id,
-              call.callSid,
-              new Date(), // Fresh date object
-              call.status, // Use the actual call status from makeCall result
-            );
-          } catch (fallbackError) {
-            console.error("Fallback also failed:", fallbackError);
-          }
         }
 
         // Create a history record after updating the schedule
