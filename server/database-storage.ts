@@ -868,7 +868,7 @@ export class DatabaseStorage implements IStorage {
               ))
               OR
               (${schedules.lastCallStatus} != 'initiated' 
-               AND ${schedules.lastCallStatus} != 'answered'
+               AND ${schedules.lastCallStatus} != 'in-progress'
                AND ${schedules.lastCallStatus} != 'pending'
               )
             )`,
