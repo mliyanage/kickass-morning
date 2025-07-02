@@ -17,6 +17,71 @@ import { db } from "./db";
 import { eq, and, or, lt, gt, desc, sql } from "drizzle-orm";
 import { IStorage } from "./storage";
 
+// Helper function to convert weekdays from local timezone to UTC
+function convertWeekdaysToUTC(
+  weekdays: string,
+  wakeupTime: string,
+  timezone: string,
+): string {
+  try {
+    const weekdayMap: { [key: string]: number } = {
+      sun: 0,
+      mon: 1,
+      tue: 2,
+      wed: 3,
+      thu: 4,
+      fri: 5,
+      sat: 6,
+    };
+
+    const reverseMap: { [key: number]: string } = {
+      0: "sun",
+      1: "mon",
+      2: "tue",
+      3: "wed",
+      4: "thu",
+      5: "fri",
+      6: "sat",
+    };
+
+    const localWeekdays = weekdays.split(",").map((d) => d.trim());
+    const utcWeekdays: string[] = [];
+
+    localWeekdays.forEach((localDay) => {
+      const localDayNum = weekdayMap[localDay.toLowerCase()];
+      if (localDayNum === undefined) return;
+
+      // Create a sample date for this weekday in the user's timezone
+      const today = new Date();
+      const daysUntilTarget = (localDayNum + 7 - today.getDay()) % 7;
+      const targetDate = new Date(today);
+      targetDate.setDate(today.getDate() + daysUntilTarget);
+
+      // Set the wakeup time in local timezone
+      const [hours, minutes] = wakeupTime.split(":").map(Number);
+      const localDateTime = new Date(targetDate);
+      localDateTime.setHours(hours, minutes, 0, 0);
+
+      // Convert to UTC and get the day
+      const utcDateTime = new Date(
+        localDateTime.toLocaleString("en-US", { timeZone: "UTC" }),
+      );
+      const utcDay = utcDateTime.getDay();
+      const utcDayName = reverseMap[utcDay];
+
+      if (utcDayName && !utcWeekdays.includes(utcDayName)) {
+        utcWeekdays.push(utcDayName);
+      }
+    });
+
+    return utcWeekdays.join(",");
+  } catch (error) {
+    console.error("Error converting weekdays to UTC:", error);
+    // Fallback to original weekdays if conversion fails
+    return weekdays;
+  }
+}
+
 // Helper function to get timezone offset in format +/-HH:MM
 function getTimezoneOffset(timezone: string): string {
   try {
@@ -537,6 +602,13 @@ export class DatabaseStorage implements IStorage {
         ? data.weekdays.join(",")
         : data.weekdays;
 
+      // Calculate UTC weekdays for scheduling
+      const weekdaysUTC = convertWeekdaysToUTC(
+        weekdaysStr,
+        data.wakeupTime,
+        data.timezone,
+      );
+
       // Convert local time to UTC time for scheduling
       const { format } = await import("date-fns-tz");
 
@@ -590,9 +662,9 @@ export class DatabaseStorage implements IStorage {
           wakeupTimeUTC: wakeupTimeUTC, // UTC time (for scheduling)
           timezone: data.timezone,
           weekdays: weekdaysStr,
+          weekdaysUTC: weekdaysUTC, // UTC weekdays (for scheduling)
           isRecurring: data.isRecurring,
           date: data.date || null, // Local date (for display)
-          dateUTC: dateUTC, // UTC date (for scheduling)
           callRetry: data.callRetry,
           advanceNotice: data.advanceNotice,
           goalType: data.goalType,
@@ -641,6 +713,11 @@ export class DatabaseStorage implements IStorage {
         // Prepare data for UTC conversion
         const timezone = data.timezone || currentSchedule.timezone;
         const wakeupTime = data.wakeupTime || currentSchedule.wakeupTime;
+        const weekdays = data.weekdays || currentSchedule.weekdays;
+
+        // Calculate UTC weekdays for scheduling
+        const weekdaysStr = Array.isArray(weekdays) ? weekdays.join(",") : weekdays;
+        const weekdaysUTC = convertWeekdaysToUTC(weekdaysStr, wakeupTime, timezone);
 
         // Get timezone offset string (e.g., "+10:00")
         const tzOffset = getTimezoneOffset(timezone);
@@ -700,11 +777,11 @@ export class DatabaseStorage implements IStorage {
             // Create a date object for the scheduled date
             const scheduleDate = new Date(Date.UTC(year, month - 1, day));
 
-            // Apply the same time offset calculation as for daily time
+            // Get the time components from wakeupTime
+            const [hours, minutes] = wakeupTime.split(":").map(Number);
+            
+            // Apply the time to the schedule date
             scheduleDate.setUTCHours(hours, minutes, 0, 0);
-            scheduleDate.setMinutes(
-              scheduleDate.getMinutes() + totalOffsetMinutes,
-            );
 
             // Format the UTC date as YYYY-MM-DD
             dateUTC = `${scheduleDate.getUTCFullYear()}-${String(scheduleDate.getUTCMonth() + 1).padStart(2, "0")}-${String(scheduleDate.getUTCDate()).padStart(2, "0")}`;
@@ -725,11 +802,14 @@ export class DatabaseStorage implements IStorage {
           );
         }
 
-        // Add UTC fields to update data
+        // Add UTC fields to update data and reset call tracking fields
         updateData = {
           ...updateData,
           wakeupTimeUTC,
-          dateUTC,
+          weekdaysUTC,
+          lastCalled: null,
+          lastCallStatus: null,
+          lastCallSid: null,
         };
       }
 
@@ -848,8 +928,8 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(schedules.isActive, true),
             eq(schedules.isRecurring, true),
-            // Check if today is one of the scheduled days
-            sql`${schedules.weekdays} LIKE ${"%" + currentUTCDayStr + "%"}`,
+            // Check if today is one of the scheduled days using UTC weekdays
+            sql`${schedules.weekdaysUTC} LIKE ${"%" + currentUTCDayStr + "%"}`,
             // Check if current time is within the window
             sql`${schedules.wakeupTimeUTC} >= ${tenMinutesAgoUTCStr} AND ${schedules.wakeupTimeUTC} <= ${currentUTCTimeStr}`,
             // Only consider schedules that have never been called before OR were called more than 5 minutes ago
@@ -875,41 +955,8 @@ export class DatabaseStorage implements IStorage {
           ),
         );
 
-      // For one-time schedules, check the UTC date and time
-      const pendingOneTimeSchedules = await db
-        .select()
-        .from(schedules)
-        .innerJoin(users, eq(schedules.userId, users.id))
-        .where(
-          and(
-            eq(schedules.isActive, true),
-            eq(schedules.isRecurring, false),
-            // Check if today is the scheduled date in UTC
-            eq(schedules.dateUTC, currentUTCDateStr),
-            // Check if current time is within the window
-            sql`${schedules.wakeupTimeUTC} >= ${tenMinutesAgoUTCStr} AND ${schedules.wakeupTimeUTC} <= ${currentUTCTimeStr}`,
-            // Only consider schedules that have never been called before OR were called more than 5 minutes ago
-            sql`(
-              ${schedules.lastCalled} IS NULL 
-              OR 
-              ${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'
-            )`,
-
-            // And if they've been called before, make sure it wasn't successfully completed
-            sql`(
-              ${schedules.lastCallStatus} IS NULL
-              OR 
-              (${schedules.callRetry} = true AND (
-                  ${schedules.lastCallStatus} = 'failed'
-              ))
-              OR
-              (${schedules.lastCallStatus} != 'initiated' 
-               AND ${schedules.lastCallStatus} != 'answered'
-               AND ${schedules.lastCallStatus} != 'pending'
-              )
-            )`,
-          ),
-        );
+      // For now, skip one-time schedules (can be implemented later)
+      const pendingOneTimeSchedules: any[] = [];
 
       // Extract just the schedule objects and combine results
       const results = [

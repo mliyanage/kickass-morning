@@ -99,7 +99,7 @@ export const schedules = pgTable("schedules", {
   weekdays: text("weekdays").notNull(),
   isRecurring: boolean("is_recurring").default(true),
   date: text("date"), // Local date (for display)
-  dateUTC: text("date_utc"), // UTC date (for scheduling one-time calls)
+  weekdaysUTC: text("weekdays_utc"), // UTC weekdays (for scheduling recurring calls)
   callRetry: boolean("call_retry").default(true),
   advanceNotice: boolean("advance_notice").default(false),
   goalType: text("goal_type").notNull(),
