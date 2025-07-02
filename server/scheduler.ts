@@ -129,26 +129,26 @@ async function processScheduledCalls() {
         const call = await makeCall(user.phone, messageText, voiceId);
 
         // Update the last called time and status for this schedule immediately after call
-        const currentTime = new Date();
-        console.log(
-          `Updating schedule ${schedule.id} last called time:`,
-          currentTime,
-          `with status: ${call.status}`,
-        );
+        // const currentTime = new Date();
+        // console.log(
+        //   `Updating schedule ${schedule.id} last called time:`,
+        //   currentTime,
+        //   `with status: ${call.status}`,
+        // );
 
-        try {
-          await storage.updateLastCalledTime(
-            schedule.id, // Schedule ID
-            call.callSid, // Twilio Call SID from the makeCall result
-            currentTime, // Current time
-            call.status, // Use the actual call status from makeCall result
-          );
-        } catch (error) {
-          console.error(
-            `Failed to update last called time for schedule ${schedule.id}:`,
-            error,
-          );
-        }
+        // try {
+        //   await storage.updateLastCalledTime(
+        //     schedule.id, // Schedule ID
+        //     call.callSid, // Twilio Call SID from the makeCall result
+        //     currentTime, // Current time
+        //     call.status, // Use the actual call status from makeCall result
+        //   );
+        // } catch (error) {
+        //   console.error(
+        //     `Failed to update last called time for schedule ${schedule.id}:`,
+        //     error,
+        //   );
+        // }
 
         // Create a history record after updating the schedule
         const callHistory = await storage.createCallHistory({

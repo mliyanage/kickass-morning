@@ -64,38 +64,6 @@ export async function makeCall(
   callSid: string;
 }> {
   try {
-    // In development mode, just simulate success
-    if (isDevelopmentMode || !client) {
-      log(
-        `[MOCK CALL] To: ${to}, Voice: ${voiceId}, Message: ${message}`,
-        "twilio",
-      );
-
-      // Even in mock mode, generate the audio file using ElevenLabs for testing purposes
-      try {
-        const audioResult = await textToSpeech(message, voiceId);
-        log(`Generated mock audio file at: ${audioResult.filePath}`, "twilio");
-
-        // Return a mock success with the actual audio URL for development testing
-        return {
-          status: CallStatus.ANSWERED,
-          duration: 60, // Simulate a 60-second call
-          recordingUrl: audioResult.url,
-          callSid: "MOCK_" + Math.random().toString(36).substring(2, 12),
-        };
-      } catch (error: any) {
-        log(`Error generating mock audio: ${error.message}`, "twilio");
-
-        // Return standard mock response if audio generation fails
-        return {
-          status: CallStatus.ANSWERED,
-          duration: 60,
-          recordingUrl: "https://example.com/mock-recording.mp3",
-          callSid: "MOCK_ERROR_" + Math.random().toString(36).substring(2, 12),
-        };
-      }
-    }
-
     log(`Initiating call to ${to} with voice ${voiceId}`, "twilio");
 
     // Generate audio using ElevenLabs text-to-speech
