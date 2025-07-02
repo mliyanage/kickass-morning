@@ -1110,7 +1110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Received Twilio webhook:", req.body);
 
         // Extract data from the webhook
-        const { CallSid, CallStatus, RecordingUrl } = req.body;
+        const { CallSid, CallStatus } = req.body;
 
         if (!CallSid) {
           return res.status(400).json({ message: "Missing CallSid parameter" });
@@ -1123,7 +1123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Use a string-based approach for clearer mapping
         let statusString: string;
-        
+
         switch (CallStatus) {
           case "completed":
             statusString = "completed";
@@ -1158,14 +1158,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               `Unrecognized Twilio status: "${CallStatus}", mapped to ${statusString}`,
             );
         }
-        
+
         // Convert string to enum value
         const status = statusString as CallStatus;
 
         console.log(`Mapped status: ${status}`); // Debug log to confirm mapping
 
         // Update the call status in the database
-        await storage.updateCallStatus(CallSid, status, RecordingUrl);
+        await storage.updateCallStatus(CallSid, status);
 
         // Respond to Twilio
         res.sendStatus(200);

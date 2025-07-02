@@ -992,7 +992,6 @@ export class DatabaseStorage implements IStorage {
   async updateCallStatus(
     callSid: string,
     status: CallStatus | undefined,
-    recordingUrl?: string,
   ): Promise<void> {
     try {
       // Check if status is undefined and provide a fallback
@@ -1009,9 +1008,7 @@ export class DatabaseStorage implements IStorage {
       console.log(`Updating call status for SID ${callSid} to ${statusString}`);
 
       // Step 1: Update the call history record
-      const updateQuery = recordingUrl
-        ? sql`UPDATE call_history SET status = ${statusString}, recording_url = ${recordingUrl} WHERE call_sid = ${callSid}`
-        : sql`UPDATE call_history SET status = ${statusString} WHERE call_sid = ${callSid}`;
+      const updateQuery = sql`UPDATE call_history SET status = ${statusString} WHERE call_sid = ${callSid}`;
 
       await db.execute(updateQuery);
 
