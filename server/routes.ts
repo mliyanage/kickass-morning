@@ -904,6 +904,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  app.post(
+    "/api/schedule/:id/toggle",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const scheduleId = parseInt(req.params.id, 10);
+
+        // Check if schedule exists and belongs to user
+        const schedule = await storage.getSchedule(scheduleId);
+        if (!schedule || schedule.userId !== req.session.userId) {
+          return res.status(404).json({ message: "Schedule not found." });
+        }
+
+        // Toggle the schedule status
+        const newStatus = !schedule.isActive;
+        await storage.updateScheduleStatus(scheduleId, newStatus);
+
+        const action = newStatus ? "resumed" : "paused";
+        const message = newStatus 
+          ? "Schedule has been resumed and is now active." 
+          : "Schedule has been paused and is now inactive.";
+
+        res.status(200).json({ 
+          message,
+          isActive: newStatus,
+          action
+        });
+      } catch (error) {
+        console.error("Toggle schedule error:", error);
+        res.status(500).json({
+          message: "An error occurred while processing your request.",
+        });
+      }
+    },
+  );
+
   // Call-related Routes
   app.post(
     "/api/call/sample",

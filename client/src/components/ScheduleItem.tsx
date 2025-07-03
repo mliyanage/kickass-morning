@@ -4,13 +4,13 @@ import { Badge } from "@/components/ui/badge";
 
 interface ScheduleItemProps {
   schedule: Schedule;
-  onSkipTomorrow: () => void;
+  onToggleSchedule: () => void;
   onEdit: () => void;
 }
 
 export default function ScheduleItem({
   schedule,
-  onSkipTomorrow,
+  onToggleSchedule,
   onEdit,
 }: ScheduleItemProps) {
   // Format goal type to readable string
@@ -129,7 +129,7 @@ export default function ScheduleItem({
               </svg>
               <span className="text-sm text-gray-900">
                 {schedule.isRecurring
-                  ? formatWeekdays(schedule.weekdays)
+                  ? formatWeekdays(Array.isArray(schedule.weekdays) ? schedule.weekdays : [schedule.weekdays as string])
                   : new Date(schedule.date as string).toLocaleDateString(
                       "en-US",
                       { weekday: "long", month: "short", day: "numeric" },
@@ -200,7 +200,7 @@ export default function ScheduleItem({
               <Button 
                 variant={schedule.isActive ? "destructive" : "default"} 
                 size="sm" 
-                onClick={onSkipTomorrow}
+                onClick={onToggleSchedule}
               >
                 {schedule.isActive ? "Pause" : "Resume"}
               </Button>

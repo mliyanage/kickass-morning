@@ -132,7 +132,8 @@ export default function Dashboard() {
 
     if (nextCall.isRecurring) {
       // Find the next occurrence
-      const dayIndices = nextCall.weekdays.map((day: string) => {
+      const weekdaysArray = Array.isArray(nextCall.weekdays) ? nextCall.weekdays : [nextCall.weekdays];
+      const dayIndices = weekdaysArray.map((day: string) => {
         switch(day) {
           case 'sun': return 0;
           case 'mon': return 1;
@@ -170,29 +171,30 @@ export default function Dashboard() {
     return "Schedule details unavailable";
   };
 
-  // Skip tomorrow's call mutation
-  const skipTomorrowMutation = useMutation({
+  // Toggle schedule status mutation
+  const toggleScheduleMutation = useMutation({
     mutationFn: async (scheduleId: number) => {
-      return await apiRequest("POST", `/api/schedule/${scheduleId}/skip-tomorrow`, {});
+      const response = await apiRequest("POST", `/api/schedule/${scheduleId}/toggle`, {});
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
-        title: "Call skipped",
-        description: "Tomorrow's wakeup call has been skipped.",
+        title: data.action === "resumed" ? "Schedule resumed" : "Schedule paused",
+        description: data.message,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/schedule'] });
     },
     onError: (error) => {
       toast({
         variant: "destructive",
-        title: "Failed to skip call",
+        title: "Failed to update schedule",
         description: error.message || "Please try again later.",
       });
     }
   });
 
-  const handleSkipTomorrow = (scheduleId: number) => {
-    skipTomorrowMutation.mutate(scheduleId);
+  const handleToggleSchedule = (scheduleId: number) => {
+    toggleScheduleMutation.mutate(scheduleId);
   };
 
   if (isLoadingSchedules || isLoadingHistory) {
@@ -322,7 +324,7 @@ export default function Dashboard() {
               <ScheduleItem 
                 key={schedule.id}
                 schedule={schedule}
-                onSkipTomorrow={() => handleSkipTomorrow(schedule.id)}
+                onToggleSchedule={() => handleToggleSchedule(schedule.id)}
                 onEdit={() => setLocation(`/schedule-call?id=${schedule.id}`)}
               />
             ))
