@@ -62,12 +62,32 @@ function convertWeekdaysToUTC(
       const localDateTime = new Date(targetDate);
       localDateTime.setHours(hours, minutes, 0, 0);
 
+      // Use the same timezone conversion logic as getTimezoneOffset function
+      const sampleDate = new Date(targetDate);
+      sampleDate.setHours(hours, minutes, 0, 0);
+      
+      // Create ISO string for the local time in the specified timezone
+      const year = sampleDate.getFullYear();
+      const month = String(sampleDate.getMonth() + 1).padStart(2, '0');
+      const day = String(sampleDate.getDate()).padStart(2, '0');
+      const hour = String(hours).padStart(2, '0');
+      const minute = String(minutes).padStart(2, '0');
+      
+      // Get timezone offset and create proper timezone-aware date
+      const offsetStr = getTimezoneOffset(timezone);
+      const isoString = `${year}-${month}-${day}T${hour}:${minute}:00${offsetStr}`;
+      const localTimeWithTz = new Date(isoString);
+      
+      console.log(`[WEEKDAY DEBUG] Converting ${localDay} ${hour}:${minute} in ${timezone}`);
+      console.log(`[WEEKDAY DEBUG] ISO string: ${isoString}`);
+      console.log(`[WEEKDAY DEBUG] Local date with timezone: ${localTimeWithTz.toString()}`);
+      console.log(`[WEEKDAY DEBUG] UTC day number: ${localTimeWithTz.getUTCDay()}`);
+      
       // Convert to UTC and get the day
-      const utcDateTime = new Date(
-        localDateTime.toLocaleString("en-US", { timeZone: "UTC" }),
-      );
-      const utcDay = utcDateTime.getDay();
+      const utcDay = localTimeWithTz.getUTCDay();
       const utcDayName = reverseMap[utcDay];
+      
+      console.log(`[WEEKDAY DEBUG] UTC day name: ${utcDayName}`);
 
       if (utcDayName && !utcWeekdays.includes(utcDayName)) {
         utcWeekdays.push(utcDayName);
