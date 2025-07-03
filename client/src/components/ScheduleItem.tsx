@@ -197,8 +197,12 @@ export default function ScheduleItem({
               <Button variant="outline" size="sm" onClick={onEdit}>
                 Edit
               </Button>
-              <Button variant="destructive" size="sm" onClick={onSkipTomorrow}>
-                Pause
+              <Button 
+                variant={schedule.isActive ? "destructive" : "default"} 
+                size="sm" 
+                onClick={onSkipTomorrow}
+              >
+                {schedule.isActive ? "Pause" : "Resume"}
               </Button>
             </div>
           </div>
