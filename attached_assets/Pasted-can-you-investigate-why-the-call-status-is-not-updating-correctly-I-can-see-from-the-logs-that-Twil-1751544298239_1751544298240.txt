@@ -1,0 +1,77 @@
+can you investigate why the call status is not updating correctly? I can see from the logs that Twilio has sent two status updates: one with CallStatus: 'initiated' and the second one with CallStatus: 'in-progress'. But still the schedules table has the value 'pending' which was set just after the makeCall function got executed. 
+Here is the log:
+11:55:15 AM [twilio] Call initiated with SID: CA795f67f3fcd722f81b6f1e2dd57b6ed9
+Updating schedule 14 last called time: 2025-07-03T11:55:15.265Z with status: pending
+Updating schedule 14 with lastCalled: 2025-07-03T11:55:15.265Z status: pending SID: CA795f67f3fcd722f81b6f1e2dd57b6ed9
+Received Twilio webhook: [Object: null prototype] {
+  Called: '+61431937699',
+  ToState: '',
+  CallerCountry: 'US',
+  Direction: 'outbound-api',
+  Timestamp: 'Thu, 03 Jul 2025 11:55:15 +0000',
+  CallbackSource: 'call-progress-events',
+  CallerState: 'CA',
+  ToZip: '',
+  SequenceNumber: '0',
+  CallSid: 'CA795f67f3fcd722f81b6f1e2dd57b6ed9',
+  To: '+61431937699',
+  CallerZip: '95060',
+  ToCountry: 'AU',
+  CalledZip: '',
+  ApiVersion: '2010-04-01',
+  CalledCity: '',
+  CallStatus: 'initiated',
+  From: '+18312436088',
+  AccountSid: 'AC69753b88fcb09ded7765ab0ba35f782c',
+  CalledCountry: 'AU',
+  CallerCity: 'GREENFIELD',
+  ToCity: '',
+  FromCountry: 'US',
+  Caller: '+18312436088',
+  FromCity: 'GREENFIELD',
+  CalledState: '',
+  FromZip: '95060',
+  FromState: 'CA'
+}
+Mapping Twilio call status: "initiated" for call SID: CA795f67f3fcd722f81b6f1e2dd57b6ed9
+Mapped status: initiated
+Updating call status for SID CA795f67f3fcd722f81b6f1e2dd57b6ed9 to initiated
+Updated last called time for schedule 14 to 2025-07-03T11:55:15.265Z with status pending
+Updated call status for SID CA795f67f3fcd722f81b6f1e2dd57b6ed9 to initiated
+11:55:15 AM [express] POST /api/webhooks/twilio/status 200 in 203ms
+Call successfully sent to +61431937699, status: pending
+Received Twilio webhook: [Object: null prototype] {
+  Called: '+61431937699',
+  ToState: '',
+  CallerCountry: 'US',
+  Direction: 'outbound-api',
+  Timestamp: 'Thu, 03 Jul 2025 11:55:20 +0000',
+  CallbackSource: 'call-progress-events',
+  CallerState: 'CA',
+  ToZip: '',
+  SequenceNumber: '1',
+  CallSid: 'CA795f67f3fcd722f81b6f1e2dd57b6ed9',
+  To: '+61431937699',
+  CallerZip: '95060',
+  ToCountry: 'AU',
+  CalledZip: '',
+  ApiVersion: '2010-04-01',
+  CalledCity: '',
+  CallStatus: 'in-progress',
+  From: '+18312436088',
+  AccountSid: 'AC69753b88fcb09ded7765ab0ba35f782c',
+  CalledCountry: 'AU',
+  CallerCity: 'GREENFIELD',
+  ToCity: '',
+  FromCountry: 'US',
+  Caller: '+18312436088',
+  FromCity: 'GREENFIELD',
+  CalledState: '',
+  FromZip: '95060',
+  FromState: 'CA'
+}
+Mapping Twilio call status: "in-progress" for call SID: CA795f67f3fcd722f81b6f1e2dd57b6ed9
+Mapped status: in-progress
+Updating call status for SID CA795f67f3fcd722f81b6f1e2dd57b6ed9 to in-progress
+Updated call status for SID CA795f67f3fcd722f81b6f1e2dd57b6ed9 to in-progress
+11:55:20 AM [express] POST /api/webhooks/twilio/status 200 in 73ms

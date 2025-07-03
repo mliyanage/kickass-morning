@@ -1080,17 +1080,18 @@ export class DatabaseStorage implements IStorage {
       await db.execute(updateQuery);
 
       // Step 2: Find the related schedule using the callSid
-      // First, get the call history entry to find the schedule ID
-      const result = await db.execute(
-        sql`SELECT schedule_id FROM call_history WHERE call_sid = ${callSid}`,
-      );
+      // Use Drizzle ORM instead of raw SQL for better type safety
+      const callHistoryEntry = await db
+        .select({ scheduleId: callHistory.scheduleId })
+        .from(callHistory)
+        .where(eq(callHistory.callSid, callSid))
+        .limit(1);
 
-      // Extract the result from the QueryResult
-      const rows = result as any;
+
 
       // Step 3: If we found a related schedule, update its last call status too
-      if (rows && rows.length > 0 && rows[0].schedule_id) {
-        const scheduleId = rows[0].schedule_id;
+      if (callHistoryEntry.length > 0 && callHistoryEntry[0].scheduleId) {
+        const scheduleId = callHistoryEntry[0].scheduleId;
 
         // Use raw SQL to avoid type conversion issues
         const scheduleUpdateQuery = sql`
