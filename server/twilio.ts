@@ -96,7 +96,7 @@ export async function makeCall(
       to,
       record: true,
       statusCallback: `${getBaseUrl()}/api/webhooks/twilio/status`,
-      statusCallbackEvent: ["initiated", "answered"],
+      statusCallbackEvent: ["initiated", "completed"],
       statusCallbackMethod: "POST",
     });
 

@@ -127,6 +127,11 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 
 ```
 Changelog:
+- July 03, 2025. Critical bug fixes completed:
+  * Fixed webhook call status tracking - schedules now properly update from pending to completed
+  * Resolved timezone conversion for international users - UTC weekday matching working correctly
+  * Confirmed live call delivery system operational with Twilio integration
+  * CallSid parameter handling fixed throughout system
 - July 01, 2025. Initial setup
 ```
 
