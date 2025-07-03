@@ -174,8 +174,7 @@ export default function Dashboard() {
   // Toggle schedule status mutation
   const toggleScheduleMutation = useMutation({
     mutationFn: async (scheduleId: number) => {
-      const response = await apiRequest("POST", `/api/schedule/${scheduleId}/toggle`, {});
-      return response.json();
+      return await apiRequest("POST", `/api/schedule/${scheduleId}/toggle`, {});
     },
     onSuccess: (data) => {
       toast({
