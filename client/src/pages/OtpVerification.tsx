@@ -45,8 +45,10 @@ export default function OtpVerification() {
       localStorage.removeItem("otpVerificationReturnUrl");
       localStorage.removeItem("phoneVerificationReturnUrl");
       
-      // Navigate to the stored return URL or dashboard as fallback
-      setLocation(returnUrl);
+      // Force a page reload to refresh auth state
+      setTimeout(() => {
+        window.location.href = returnUrl;
+      }, 1000);
     },
     onError: (error: any) => {
       const errorMessage = error?.message || '';
