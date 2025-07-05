@@ -53,8 +53,8 @@ export default function PhoneVerification() {
     },
     onSuccess: () => {
       toast({
-        title: "OTP sent",
-        description: "A verification code has been sent to your phone.",
+        title: "Boom! Code sent 🚀",
+        description: "Check your phone for the verification code. You're almost there!",
       });
       // Store phone number in localStorage for the OTP verification page
       const fullPhone = `${countryCode}${phone.replace(/\D/g, '')}`;
@@ -96,65 +96,92 @@ export default function PhoneVerification() {
 
   return (
     <DashboardLayout>
-      <div className="shadow sm:rounded-md sm:overflow-hidden">
-        <div className="bg-white py-6 px-4 sm:p-6">
-          <h2 className="text-lg leading-6 font-medium text-gray-900 mb-4">Phone Verification Required</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            To schedule wake-up calls or try sample calls, you need to verify your phone number first.
-          </p>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-                <h2 className="mt-2 text-lg font-medium text-gray-900">Verify your phone number</h2>
-                <p className="mt-1 text-sm text-gray-500">We'll send you a verification code to confirm your phone number</p>
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-gradient-to-r from-blue-50 via-primary-50 to-purple-50 py-8 px-4 sm:p-8 rounded-lg shadow-sm">
+          <Card className="bg-white border-0 shadow-sm">
+            <CardContent className="pt-8 pb-8">
+              <div className="text-center mb-8">
+                <div className="mx-auto h-16 w-16 bg-gradient-to-r from-primary to-orange-500 rounded-full flex items-center justify-center mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                
+                <h1 className="text-3xl font-bold text-gray-900 mb-3">
+                  🔐 One Last Step to Unlock Your Kickass Mornings
+                </h1>
+                
+                <p className="text-lg text-gray-700 mb-2">
+                  We'll send you a verification code to confirm your number.
+                </p>
+                
+                <p className="text-base text-gray-600 mb-6">
+                  Once verified, you can start receiving wake-up calls that actually work.
+                </p>
+                
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-green-800 font-medium">
+                    No spam. No cold calls. Just real, motivating wake-up calls.
+                  </p>
+                </div>
               </div>
 
               <form onSubmit={handleSendOtp} className="space-y-6">
-                <div>
-                  <Label htmlFor="country-code">Country code</Label>
-                  <Select 
-                    value={countryCode} 
-                    onValueChange={setCountryCode}
-                  >
-                    <SelectTrigger id="country-code" className="w-full mb-3">
-                      <SelectValue placeholder="Select country code" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {countryCodes.map((country) => (
-                        <SelectItem key={country.code} value={country.code}>
-                          {country.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="country-code" className="text-base font-medium text-gray-900">
+                      📱 Country Code
+                    </Label>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Select your country to auto-fill your code
+                    </p>
+                    <Select 
+                      value={countryCode} 
+                      onValueChange={setCountryCode}
+                    >
+                      <SelectTrigger id="country-code" className="w-full">
+                        <SelectValue placeholder="Select country code" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {countryCodes.map((country) => (
+                          <SelectItem key={country.code} value={country.code}>
+                            {country.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   
-                  <Label htmlFor="phone">Phone number</Label>
-                  <div className="mt-1 flex rounded-md shadow-sm">
-                    <span className="inline-flex items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-gray-500 sm:text-sm">
-                      {countryCode}
-                    </span>
-                    <Input 
-                      id="phone" 
-                      type="tel" 
-                      placeholder="Enter phone number"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="rounded-l-none"
-                      required
-                    />
+                  <div>
+                    <Label htmlFor="phone" className="text-base font-medium text-gray-900">
+                      📞 Phone Number
+                    </Label>
+                    <p className="text-sm text-gray-600 mb-2">
+                      We'll text your verification code here
+                    </p>
+                    <div className="flex rounded-md shadow-sm">
+                      <span className="inline-flex items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-gray-700 font-medium sm:text-sm">
+                        {countryCode}
+                      </span>
+                      <Input 
+                        id="phone" 
+                        type="tel" 
+                        placeholder="Enter your phone number"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="rounded-l-none text-base"
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
 
                 <Button 
                   type="submit" 
-                  className="w-full"
+                  className="w-full py-3 text-lg font-semibold bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90"
                   disabled={sendOtpMutation.isPending}
                 >
-                  {sendOtpMutation.isPending ? "Sending code..." : "Send verification code"}
+                  {sendOtpMutation.isPending ? "Sending Code..." : "Send Verification Code"}
                 </Button>
               </form>
             </CardContent>
