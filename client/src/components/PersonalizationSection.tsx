@@ -97,12 +97,25 @@ export function PersonalizationSection() {
     }
   };
   
-  // Helper function to get voice display text
+  // Helper function to get voice display text with description
   const getVoiceText = () => {
     if (customVoice) return customVoice;
     if (voice) {
       const voiceObj = voices.find(v => v.id === voice);
-      return voiceObj ? voiceObj.name : voice;
+      if (voiceObj) {
+        // Add personality descriptions for key voices
+        const descriptions = {
+          "jocko": "calm but commanding",
+          "liam": "energetic and supportive", 
+          "lily": "gentle yet motivating",
+          "bill": "direct and results-focused",
+          "todd-thomas": "psychological and insightful",
+          "radio-station": "high-energy morning show style"
+        };
+        const desc = descriptions[voice as keyof typeof descriptions];
+        return `${voiceObj.name}${desc ? ` — ${desc}` : ''}`;
+      }
+      return voice;
     }
     return "Not set";
   };
@@ -126,12 +139,15 @@ export function PersonalizationSection() {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle className="text-lg font-medium text-gray-900">
-                  Set Your Wake-Up Preferences
+                <CardTitle className="text-2xl font-bold text-gray-900">
+                  🔹 Set Your Wake-Up Preferences
                 </CardTitle>
-                <CardDescription>
-                  Personalize your wake-up calls to match your goals and motivations
+                <CardDescription className="text-base">
+                  Build your perfect morning call.
                 </CardDescription>
+                <p className="text-sm text-gray-600 mt-2">
+                  We'll motivate you based on your goals, kick your struggles, and deliver the message in your favorite voice.
+                </p>
               </div>
               {personalizationData && (
                 <Button 
@@ -164,7 +180,7 @@ export function PersonalizationSection() {
                           <path d="M20 6L9 17l-5-5" />
                         </svg>
                       </div>
-                      <h4 className="text-sm font-medium text-gray-700">Your Wake-Up Goal</h4>
+                      <h4 className="text-sm font-medium text-gray-700">💪 Goals</h4>
                     </div>
                     <div className="space-y-1 pl-1">
                       {goals.length > 0 ? (
@@ -189,7 +205,7 @@ export function PersonalizationSection() {
                           <line x1="12" y1="17" x2="12.01" y2="17"></line>
                         </svg>
                       </div>
-                      <h4 className="text-sm font-medium text-gray-700">Your Biggest Struggle</h4>
+                      <h4 className="text-sm font-medium text-gray-700">⚡ Struggles</h4>
                     </div>
                     <div className="space-y-1 pl-1">
                       {struggles.length > 0 ? (
@@ -215,7 +231,7 @@ export function PersonalizationSection() {
                           <line x1="8" y1="23" x2="16" y2="23"></line>
                         </svg>
                       </div>
-                      <h4 className="text-sm font-medium text-gray-700">Selected Voice</h4>
+                      <h4 className="text-sm font-medium text-gray-700">🗣️ Voice</h4>
                     </div>
                     <div className="pl-8">
                       <p className="text-sm font-medium text-primary-700">{getVoiceText()}</p>

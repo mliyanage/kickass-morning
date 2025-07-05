@@ -232,36 +232,39 @@ export default function Dashboard() {
       {/* Personalization Section */}
       <PersonalizationSection />
       
-      {/* Sample Call Section */}
-      <div className="shadow sm:rounded-md sm:overflow-hidden">
-        <div className="bg-gradient-to-r from-primary-50 to-primary-100 py-6 px-4 sm:p-6">
+      {/* Hero/Call-to-Action Section */}
+      <div className="shadow sm:rounded-md sm:overflow-hidden mb-6">
+        <div className="bg-gradient-to-r from-primary-50 to-primary-100 py-8 px-4 sm:p-8">
           <Card className="bg-white border-0 shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium text-gray-900">Try a Sample Call</CardTitle>
-              <CardDescription>
-                Experience how our motivational wakeup calls work before scheduling your first call
+            <CardHeader className="pb-4">
+              <CardTitle className="text-2xl font-bold text-gray-900">🔹 Try a Sample Call</CardTitle>
+              <CardDescription className="text-lg">
+                Experience your first AI-powered wake-up 💥
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-2">
+              <p className="text-gray-600 mb-6">
+                Not sure what to expect? Hear a personalized motivational message sent to your phone — just like your real wake-up call.
+              </p>
+              
               <div className="flex flex-col md:flex-row md:items-center gap-4">
                 <div className="flex-1">
-                  <p className="text-sm text-gray-600 mb-4">
-                    Get a sample wakeup call immediately to your verified phone number. 
-                    Hear how our AI-generated voices deliver personalized motivational messages.
-                  </p>
-                  <div className="flex items-center text-sm text-gray-500 mb-1">
-                    <Phone className="h-4 w-4 mr-2 text-primary" />
-                    <span>Sent to your phone number: </span>
-                    {userData?.user?.phoneVerified ? (
-                      <span className="ml-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        {userData.user.phone} <span className="ml-1">✓</span>
-                      </span>
-                    ) : (
-                      <span className="ml-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        Not verified
-                      </span>
-                    )}
-                  </div>
+                  {userData?.user?.phoneVerified ? (
+                    <div className="flex items-center text-sm text-green-700 mb-4">
+                      <Phone className="h-4 w-4 mr-2" />
+                      <span className="font-medium">Ready to call: {userData.user.phone} ✓</span>
+                    </div>
+                  ) : (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-center">
+                        <div className="text-yellow-600 mr-3">🔒</div>
+                        <div>
+                          <p className="text-sm font-medium text-yellow-800">Your phone isn't verified yet.</p>
+                          <p className="text-sm text-yellow-700">→ Verify now to unlock your first wake-up preview.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="flex-shrink-0">
                   <Button 
@@ -271,7 +274,7 @@ export default function Dashboard() {
                     disabled={sampleCallMutation.isPending}
                   >
                     <Play className="mr-2 h-4 w-4" />
-                    {sampleCallMutation.isPending ? "Initiating call..." : "Try it Now"}
+                    {sampleCallMutation.isPending ? "Initiating call..." : "▶️ Try It Now"}
                   </Button>
                 </div>
               </div>
@@ -284,7 +287,11 @@ export default function Dashboard() {
       <div className="shadow sm:rounded-md sm:overflow-hidden">
         <div className="bg-white py-6 px-4 sm:p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg leading-6 font-medium text-gray-900">Your Wakeup Schedule</h2>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">🔹 Your Wake-Up Schedule</h2>
+              <p className="text-gray-600 mt-1">⏰ Let's set up your first real wake-up call.</p>
+              <p className="text-sm text-gray-500 mt-1">No more snoozing. No more excuses. Choose a time, pick your voice, and let us kickstart your morning.</p>
+            </div>
             <Button onClick={() => {
               const { user } = userData || {};
               if (user && !user.phoneVerified) {
@@ -297,7 +304,7 @@ export default function Dashboard() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              Add Call
+              ➕ Add Call
             </Button>
           </div>
           
@@ -328,9 +335,11 @@ export default function Dashboard() {
               />
             ))
           ) : (
-            <div className="text-center py-6 bg-gray-50 rounded-md">
-              <p className="text-gray-500">No schedules found. Create your first wakeup call schedule.</p>
-              <Button className="mt-4" onClick={() => {
+            <div className="text-center py-8 bg-gray-50 rounded-md">
+              <div className="text-4xl mb-4">⏰</div>
+              <p className="text-lg font-medium text-gray-700 mb-2">Let's get your first wake-up win</p>
+              <p className="text-gray-500 mb-6">Ready to ditch the snooze button and start crushing your mornings?</p>
+              <Button size="lg" className="mt-4" onClick={() => {
                 const { user } = userData || {};
                 if (user && !user.phoneVerified) {
                   localStorage.setItem("phoneVerificationReturnUrl", "/schedule-call");
@@ -339,7 +348,7 @@ export default function Dashboard() {
                   setLocation("/schedule-call");
                 }
               }}>
-                Schedule a Call
+                🟡 Schedule a Call
               </Button>
             </div>
           )}
@@ -349,7 +358,10 @@ export default function Dashboard() {
       {/* Call History Section */}
       <div className="shadow sm:rounded-md sm:overflow-hidden">
         <div className="bg-white py-6 px-4 sm:p-6">
-          <h2 className="text-lg leading-6 font-medium text-gray-900 mb-6">Recent Call History</h2>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">🔹 Recent Call History</h2>
+            <p className="text-gray-600 mt-1">Track your wins and streaks. This is how consistency starts.</p>
+          </div>
           
           {callHistory && callHistory.length > 0 ? (
             <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
@@ -373,8 +385,10 @@ export default function Dashboard() {
               </table>
             </div>
           ) : (
-            <div className="text-center py-6 bg-gray-50 rounded-md">
-              <p className="text-gray-500">No call history yet. Schedule a call to get started.</p>
+            <div className="text-center py-8 bg-gray-50 rounded-md">
+              <div className="text-4xl mb-4">📞</div>
+              <p className="text-lg font-medium text-gray-700 mb-2">No calls yet — but that's about to change</p>
+              <p className="text-gray-500">Your winning streak starts with your first wake-up call</p>
             </div>
           )}
           
