@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { OtpVerificationRequest } from "@/types";
 import { 
   InputOTP, 
@@ -16,6 +16,7 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 export default function OtpVerification() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const [otp, setOtp] = useState("");
   const [phone, setPhone] = useState<string>("");
   const [returnUrl, setReturnUrl] = useState("/dashboard");
@@ -49,6 +50,9 @@ export default function OtpVerification() {
       if ((window as any).refreshAuthState) {
         await (window as any).refreshAuthState();
       }
+      
+      // Also invalidate the query cache to force UI refresh
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/check'] });
       
       // Navigate to the return URL
       setTimeout(() => {
