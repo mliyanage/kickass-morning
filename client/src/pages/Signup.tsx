@@ -208,7 +208,7 @@ export default function Signup() {
           <div className="mt-6">
             <div className="text-center">
               <p className="text-sm text-gray-600">
-                Already have an account? {' '}
+                Already a morning boss? {' '}
                 <a 
                   href="#" 
                   className="font-medium text-primary hover:text-primary/80"
@@ -217,7 +217,7 @@ export default function Signup() {
                     setLocation('/login');
                   }}
                 >
-                  Sign in
+                  Sign back in! 💥
                 </a>
               </p>
             </div>

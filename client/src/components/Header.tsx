@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import Logo from "@/components/Logo";
 
 export default function Header() {
   const [, setLocation] = useLocation();
@@ -38,10 +39,7 @@ export default function Header() {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <div className="flex items-center cursor-pointer" onClick={() => setLocation("/dashboard")}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="ml-2 text-xl font-bold text-primary-700">KickAss Morning</span>
+                <Logo size="sm" />
               </div>
             </div>
             <nav className="hidden sm:ml-6 sm:flex sm:space-x-8" aria-label="Main navigation">

@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import Logo from "@/components/Logo";
 import { useLocation } from "wouter";
 import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
@@ -151,20 +152,18 @@ export default function Login() {
       <Card>
         <CardContent className="pt-6">
           <div className="text-center mb-6">
-            <div className="flex justify-center mb-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="ml-2 text-xl font-bold text-primary-700">KickAss Morning</span>
+            <div className="flex justify-center mb-4">
+              <Logo size="md" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
-            <p className="mt-2 text-sm text-gray-600">Get wakeup calls from your favorite personalities</p>
+            <h2 className="text-2xl font-bold text-gray-900">💥 Welcome Back, Boss!</h2>
+            <p className="mt-2 text-sm text-gray-600">Ready to crush another day? Let's get you signed in.</p>
           </div>
           
           {!otpSent ? (
             <form onSubmit={handleRequestOtp} className="space-y-6">
               <div>
-                <Label htmlFor="email">Email address</Label>
+                <Label htmlFor="email">Email Address</Label>
+                <p className="text-xs text-gray-500 mb-2">We'll send you a quick verification code — no passwords needed! 🔥</p>
                 <Input 
                   id="email" 
                   type="email" 
@@ -258,7 +257,7 @@ export default function Login() {
 
             <div className="text-center">
               <p className="text-sm text-gray-600">
-                Don't have an account? {' '}
+                New to the wake-up revolution? {' '}
                 <a 
                   href="#" 
                   className="font-medium text-primary hover:text-primary/80"
@@ -267,7 +266,7 @@ export default function Login() {
                     setLocation('/signup');
                   }}
                 >
-                  Sign up
+                  Join the boss squad! 💥
                 </a>
               </p>
             </div>
