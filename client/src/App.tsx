@@ -88,6 +88,9 @@ function App() {
       }
     };
 
+    // Expose the auth refresh function globally
+    (window as any).refreshAuthState = checkAuth;
+
     checkAuth();
 
     // Add CSS to handle the auth transition without flashing

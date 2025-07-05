@@ -36,7 +36,7 @@ export default function OtpVerification() {
     mutationFn: async (data: OtpVerificationRequest) => {
       return await apiRequest("POST", "/api/auth/verify-otp", data);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: "Yes! Phone verified 🎉",
         description: "You're all set. Time to schedule your first kickass morning!",
@@ -45,10 +45,15 @@ export default function OtpVerification() {
       localStorage.removeItem("otpVerificationReturnUrl");
       localStorage.removeItem("phoneVerificationReturnUrl");
       
-      // Force a page reload to refresh auth state
+      // Refresh auth state without page reload
+      if ((window as any).refreshAuthState) {
+        await (window as any).refreshAuthState();
+      }
+      
+      // Navigate to the return URL
       setTimeout(() => {
-        window.location.href = returnUrl;
-      }, 1000);
+        setLocation(returnUrl);
+      }, 500);
     },
     onError: (error: any) => {
       const errorMessage = error?.message || '';
