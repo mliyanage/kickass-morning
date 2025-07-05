@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import Logo from "@/components/Logo";
 import { useLocation } from "wouter";
 import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
@@ -104,11 +105,8 @@ export default function Signup() {
       <Card>
         <CardContent className="pt-6">
           <div className="text-center mb-6">
-            <div className="flex justify-center mb-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="ml-2 text-xl font-bold text-primary-700">KickAss Morning</span>
+            <div className="flex justify-center mb-4">
+              <Logo size="md" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900">💥 Let's Get You Out of Bed Like a Boss</h2>
             <p className="mt-2 text-sm text-gray-600">Set up your wake-up calls from voices that don't hit snooze.</p>
