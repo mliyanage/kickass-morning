@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLocation } from "wouter";
+import Logo from "@/components/Logo";
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -11,10 +12,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="ml-2 text-xl font-bold text-primary-700">KickAss Morning</span>
+              <Logo size="md" />
             </div>
             <div className="flex space-x-4">
               <Button variant="outline" onClick={() => setLocation("/login")}>
