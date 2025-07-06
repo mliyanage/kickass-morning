@@ -54,12 +54,6 @@ function App() {
             isPhoneVerified: data.user.phoneVerified,
             isPersonalized: data.user.isPersonalized,
           });
-
-          // If authenticated user is on login/signup page, redirect to dashboard
-          const currentPath = window.location.pathname;
-          if (currentPath === "/login" || currentPath === "/signup") {
-            setLocation("/dashboard");
-          }
         } else {
           console.log("Not authenticated:", data.message);
           setIsAuthenticated(false);
@@ -121,11 +115,14 @@ function App() {
   // Authentication guard for protected routes
   const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
-      if (!isAuthenticated) {
-        // Force a full page reload to /login to clear all state
-        window.location.href = "/login";
+      if (!isLoading && !isAuthenticated) {
+        setLocation("/login");
       }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, isLoading]);
+
+    if (isLoading) {
+      return <div>Loading...</div>;
+    }
 
     return isAuthenticated ? <>{children}</> : null;
   };
@@ -156,9 +153,7 @@ function App() {
     <>
       <Switch>
         <Route path="/" component={Home} />
-        <Route path="/login">
-          {isAuthenticated ? <Dashboard /> : <Login />}
-        </Route>
+        <Route path="/login" component={Login} />
         <Route path="/signup" component={Signup} />
         <Route path="/phone-verification">
           <AuthGuard>

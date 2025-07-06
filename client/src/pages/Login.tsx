@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/Logo";
 import { useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 
@@ -17,6 +17,27 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
+
+  // Check if user is already authenticated and redirect
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/auth/check", {
+          credentials: "include",
+        });
+        const data = await response.json();
+        
+        if (data.authenticated) {
+          setLocation("/dashboard");
+        }
+      } catch (error) {
+        // If auth check fails, user is not authenticated, stay on login page
+        console.log("User not authenticated, staying on login page");
+      }
+    };
+    
+    checkAuth();
+  }, [setLocation]);
 
   // Request email OTP
   const requestOtpMutation = useMutation({
