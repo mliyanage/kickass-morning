@@ -29,54 +29,122 @@ export default function Home() {
       </header>
 
       <main className="flex-1">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="lg:grid lg:grid-cols-12 lg:gap-8">
-            <div className="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left">
-              <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
-                <span className="block xl:inline">Wake up motivated with </span>
-                <span className="block text-primary xl:inline">AI voice calls</span>
-              </h1>
-              <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto lg:mx-0">
-                Get personalized wakeup calls from your favorite inspirational figures. 
-                Start your day with motivation from voices like Elon Musk, Oprah Winfrey, 
-                David Goggins, and more.
-              </p>
-              <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
-                <Button size="lg" onClick={() => setLocation("/signup")}>
-                  Get started for free
-                </Button>
-              </div>
-            </div>
-            <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center">
-              <div className="relative mx-auto w-full rounded-lg shadow-lg lg:max-w-md">
-                <Card className="w-full">
-                  <CardContent className="p-8">
-                    <div className="text-center mb-6">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                      </svg>
-                      <h2 className="mt-2 text-lg font-semibold text-gray-900">AI-Generated Voice Calls</h2>
-                      <p className="mt-1 text-sm text-gray-500">Wake up to personalized motivation every morning</p>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          {/* Hero Section */}
+          <div className="text-center mb-16">
+            <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 sm:text-6xl mb-6">
+              <span className="block">Alarms Don't Work.</span>
+              <span className="block text-primary">This Does.</span>
+            </h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              A wake-up call service designed for people who <em>just can't get out of bed.</em>
+            </p>
+          </div>
+
+          {/* Problem Section */}
+          <div className="bg-gray-50 rounded-lg p-8 mb-12">
+            <p className="text-lg text-gray-700 leading-relaxed mb-4">
+              We get it. You sleep 7–8 hours. You eat right. You even go to bed early. But when the alarm rings… it's just not enough.
+            </p>
+            <p className="text-lg text-gray-700 leading-relaxed">
+              Until someone calls. Suddenly you're up, alert, and moving.
+            </p>
+          </div>
+
+          {/* Solution */}
+          <div className="text-center mb-12">
+            <p className="text-xl text-gray-800 font-medium max-w-3xl mx-auto leading-relaxed">
+              <strong>Kickass Wake-Up Calls</strong> recreates that moment—an actual call, tailored to <em>you</em>, 
+              with a voice you choose and a message that hits the right note every time.
+            </p>
+          </div>
+
+          {/* Features */}
+          <div className="mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">How It Helps:</h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl">🕒</span>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Flexible Scheduling</h3>
+                      <p className="text-gray-600">Set your wake-up times for any day of the week</p>
                     </div>
-                    <ul className="mt-6 space-y-4">
-                      {[
-                        "Choose your favorite inspirational figure's voice",
-                        "Customize based on your goals and struggles",
-                        "Schedule for the days and times you need",
-                        "Get the perfect motivation to start your day"
-                      ].map((feature, idx) => (
-                        <li key={idx} className="flex">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary flex-shrink-0 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span className="text-sm text-gray-700">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl">🎙</span>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Motivating Voices</h3>
+                      <p className="text-gray-600">Pick voices that motivate—from calm to commanding (yes, we have "Jocko")</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl">💬</span>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Personal Messages</h3>
+                      <p className="text-gray-600">Tell us your story—why you want to wake up early—and get daily messages that match your goals</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl">🛌</span>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Full Control</h3>
+                      <p className="text-gray-600">Turn it off anytime if plans change</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl">📈</span>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Track Progress</h3>
+                      <p className="text-gray-600">View your call history and celebrate the wins</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+          </div>
+
+          {/* Mission Statement */}
+          <div className="bg-gradient-to-r from-primary-50 to-primary-100 rounded-lg p-8 mb-12">
+            <div className="text-center">
+              <p className="text-lg text-gray-800 leading-relaxed mb-4">
+                This isn't just about waking up. It's about starting your day with <em>intention</em>.
+              </p>
+              <p className="text-lg text-gray-800 leading-relaxed font-medium">
+                Because when your morning works, everything else does too.
+              </p>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center">
+            <p className="text-xl text-gray-700 mb-8">
+              💡 Start with your first call. It might just change your life.
+            </p>
+            <Button size="lg" className="text-lg px-8 py-4" onClick={() => setLocation("/signup")}>
+              Try It Now – Free Wake-Up Call
+            </Button>
           </div>
         </div>
       </main>
