@@ -66,15 +66,9 @@ export default function Login() {
         // This prevents the login screen flash by letting the app know auth is in progress
         sessionStorage.setItem('auth_successful', 'true');
         
-        // Immediately refresh the auth state in the main App component
-        if ((window as any).refreshAuthState) {
-          console.log("Refreshing auth state after login");
-          await (window as any).refreshAuthState();
-        }
-        
-        // Navigate to dashboard immediately
-        console.log("Redirecting to dashboard");
-        setLocation("/dashboard");
+        // Force a page reload to ensure clean authentication state
+        console.log("Login successful, reloading to dashboard");
+        window.location.href = "/dashboard";
       } catch (error) {
         // Fallback: try to refresh auth and redirect
         console.error("Error processing login response:", error);
@@ -83,11 +77,8 @@ export default function Login() {
           description: "Loading dashboard...",
         });
         
-        // Refresh auth state and redirect
-        if ((window as any).refreshAuthState) {
-          await (window as any).refreshAuthState();
-        }
-        setLocation("/dashboard");
+        // Fallback: reload to dashboard
+        window.location.href = "/dashboard";
       }
     },
     onError: (error: any) => {
