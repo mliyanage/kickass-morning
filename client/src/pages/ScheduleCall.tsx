@@ -476,61 +476,9 @@ export default function ScheduleCall() {
                   </div>
                 </div>
                 
-                <div>
-                  <Label className="text-sm font-medium">Recurrence</Label>
-                  <RadioGroup className="mt-2" value={isRecurring ? "daily" : "once"} onValueChange={(val) => setIsRecurring(val === "daily")}>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="daily" id="recurring-daily" />
-                        <Label htmlFor="recurring-daily">Daily (on selected days)</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="once" id="recurring-once" />
-                        <Label htmlFor="recurring-once">One-time only</Label>
-                      </div>
-                    </div>
-                  </RadioGroup>
-                  
-                  {!isRecurring && (
-                    <div className="ml-7 mt-2">
-                      <Label htmlFor="date-picker" className="block text-xs font-medium mb-1">Select Date</Label>
-                      <Input 
-                        id="date-picker" 
-                        type="date" 
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
-                        required={!isRecurring}
-                      />
-                    </div>
-                  )}
-                </div>
-                
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">Call Settings</Label>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="call-retry" 
-                        checked={callRetry}
-                        onCheckedChange={(checked) => setCallRetry(!!checked)}
-                      />
-                      <Label htmlFor="call-retry" className="text-sm">
-                        Automatically retry call if not answered (up to 3 times)
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="advance-notice" 
-                        checked={advanceNotice}
-                        onCheckedChange={(checked) => setAdvanceNotice(!!checked)}
-                      />
-                      <Label htmlFor="advance-notice" className="text-sm">
-                        Send a reminder text 5 minutes before the call
-                      </Label>
-                    </div>
-                  </div>
-                </div>
+                {/* Hidden sections - recurrence is default (recurring), call settings come later */}
+                {/* Recurrence section hidden - all schedules are recurring by default */}
+                {/* Call settings section hidden - automatic retry and reminders will be implemented later */}
                 
                 <Separator />
                 
