@@ -66,51 +66,28 @@ export default function Login() {
         // This prevents the login screen flash by letting the app know auth is in progress
         sessionStorage.setItem('auth_successful', 'true');
         
-        // Use setTimeout to ensure the session is established before redirecting
-        setTimeout(() => {
-          console.log("Redirecting to dashboard");
-          // Use router navigation instead of window.location for consistency
-          setLocation("/dashboard");
-        }, 800);
+        // Immediately refresh the auth state in the main App component
+        if ((window as any).refreshAuthState) {
+          console.log("Refreshing auth state after login");
+          await (window as any).refreshAuthState();
+        }
+        
+        // Navigate to dashboard immediately
+        console.log("Redirecting to dashboard");
+        setLocation("/dashboard");
       } catch (error) {
+        // Fallback: try to refresh auth and redirect
         console.error("Error processing login response:", error);
-        // Fallback to auth check if response processing fails
         toast({
           title: "Login successful",
-          description: "Checking your profile status...",
+          description: "Loading dashboard...",
         });
         
-        // Display loading state
-        document.body.classList.add('auth-in-progress');
-        
-        setTimeout(async () => {
-          try {
-            const authCheck = await apiRequest("GET", "/api/auth/check");
-            
-            if (authCheck.authenticated) {
-              sessionStorage.setItem('auth_successful', 'true');
-              setLocation("/dashboard");
-            } else {
-              // Should not reach here if login was successful
-              document.body.classList.remove('auth-in-progress');
-              toast({
-                variant: "destructive",
-                title: "Authentication failed",
-                description: "Please log in again",
-              });
-              setLocation("/login");
-            }
-          } catch (secondError) {
-            document.body.classList.remove('auth-in-progress');
-            console.error("Error checking auth status:", secondError);
-            toast({
-              variant: "destructive",
-              title: "Authentication error",
-              description: "Please try logging in again",
-            });
-            setLocation("/login");
-          }
-        }, 1000);
+        // Refresh auth state and redirect
+        if ((window as any).refreshAuthState) {
+          await (window as any).refreshAuthState();
+        }
+        setLocation("/dashboard");
       }
     },
     onError: (error: any) => {
