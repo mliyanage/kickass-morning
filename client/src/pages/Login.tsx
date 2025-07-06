@@ -18,26 +18,7 @@ export default function Login() {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
 
-  // Check if user is already authenticated and redirect
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch("/api/auth/check", {
-          credentials: "include",
-        });
-        const data = await response.json();
-        
-        if (data.authenticated) {
-          setLocation("/dashboard");
-        }
-      } catch (error) {
-        // If auth check fails, user is not authenticated, stay on login page
-        console.log("User not authenticated, staying on login page");
-      }
-    };
-    
-    checkAuth();
-  }, [setLocation]);
+
 
   // Request email OTP
   const requestOtpMutation = useMutation({

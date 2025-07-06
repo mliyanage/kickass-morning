@@ -104,13 +104,13 @@ function App() {
     document.head.appendChild(style);
 
     // Set up interval to periodically check authentication status
-    const authCheckInterval = setInterval(checkAuth, 100000); // Check auth every 10 seconds
+    const authCheckInterval = setInterval(checkAuth, 300000); // Check auth every 5 minutes
 
     return () => {
       clearInterval(authCheckInterval);
       document.head.removeChild(style);
     };
-  }, [setLocation]);
+  }, []); // Only run once on mount
 
   // Authentication guard for protected routes
   const AuthGuard = ({ children }: { children: React.ReactNode }) => {
