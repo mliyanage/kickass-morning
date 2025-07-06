@@ -54,6 +54,12 @@ function App() {
             isPhoneVerified: data.user.phoneVerified,
             isPersonalized: data.user.isPersonalized,
           });
+
+          // If authenticated user is on login/signup page, redirect to dashboard
+          const currentPath = window.location.pathname;
+          if (currentPath === "/login" || currentPath === "/signup") {
+            setLocation("/dashboard");
+          }
         } else {
           console.log("Not authenticated:", data.message);
           setIsAuthenticated(false);

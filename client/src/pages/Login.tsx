@@ -67,8 +67,8 @@ export default function Login() {
         // Use setTimeout to ensure the session is established before redirecting
         setTimeout(() => {
           console.log("Redirecting to dashboard");
-          // Use window.location.replace instead of href for a cleaner transition
-          window.location.replace("/dashboard");
+          // Use router navigation instead of window.location for consistency
+          setLocation("/dashboard");
         }, 800);
       } catch (error) {
         console.error("Error processing login response:", error);
@@ -87,7 +87,7 @@ export default function Login() {
             
             if (authCheck.authenticated) {
               sessionStorage.setItem('auth_successful', 'true');
-              window.location.replace("/dashboard");
+              setLocation("/dashboard");
             } else {
               // Should not reach here if login was successful
               document.body.classList.remove('auth-in-progress');
