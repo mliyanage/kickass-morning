@@ -116,12 +116,21 @@ function App() {
   const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
       if (!isLoading && !isAuthenticated) {
-        setLocation("/login");
+        const currentPath = window.location.pathname;
+        // Only redirect if we're not already on login/signup
+        if (currentPath !== "/login" && currentPath !== "/signup") {
+          setLocation("/login");
+        }
       }
     }, [isAuthenticated, isLoading]);
 
     if (isLoading) {
-      return <div>Loading...</div>;
+      return <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>;
     }
 
     return isAuthenticated ? <>{children}</> : null;
@@ -177,7 +186,13 @@ function App() {
         </Route>
         <Route path="/dashboard">
           <AuthGuard>
-            <Dashboard />
+            {isPhoneVerified && isPersonalized ? (
+              <Dashboard />
+            ) : !isPhoneVerified ? (
+              <PhoneVerification />
+            ) : (
+              <Personalization />
+            )}
           </AuthGuard>
         </Route>
         <Route path="/help">
