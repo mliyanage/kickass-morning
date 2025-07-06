@@ -303,6 +303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`User ${existingUser.id} logged in successfully`);
+      console.log(`Session ID: ${req.sessionID}, User ID in session: ${req.session.userId}`);
 
       // Return success
       res.status(200).json({
@@ -334,6 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/check", async (req: Request, res: Response) => {
+    console.log(`Auth check - Session ID: ${req.sessionID}, User ID: ${req.session.userId}`);
     if (!req.session.userId) {
       return res.status(200).json({
         authenticated: false,
