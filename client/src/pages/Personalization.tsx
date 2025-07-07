@@ -180,6 +180,11 @@ export default function Personalization() {
       return await apiRequest("POST", "/api/user/personalization", data);
     },
     onSuccess: () => {
+      // Invalidate the personalization cache so dashboard shows updated data
+      queryClient.invalidateQueries({
+        queryKey: ["/api/user/personalization"]
+      });
+      
       toast({
         title: "Preferences saved",
         description: "Your personalization settings have been saved.",
