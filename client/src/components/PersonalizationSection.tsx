@@ -59,7 +59,10 @@ export function PersonalizationSection() {
   // Fetch existing personalization data
   const { data: personalizationData, isLoading } = useQuery<PersonalizationData>({
     queryKey: ['/api/user/personalization'],
-    retry: false
+    retry: false,
+    staleTime: 0, // Always consider data stale
+    refetchOnMount: true, // Refetch when component mounts
+    refetchOnWindowFocus: false
   });
   
   // Local variables for displaying personalization data

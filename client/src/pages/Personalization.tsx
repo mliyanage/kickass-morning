@@ -136,6 +136,9 @@ export default function Personalization() {
     useQuery<PersonalizationData>({
       queryKey: ["/api/user/personalization"],
       retry: false,
+      staleTime: 0, // Always consider data stale
+      refetchOnMount: true, // Refetch when component mounts
+      refetchOnWindowFocus: false
     });
 
   // Set initial values from fetched data
@@ -179,9 +182,14 @@ export default function Personalization() {
     mutationFn: async (data: PersonalizationData) => {
       return await apiRequest("POST", "/api/user/personalization", data);
     },
-    onSuccess: () => {
-      // Invalidate the personalization cache so dashboard shows updated data
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      // Invalidate and refetch the personalization cache immediately
+      await queryClient.invalidateQueries({
+        queryKey: ["/api/user/personalization"]
+      });
+      
+      // Force refetch to ensure fresh data
+      await queryClient.refetchQueries({
         queryKey: ["/api/user/personalization"]
       });
       
