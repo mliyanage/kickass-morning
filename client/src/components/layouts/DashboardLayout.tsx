@@ -31,9 +31,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen">
       <Header />
       
-      <div className="main-container py-10">
+      <div className="main-container py-10 pb-20 lg:pb-10"> {/* Extra bottom padding for mobile toolbar */}
         <div className="lg:grid lg:grid-cols-12 lg:gap-x-6">
-          {/* Sidebar - fixed width to prevent layout shifts */}
+          {/* Sidebar - hidden on mobile, shown as bottom toolbar */}
           <div className="lg:col-span-3 mb-6 lg:mb-0">
             <Sidebar />
           </div>

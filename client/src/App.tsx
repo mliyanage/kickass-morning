@@ -9,6 +9,7 @@ import OtpVerification from "@/pages/OtpVerification";
 import Personalization from "@/pages/Personalization";
 import ScheduleCall from "@/pages/ScheduleCall";
 import Dashboard from "@/pages/Dashboard";
+import CallHistory from "@/pages/CallHistory";
 import Help from "@/pages/Help";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
@@ -194,6 +195,11 @@ function App() {
               <Personalization />
             )}
           </AuthGuard>
+        </Route>
+        <Route path="/call-history">
+          <PersonalizedGuard>
+            <CallHistory />
+          </PersonalizedGuard>
         </Route>
         <Route path="/help">
           <AuthGuard>
