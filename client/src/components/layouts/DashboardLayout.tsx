@@ -28,11 +28,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Header />
       
-      <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-        <div className="lg:grid lg:grid-cols-12 lg:gap-x-5">
+      <div className="main-container py-10">
+        <div className="lg:grid lg:grid-cols-12 lg:gap-x-6">
           {/* Sidebar - fixed width to prevent layout shifts */}
           <div className="lg:col-span-3 mb-6 lg:mb-0">
             <Sidebar />

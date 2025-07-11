@@ -8,8 +8,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-white shadow-sm py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="bg-white/90 backdrop-blur-sm shadow-sm py-4 border-b border-white/20">
+        <div className="main-container">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <Logo size="md" />

@@ -13,13 +13,14 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased text-foreground;
+    /* Beautiful gradient background inspired by the design */
+    background: linear-gradient(135deg, #a8e6cf 0%, #88d8a3 25%, #7fcdcd 75%, #6bb6d6 100%);
+    min-height: 100vh;
     /* Prevent horizontal scrollbar */
     overflow-x: hidden;
     /* Add padding-right equal to scrollbar width to prevent content shift */
     padding-right: calc(100vw - 100%);
-    /* Ensure a minimum height to prevent short pages from looking too compact */
-    min-height: 100vh;
   }
 
   /* Improve scrollbar appearance */
@@ -58,5 +59,24 @@
     height: 100%;
     background-color: white;
     z-index: 9999;
+  }
+
+  /* Enhanced card styling inspired by the reference design */
+  .card {
+    @apply bg-white/95 backdrop-blur-sm;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  /* Main container styling for better layout */
+  .main-container {
+    @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Enhanced button styling */
+  .btn-primary {
+    @apply bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700;
+    @apply text-white font-medium rounded-lg px-6 py-2.5;
+    @apply shadow-lg hover:shadow-xl transition-all duration-200;
   }
 }
