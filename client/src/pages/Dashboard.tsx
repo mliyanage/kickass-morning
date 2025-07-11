@@ -281,63 +281,64 @@ export default function Dashboard() {
 
       {/* Hero/Call-to-Action Section */}
       <div className="shadow sm:rounded-md sm:overflow-hidden mb-6">
-        <div className="bg-gradient-to-r from-primary-50 to-primary-100 py-8 px-4 sm:p-8">
-          <Card className="bg-white border-0 shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-2xl font-bold text-gray-900">
+        <div className="bg-white py-6 px-4 sm:p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
                 🔹 Try a Sample Call
-              </CardTitle>
-              <CardDescription className="text-lg">
+              </h2>
+              <p className="text-gray-600 mt-1">
                 Experience your first AI-powered wake-up 💥
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <p className="text-gray-600 mb-6">
-                Not sure what to expect? Hear a personalized motivational
-                message sent to your phone — just like your real wake-up call.
               </p>
+            </div>
+          </div>
+          
+          <div>
+            <p className="text-gray-600 mb-6">
+              Not sure what to expect? Hear a personalized motivational
+              message sent to your phone — just like your real wake-up call.
+            </p>
 
-              <div className="flex flex-col md:flex-row md:items-center gap-4">
-                <div className="flex-1">
-                  {userData?.user?.phoneVerified ? (
-                    <div className="flex items-center text-sm text-green-700 mb-4">
-                      <Phone className="h-4 w-4 mr-2" />
-                      <span className="font-medium">
-                        Ready to call: {userData.user.phone} ✓
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                      <div className="flex items-center">
-                        <div className="text-yellow-600 mr-3">🔒</div>
-                        <div>
-                          <p className="text-sm font-medium text-yellow-800">
-                            Your phone isn't verified yet.
-                          </p>
-                          <p className="text-sm text-yellow-700">
-                            → Verify now to unlock your first wake-up preview.
-                          </p>
-                        </div>
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              <div className="flex-1">
+                {userData?.user?.phoneVerified ? (
+                  <div className="flex items-center text-sm text-green-700 mb-4">
+                    <Phone className="h-4 w-4 mr-2" />
+                    <span className="font-medium">
+                      Ready to call: {userData.user.phone} ✓
+                    </span>
+                  </div>
+                ) : (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-center">
+                      <div className="text-yellow-600 mr-3">🔒</div>
+                      <div>
+                        <p className="text-sm font-medium text-yellow-800">
+                          Your phone isn't verified yet.
+                        </p>
+                        <p className="text-sm text-yellow-700">
+                          → Verify now to unlock your first wake-up preview.
+                        </p>
                       </div>
                     </div>
-                  )}
-                </div>
-                <div className="flex-shrink-0">
-                  <Button
-                    size="lg"
-                    className="w-full md:w-auto"
-                    onClick={handleSampleCall}
-                    disabled={sampleCallMutation.isPending}
-                  >
-                    <Play className="mr-2 h-4 w-4" />
-                    {sampleCallMutation.isPending
-                      ? "Initiating call..."
-                      : "Try It Now"}
-                  </Button>
-                </div>
+                  </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex-shrink-0">
+                <Button
+                  size="lg"
+                  className="w-full md:w-auto"
+                  onClick={handleSampleCall}
+                  disabled={sampleCallMutation.isPending}
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  {sampleCallMutation.isPending
+                    ? "Initiating call..."
+                    : "Try It Now"}
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -137,42 +137,40 @@ export function PersonalizationSection() {
   
   return (
     <div className="shadow sm:rounded-md sm:overflow-hidden">
-      <div className="bg-gradient-to-r from-blue-50 via-primary-50 to-purple-50 py-6 px-4 sm:p-6">
-        <Card className="bg-white border-0 shadow-sm">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="text-2xl font-bold text-gray-900">
-                  🔹 Set Your Wake-Up Preferences
-                </CardTitle>
-                <CardDescription className="text-base">
-                  Build your perfect morning call.
-                </CardDescription>
-                <p className="text-sm text-gray-600 mt-2">
-                  We'll motivate you based on your goals, kick your struggles, and deliver the message in your favorite voice.
-                </p>
-              </div>
-              {personalizationData && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setLocation("/personalization")}
-                  className="flex items-center text-xs"
-                >
-                  <Settings className="mr-1 h-3 w-3" />
-                  Edit
-                </Button>
-              )}
+      <div className="bg-white py-6 px-4 sm:p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              🔹 Set Your Wake-Up Preferences
+            </h2>
+            <p className="text-gray-600 mt-1">
+              Build your perfect morning call.
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              We'll motivate you based on your goals, kick your struggles, and deliver the message in your favorite voice.
+            </p>
+          </div>
+          {personalizationData && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setLocation("/personalization")}
+              className="flex items-center text-xs"
+            >
+              <Settings className="mr-1 h-3 w-3" />
+              Edit
+            </Button>
+          )}
+        </div>
+        
+        <div>
+          {!personalizationData ? (
+            <div className="flex justify-center p-4">
+              <Button onClick={() => setLocation("/personalization")}>
+                Set Up Your Preferences
+              </Button>
             </div>
-          </CardHeader>
-          <CardContent>
-            {!personalizationData ? (
-              <div className="flex justify-center p-4">
-                <Button onClick={() => setLocation("/personalization")}>
-                  Set Up Your Preferences
-                </Button>
-              </div>
-            ) : (
+          ) : (
               // Display summary view
               <div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -259,8 +257,7 @@ export function PersonalizationSection() {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+        </div>
       </div>
     </div>
   );

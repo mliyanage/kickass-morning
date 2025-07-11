@@ -30,17 +30,17 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           {/* Hero Section */}
           <div className="text-center mb-16">
-            <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 sm:text-6xl mb-6">
-              <span className="block">Alarms Don't Work.</span>
-              <span className="block text-primary">This Does.</span>
+            <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl mb-6">
+              <span className="block text-white drop-shadow-lg">Alarms Don't Work.</span>
+              <span className="block text-white font-black drop-shadow-lg">This Does.</span>
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-white/90 max-w-3xl mx-auto leading-relaxed drop-shadow">
               A wake-up call service designed for people who <em>just can't get out of bed.</em>
             </p>
           </div>
 
           {/* Problem Section */}
-          <div className="bg-gray-50 rounded-lg p-8 mb-12">
+          <div className="bg-white/95 backdrop-blur-sm rounded-lg p-8 mb-12 shadow-lg border border-white/20">
             <p className="text-lg text-gray-700 leading-relaxed mb-4">
               We get it. You sleep 7–8 hours. You eat right. You even go to bed early. But when the alarm rings… it's just not enough.
             </p>
@@ -51,10 +51,12 @@ export default function Home() {
 
           {/* Solution */}
           <div className="text-center mb-12">
-            <p className="text-xl text-gray-800 font-medium max-w-3xl mx-auto leading-relaxed">
-              <strong>Kickass Wake-Up Calls</strong> recreates that moment—an actual call, tailored to <em>you</em>, 
-              with a voice you choose and a message that hits the right note every time.
-            </p>
+            <div className="bg-white/95 backdrop-blur-sm rounded-lg p-8 shadow-lg border border-white/20">
+              <p className="text-xl text-gray-800 font-medium max-w-3xl mx-auto leading-relaxed">
+                <strong>Kickass Wake-Up Calls</strong> recreates that moment—an actual call, tailored to <em>you</em>, 
+                with a voice you choose and a message that hits the right note every time.
+              </p>
+            </div>
           </div>
 
           {/* Features */}
