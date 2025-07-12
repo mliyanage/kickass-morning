@@ -532,6 +532,10 @@ export default function Dashboard() {
               <a
                 href="#"
                 className="text-sm font-medium text-primary hover:text-primary/80"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setLocation("/call-history");
+                }}
               >
                 View all call history <span aria-hidden="true">→</span>
               </a>
