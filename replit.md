@@ -127,6 +127,13 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 
 ```
 Changelog:
+- July 11, 2025. Mobile navigation overhaul completed:
+  * Redesigned mobile interface with bottom toolbar navigation
+  * Removed Account and Help from sidebar, moved Account to top menu
+  * Created icon-only bottom toolbar for mobile with Dashboard, Preferences, Schedule, History
+  * Fixed content scrolling with proper bottom padding to prevent toolbar overlap
+  * Applied glassmorphism styling with gradient backgrounds and consistent card design
+  * Enhanced text visibility on home page with white text and drop shadows
 - July 06, 2025. Authentication system fully operational:
   * Fixed session persistence issues causing login redirect failures
   * Implemented reliable authentication flow with full page reload after login
