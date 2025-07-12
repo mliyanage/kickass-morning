@@ -140,14 +140,19 @@ export default function Help() {
                 <AccordionItem value="item-3">
                   <AccordionTrigger>What voice options are available?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="mb-2">We offer several AI-generated voices inspired by well-known motivational figures:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li>Elon Musk - For technology and innovation-focused motivation</li>
-                      <li>Oprah Winfrey - For empowering and inspirational messages</li>
-                      <li>David Goggins - For intense, no-excuses motivation</li>
-                      <li>Steve Jobs - For creativity and perfectionism-focused messages</li>
+                    <p className="mb-3">We offer several AI-generated voices powered by ElevenLabs technology, inspired by well-known motivational figures:</p>
+                    <ul className="list-disc pl-5 space-y-1 mb-3">
+                      <li>Jocko Willink - For disciplined, no-excuses motivation</li>
+                      <li>Similar voices inspired by other popular figures</li>
                       <li>Custom options - We're constantly adding new voices</li>
                     </ul>
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-sm font-medium text-yellow-800 mb-1">Important Disclaimer:</p>
+                      <p className="text-sm text-yellow-700">
+                        These are AI-generated voices created using ElevenLabs technology that are designed to sound similar to public figures for motivational purposes. 
+                        They are <strong>not</strong> the actual voices of these individuals. All voices are synthesized and used for inspirational content only.
+                      </p>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
 
