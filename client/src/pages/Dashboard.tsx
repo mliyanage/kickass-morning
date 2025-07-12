@@ -269,7 +269,7 @@ export default function Dashboard() {
     <DashboardLayout>
       <div className="bg-white p-6 rounded-lg shadow">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          🌅 Good Morning, Boss!
+          ⚡ Ready to Dominate, Boss!
         </h1>
         <p className="text-lg text-gray-600">
           Welcome to your KickAss Morning Dashboard.
