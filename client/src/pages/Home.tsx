@@ -15,6 +15,9 @@ export default function Home() {
               <Logo size="md" />
             </div>
             <div className="flex space-x-4">
+              <Button variant="ghost" onClick={() => setLocation("/help")}>
+                How It Works
+              </Button>
               <Button variant="outline" onClick={() => setLocation("/login")}>
                 Log in
               </Button>
