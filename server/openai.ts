@@ -47,6 +47,12 @@ export async function generateVoiceMessage(
   const strugglesText = formatListForPrompt(formattedStruggles);
   console.log("Goals:", goalsText);
   console.log("Struggles:", strugglesText);
+  
+  // Combine goals with goal description if provided
+  const enhancedGoalsText = goalDescription 
+    ? `${goalsText}. Additional context: ${goalDescription}`
+    : goalsText;
+    
   try {
     // The newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
     const response = await openai.chat.completions.create({
@@ -63,7 +69,7 @@ export async function generateVoiceMessage(
         {
           role: "user",
           content: `Create a motivational wakeup call message for ${formattedName}. 
-          Their goals are focused on ${goalsText} and they struggle with ${strugglesText}. 
+          Their goals are focused on ${enhancedGoalsText} and they struggle with ${strugglesText}. 
           Make it sound conversational and natural, as if a motivational figure is personally calling them.
           Address multiple goals and struggles in a coherent way that feels personalized.`,
         },
