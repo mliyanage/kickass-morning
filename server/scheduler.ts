@@ -85,14 +85,15 @@ async function processScheduledCalls() {
           typeof schedule.goalType === "string"
             ? schedule.goalType.split(",")
             : [schedule.goalType];
-        const mainGoal = goalTypes[0];
 
         // Extract struggles from schedule
         const struggleTypes =
           typeof schedule.struggleType === "string"
             ? schedule.struggleType.split(",")
             : [schedule.struggleType];
-        const mainStruggle = struggleTypes[0];
+
+        const userGoals = goalTypes;
+        const userStruggles = struggleTypes;
 
         // Get any custom goal description if available
         let goalDescription = "";
@@ -100,24 +101,22 @@ async function processScheduledCalls() {
           goalDescription = personalization.goalDescription;
         }
 
+        let otherStruggleText = "";
+
         // Use voice from personalization data with a fallback
         const voiceId = personalization.voice || "jocko"; // Default to "jocko" if no voice is set
         console.log(`Using voice from personalization: ${voiceId}`); // Log the voice being used
 
         // Generate voice message
         console.log(
-          `Generating voice message for user ${user.id} with voice ${voiceId}, goal: ${mainGoal}, struggle: ${mainStruggle}`,
+          `Generating voice message for user ${user.id} with voice ${voiceId}, goals: ${userGoals.join(',')}, struggles: ${userStruggles.join(',')}`,
         );
-
-        // Convert single strings to arrays for the API
-        const goalsArray = [mainGoal as any]; // Type assertion
-        const strugglesArray = [mainStruggle as any]; // Type assertion
-
         const messageText = await generateVoiceMessage(
-          goalsArray,
-          strugglesArray,
-          user.name, // Can be null
-          goalDescription, // Pass as otherGoal
+          userGoals as any[],
+          userStruggles as any[],
+          user.name,
+          goalDescription, // This will be used for OTHER goals
+          otherStruggleText, // This will be used for OTHER struggles
         );
 
         // Generate an audio file from the message text

@@ -23,7 +23,7 @@ export async function generateVoiceMessage(
     [GoalType.PRODUCTIVITY]: "do focused productive work",
     [GoalType.STUDY]: "studying or learning",
     [GoalType.MEDITATION]: "meditation and mindfulness",
-    [GoalType.CREATIVE]: "persue creative projects",
+    [GoalType.CREATIVE]: "pursue creative projects",
     [GoalType.OTHER]: otherGoal || "their personal goal",
   };
 
