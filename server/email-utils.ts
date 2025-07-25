@@ -1,27 +1,28 @@
-import { MailService } from '@sendgrid/mail';
+import Mailjet from 'node-mailjet';
 
-// Initialize SendGrid with API key
-const mailService = new MailService();
-
-// This will be initialized in the init function
+// Initialize Mailjet client
+let mailjetClient: Mailjet | null = null;
 let isInitialized = false;
 
 /**
- * Initialize the SendGrid mail service
+ * Initialize the Mailjet mail service
  */
-export function initSendGrid() {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.warn("SENDGRID_API_KEY not found. Email functionality will not work.");
+export function initMailjet() {
+  if (!process.env.MAILJET_API_KEY || !process.env.MAILJET_SECRET_KEY) {
+    console.warn("MAILJET_API_KEY or MAILJET_SECRET_KEY not found. Email functionality will not work.");
     return false;
   }
 
   try {
-    mailService.setApiKey(process.env.SENDGRID_API_KEY);
+    mailjetClient = new Mailjet({
+      apiKey: process.env.MAILJET_API_KEY,
+      apiSecret: process.env.MAILJET_SECRET_KEY
+    });
     isInitialized = true;
-    console.log("SendGrid initialized successfully");
+    console.log("Mailjet initialized successfully");
     return true;
   } catch (error) {
-    console.error("Failed to initialize SendGrid:", error);
+    console.error("Failed to initialize Mailjet:", error);
     return false;
   }
 }
@@ -34,29 +35,44 @@ interface EmailParams {
 }
 
 /**
- * Send an email using SendGrid
+ * Send an email using Mailjet
  * 
  * @param params Email parameters (to, subject, text, html)
  * @returns Promise resolving to true if email was sent successfully, false otherwise
  */
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  if (!isInitialized) {
-    console.warn("SendGrid not initialized. Cannot send email.");
+  if (!isInitialized || !mailjetClient) {
+    console.warn("Mailjet not initialized. Cannot send email.");
     return false;
   }
 
   try {
-    await mailService.send({
-      to: params.to,
-      from: "notifications@kickassmorning.com", // Use your verified sender
-      subject: params.subject,
-      text: params.text || '',
-      html: params.html || '',
-    });
+    const request = mailjetClient
+      .post('send', { version: 'v3.1' })
+      .request({
+        Messages: [
+          {
+            From: {
+              Email: "notifications@kickassmorning.com",
+              Name: "KickAss Morning"
+            },
+            To: [
+              {
+                Email: params.to
+              }
+            ],
+            Subject: params.subject,
+            TextPart: params.text || '',
+            HTMLPart: params.html || '',
+          }
+        ]
+      });
+
+    await request;
     console.log(`Email sent to ${params.to}`);
     return true;
   } catch (error) {
-    console.error('SendGrid email error:', error);
+    console.error('Mailjet email error:', error);
     return false;
   }
 }

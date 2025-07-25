@@ -88,7 +88,7 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 ### Core Services
 - **OpenAI API**: GPT-4o for text generation, TTS for voice synthesis
 - **Twilio**: SMS for verification, Voice for call delivery
-- **SendGrid**: Email delivery for OTP codes
+- **Mailjet**: Email delivery for OTP codes
 - **Neon Database**: Serverless PostgreSQL hosting
 
 ### Development Tools
@@ -127,6 +127,11 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 
 ```
 Changelog:
+- July 25, 2025. Email service migration completed:
+  * Migrated from SendGrid to Mailjet API for OTP email delivery
+  * Updated email-utils.ts to use node-mailjet package instead of @sendgrid/mail
+  * Changed environment variables from SENDGRID_API_KEY to MAILJET_API_KEY and MAILJET_SECRET_KEY
+  * Maintained same external interface for sendEmail() and sendOtpEmail() functions
 - July 11, 2025. Mobile navigation overhaul completed:
   * Redesigned mobile interface with bottom toolbar navigation
   * Removed Account and Help from sidebar, moved Account to top menu
