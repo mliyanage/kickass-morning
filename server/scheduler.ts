@@ -95,13 +95,10 @@ async function processScheduledCalls() {
         const userGoals = goalTypes;
         const userStruggles = struggleTypes;
 
-        // Get any custom goal description if available
-        let goalDescription = "";
-        if (personalization.goalDescription) {
-          goalDescription = personalization.goalDescription;
-        }
-
-        let otherStruggleText = "";
+        // Get custom goal and struggle texts
+        const otherGoalText = personalization.otherGoal || "";
+        const otherStruggleText = personalization.otherStruggle || "";
+        const goalDescription = personalization.goalDescription || "";
 
         // Use voice from personalization data with a fallback
         const voiceId = personalization.voice || "jocko"; // Default to "jocko" if no voice is set
@@ -115,8 +112,9 @@ async function processScheduledCalls() {
           userGoals as any[],
           userStruggles as any[],
           user.name,
-          goalDescription, // This will be used for OTHER goals
-          otherStruggleText, // This will be used for OTHER struggles
+          otherGoalText, // Custom goal text for OTHER goals
+          otherStruggleText, // Custom struggle text for OTHER struggles  
+          goalDescription, // General goal description for all goals
         );
 
         // Generate an audio file from the message text

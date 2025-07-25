@@ -13,6 +13,7 @@ export async function generateVoiceMessage(
   userName: string | null,
   otherGoal?: string,
   otherStruggle?: string,
+  goalDescription?: string,
 ): Promise<string> {
   // Default to "there" if name is null
   const formattedName = userName || "there";
