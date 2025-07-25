@@ -970,6 +970,7 @@ export class DatabaseStorage implements IStorage {
               (${schedules.lastCallStatus} != 'initiated' 
                AND ${schedules.lastCallStatus} != 'in-progress'
                AND ${schedules.lastCallStatus} != 'pending'
+               AND ${schedules.lastCallStatus} != 'completed'
               )
             )`,
           ),
