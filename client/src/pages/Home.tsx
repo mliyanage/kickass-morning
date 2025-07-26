@@ -1,36 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLocation } from "wouter";
-import Logo from "@/components/Logo";
+import PublicLayout from "@/components/layouts/PublicLayout";
 
 export default function Home() {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-white/90 backdrop-blur-sm shadow-sm py-4 border-b border-white/20">
-        <div className="main-container">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center">
-              <Logo size="md" />
-            </div>
-            <div className="flex space-x-4">
-              <Button variant="ghost" onClick={() => setLocation("/help")}>
-                How It Works
-              </Button>
-              <Button variant="outline" onClick={() => setLocation("/login")}>
-                Log in
-              </Button>
-              <Button onClick={() => setLocation("/signup")}>
-                Sign up
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <PublicLayout>
           {/* Hero Section */}
           <div className="text-center mb-16">
             <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl mb-6">
@@ -149,16 +126,6 @@ export default function Home() {
               Try It Now – Free Wake-Up Call
             </Button>
           </div>
-        </div>
-      </main>
-
-      <footer className="bg-white">
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} KickAss Morning. All rights reserved.
-          </p>
-        </div>
-      </footer>
-    </div>
+    </PublicLayout>
   );
 }

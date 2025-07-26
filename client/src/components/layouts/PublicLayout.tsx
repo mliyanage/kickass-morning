@@ -14,7 +14,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
       <header className="bg-white/90 backdrop-blur-sm shadow-sm py-4 border-b border-white/20">
         <div className="main-container">
           <div className="flex justify-between items-center">
-            <div className="flex items-center">
+            <div className="flex items-center cursor-pointer" onClick={() => setLocation("/")}>
               <Logo size="md" />
             </div>
             <div className="flex space-x-4">
