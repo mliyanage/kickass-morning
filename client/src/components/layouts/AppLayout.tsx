@@ -40,15 +40,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
         return { isAuthenticated: true, isLoading: false };
       }
       
-      // For public pages (home, login, signup, help from public), assume not authenticated
+      // For all public pages (home, login, signup, help from public), 
+      // check if there's a session cookie but default to not authenticated
+      const hasSessionCookie = document.cookie.includes('connect.sid');
       if (currentPath === '/' || currentPath === '/login' || currentPath === '/signup' ||
           (currentPath === '/help' && (!referrer || !referrer.includes('/dashboard')))) {
-        return { isAuthenticated: false, isLoading: true };
-      }
-      
-      // Check if there's a session cookie for other cases
-      if (document.cookie.includes('connect.sid')) {
-        return { isAuthenticated: true, isLoading: true };
+        return { 
+          isAuthenticated: false, 
+          isLoading: hasSessionCookie // Only show loading if there might be a session
+        };
       }
     }
     return { isAuthenticated: false, isLoading: true };
@@ -66,10 +66,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
                                        currentPath === '/call-history' || 
                                        currentPath === '/account';
     
-    const hasSessionCookie = document.cookie.includes('connect.sid');
-    
     // Skip auth check if we're on strictly authenticated pages and already authenticated
     if (isStrictlyAuthenticatedPage && authState.isAuthenticated) {
+      return;
+    }
+    
+    // For public pages, only check auth if we have a session cookie or need to verify
+    const isPublicPage = currentPath === '/' || currentPath === '/login' || currentPath === '/signup';
+    const isHelpPage = currentPath === '/help';
+    const hasSessionCookie = document.cookie.includes('connect.sid');
+    
+    // Skip auth check for public page navigation when no session cookie exists
+    if (isPublicPage && !hasSessionCookie && !authState.isAuthenticated) {
+      // Already in correct state, no need to check
       return;
     }
     
@@ -91,11 +100,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
       }
     };
 
-    // Always check auth for public pages and Help page to ensure correct state
-    const isPublicPage = currentPath === '/' || currentPath === '/login' || currentPath === '/signup';
-    const isHelpPage = currentPath === '/help';
-    
-    if (isPublicPage || isHelpPage || !authState.isAuthenticated) {
+    // Only check auth when necessary:
+    // 1. Help page (to get correct context)
+    // 2. Public pages with session cookies (might be authenticated)
+    // 3. When not authenticated but might need to be
+    if (isHelpPage || (hasSessionCookie && !authState.isAuthenticated) || 
+        (!isPublicPage && !isStrictlyAuthenticatedPage)) {
       checkAuth();
     }
   }, [location]); // React to location changes
