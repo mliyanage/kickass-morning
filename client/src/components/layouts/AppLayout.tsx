@@ -32,12 +32,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
         return { isAuthenticated: true, isLoading: false };
       }
       
-      // For Help page, only assume authenticated if coming from authenticated pages
-      if (currentPath === '/help' && referrer && 
-          (referrer.includes('/dashboard') || referrer.includes('/personalization') || 
-           referrer.includes('/schedule-call') || referrer.includes('/call-history') ||
-           referrer.includes('/account'))) {
-        return { isAuthenticated: true, isLoading: false };
+      // For Help page, check if we have session cookie and assume authenticated if so
+      // This handles both dashboard->help and direct help access
+      if (currentPath === '/help') {
+        const hasSessionCookie = document.cookie.includes('connect.sid');
+        if (hasSessionCookie || (referrer && 
+            (referrer.includes('/dashboard') || referrer.includes('/personalization') || 
+             referrer.includes('/schedule-call') || referrer.includes('/call-history') ||
+             referrer.includes('/account')))) {
+          return { isAuthenticated: true, isLoading: false };
+        }
       }
       
       // For all public pages (home, login, signup, help from public), 
@@ -101,11 +105,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
     };
 
     // Only check auth when necessary:
-    // 1. Help page (to get correct context)
+    // 1. Help page only if we don't already have correct auth state
     // 2. Public pages with session cookies (might be authenticated)
     // 3. When not authenticated but might need to be
-    if (isHelpPage || (hasSessionCookie && !authState.isAuthenticated) || 
-        (!isPublicPage && !isStrictlyAuthenticatedPage)) {
+    if ((isHelpPage && !hasSessionCookie && authState.isLoading) || 
+        (hasSessionCookie && !authState.isAuthenticated) || 
+        (!isPublicPage && !isStrictlyAuthenticatedPage && !isHelpPage)) {
       checkAuth();
     }
   }, [location]); // React to location changes
