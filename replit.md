@@ -127,6 +127,13 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 
 ```
 Changelog:
+- July 26, 2025. Navigation system optimization completed:
+  * Successfully completed major architectural refactor from multiple layouts (PublicLayout, DashboardLayout) to single adaptive AppLayout
+  * Eliminated all layout jumping issues between authenticated and unauthenticated states
+  * Implemented smart authentication detection using session storage and referrer tracking
+  * Optimized authentication checks to prevent unnecessary API calls during navigation
+  * Fixed menu disappearing issues when navigating between dashboard and help pages
+  * All navigation flows now work smoothly: public pages, authenticated pages, and cross-navigation
 - July 26, 2025. Critical timezone bug fix completed:
   * Fixed convertWeekdaysToUTC function where Saturday 10:05 AM Sydney time incorrectly saved as 'sun' instead of 'sat' in weekdays_utc field
   * Corrected timezone conversion logic to use proper target date components instead of today's date
