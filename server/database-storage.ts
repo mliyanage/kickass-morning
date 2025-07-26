@@ -908,9 +908,10 @@ export class DatabaseStorage implements IStorage {
       // Get current UTC time formatted as HH:MM
       const currentUTCTimeStr = currentTime.toISOString().substring(11, 16);
 
-      // Calculate time 10 minutes ahead for the window (forward-looking)
-      const tenMinutesAhead = new Date(currentTime.getTime() + 10 * 60 * 1000);
-      const tenMinutesAheadUTCStr = tenMinutesAhead.toISOString().substring(11, 16);
+      // Use a backward-looking window to catch schedules that should have been called
+      // This allows us to catch failed calls and avoid timing issues
+      const tenMinutesAgo = new Date(currentTime.getTime() - 10 * 60 * 1000);
+      const tenMinutesAgoUTCStr = tenMinutesAgo.toISOString().substring(11, 16);
 
       // Current day of week in UTC (0-6, starting with Sunday)
       const currentUTCDayOfWeek = currentTime.getUTCDay();
@@ -931,7 +932,7 @@ export class DatabaseStorage implements IStorage {
         `Current UTC time: ${currentUTCTimeStr}, day: ${currentUTCDayStr}, date: ${currentUTCDateStr}`,
       );
       console.log(
-        `Time window: ${currentUTCTimeStr} to ${tenMinutesAheadUTCStr}`,
+        `Time window: ${tenMinutesAgoUTCStr} to ${currentUTCTimeStr}`,
       );
 
       // Query for pending schedules using UTC fields
@@ -945,8 +946,8 @@ export class DatabaseStorage implements IStorage {
             eq(schedules.isRecurring, true),
             // Check if today is one of the scheduled days using UTC weekdays
             sql`${schedules.weekdaysUTC} LIKE ${"%" + currentUTCDayStr + "%"}`,
-            // Check if schedule time is within the forward-looking window
-            sql`${schedules.wakeupTimeUTC} >= ${currentUTCTimeStr} AND ${schedules.wakeupTimeUTC} <= ${tenMinutesAheadUTCStr}`,
+            // Check if schedule time is within the backward-looking window
+            sql`${schedules.wakeupTimeUTC} >= ${tenMinutesAgoUTCStr} AND ${schedules.wakeupTimeUTC} <= ${currentUTCTimeStr}`,
             // Only consider schedules that have never been called before OR were called more than 5 minutes ago
             sql`(
               ${schedules.lastCalled} IS NULL 
@@ -958,7 +959,7 @@ export class DatabaseStorage implements IStorage {
             // 1. Never called before, OR
             // 2. Last call was completed but on a different day (recurring), OR  
             // 3. Last call failed and retry is enabled, OR
-            // 4. Last call is not in active states (initiated/in-progress/pending)
+            // 4. Last call is not in active states that shouldn't be retried
             sql`(
               ${schedules.lastCallStatus} IS NULL
               OR 
@@ -966,7 +967,7 @@ export class DatabaseStorage implements IStorage {
               OR
               (${schedules.callRetry} = true AND ${schedules.lastCallStatus} = 'failed')
               OR
-              (${schedules.lastCallStatus} NOT IN ('initiated', 'in-progress', 'pending'))
+              (${schedules.lastCallStatus} NOT IN ('initiated', 'in-progress', 'pending', 'completed'))
             )`,
           ),
         );

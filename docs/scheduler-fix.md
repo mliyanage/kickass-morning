@@ -20,17 +20,17 @@ wakeup_time_utc >= 23:00 AND wakeup_time_utc <= 23:10
 
 ## Fix Implemented
 
-### New (Fixed) Logic:
+### Final (Corrected) Logic:
 ```sql
--- Forward-looking window: now to 10 minutes ahead
-wakeup_time_utc >= 23:10 AND wakeup_time_utc <= 23:20
+-- Backward-looking window: 10 minutes ago to now
+wakeup_time_utc >= 23:05 AND wakeup_time_utc <= 23:15
 ```
 
 ### How This Fixes Schedule 15:
 - **Wakeup Time UTC**: 23:15
-- **Query Time**: 23:10
-- **Time Window**: 23:10 to 23:20
-- **Result**: 23:15 is within range ✅
+- **Query Time**: 23:15
+- **Time Window**: 23:05 to 23:15
+- **Result**: 23:15 is within range ✅ (includes exact time)
 
 ## Code Changes Made
 
@@ -47,18 +47,27 @@ wakeup_time_utc >= 23:10 AND wakeup_time_utc <= 23:20
 
 2. **SQL Query**:
    ```sql
-   -- OLD: Catches schedules that are already past
+   -- FINAL: Catches schedules in the last 10 minutes (including exact time)
    wakeup_time_utc >= tenMinutesAgoUTCStr AND wakeup_time_utc <= currentUTCTimeStr
-   
-   -- NEW: Catches upcoming schedules within next 10 minutes
-   wakeup_time_utc >= currentUTCTimeStr AND wakeup_time_utc <= tenMinutesAheadUTCStr
    ```
 
 3. **Logging**:
    ```javascript
-   // OLD: Time window: 23:00 to 23:10
-   // NEW: Time window: 23:10 to 23:20
+   // FINAL: Time window: 23:05 to 23:15 (backward-looking)
    ```
+
+## Logic Consistency Fix
+
+**Additional Issue Identified**: The original forward-looking approach was logically inconsistent:
+- **Time Window**: Forward-looking (future schedules)
+- **Failed Retry Logic**: Backward-looking (past failed calls)
+- **Active State Exclusion**: Nonsensical (can't have "in-progress" calls in the future)
+
+**Solution**: Use backward-looking window for logical consistency:
+- ✅ Catches schedules that should have been called recently
+- ✅ Allows retry of failed calls from previous runs  
+- ✅ Makes sense to exclude active states from past calls
+- ✅ Includes exact scheduled time (23:15 at 23:15)
 
 ## Benefits of the Fix
 
