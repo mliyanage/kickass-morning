@@ -25,25 +25,44 @@ export default function AppLayout({ children }: AppLayoutProps) {
       const currentPath = window.location.pathname;
       const referrer = document.referrer;
       
-      // If we're on dashboard routes or coming from them, assume authenticated
+      // If we're on authenticated routes or coming from them, assume authenticated
       if (currentPath.startsWith('/dashboard') || currentPath === '/personalization' || 
           currentPath === '/schedule-call' || currentPath === '/call-history' || 
-          currentPath === '/account' || 
-          (referrer && (referrer.includes('/dashboard') || referrer.includes('/personalization')))) {
-        return { isAuthenticated: true, isLoading: true };
+          currentPath === '/account' || currentPath === '/help' ||
+          (referrer && (referrer.includes('/dashboard') || referrer.includes('/personalization') || 
+           referrer.includes('/schedule-call') || referrer.includes('/call-history')))) {
+        return { isAuthenticated: true, isLoading: false };
       }
       
       // Check if there's a session cookie
       if (document.cookie.includes('connect.sid')) {
-        return { isAuthenticated: true, isLoading: true };
+        return { isAuthenticated: true, isLoading: false };
       }
     }
-    return { isAuthenticated: false, isLoading: true };
+    return { isAuthenticated: false, isLoading: false };
   });
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
+    const currentPath = window.location.pathname;
+    
+    // Only check auth for pages that actually need it (public pages or initial load)
+    // Skip auth check if we're already on authenticated pages and have session cookie
+    const isAuthenticatedPage = currentPath.startsWith('/dashboard') || 
+                               currentPath === '/personalization' || 
+                               currentPath === '/schedule-call' || 
+                               currentPath === '/call-history' || 
+                               currentPath === '/account' ||
+                               currentPath === '/help';
+    
+    const hasSessionCookie = document.cookie.includes('connect.sid');
+    
+    // Skip auth check if we're on authenticated pages and have session cookie
+    if (isAuthenticatedPage && hasSessionCookie && authState.isAuthenticated) {
+      return;
+    }
+    
     const checkAuth = async () => {
       try {
         const res = await fetch("/api/auth/check", {
@@ -62,8 +81,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
       }
     };
 
-    checkAuth();
-  }, []);
+    // Only check auth when necessary
+    if (!isAuthenticatedPage || !hasSessionCookie || !authState.isAuthenticated) {
+      checkAuth();
+    }
+  }, [location]); // React to location changes
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -85,8 +107,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
     logoutMutation.mutate();
   };
 
-  // Show loading state briefly only on initial load
-  if (authState.isLoading && typeof window !== 'undefined' && !window.location.pathname.startsWith('/')) {
+  // Show loading state only for public pages on initial load
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const isPublicPage = currentPath === '/' || currentPath === '/login' || currentPath === '/signup';
+  
+  if (authState.isLoading && isPublicPage) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
