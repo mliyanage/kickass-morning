@@ -80,17 +80,9 @@ async function processScheduledCalls() {
           continue;
         }
 
-        // Extract goals from schedule
-        const goalTypes =
-          typeof schedule.goalType === "string"
-            ? schedule.goalType.split(",")
-            : [schedule.goalType];
-
-        // Extract struggles from schedule
-        const struggleTypes =
-          typeof schedule.struggleType === "string"
-            ? schedule.struggleType.split(",")
-            : [schedule.struggleType];
+        // Extract goals and struggles from personalization
+        const goalTypes = personalization.goals || [];
+        const struggleTypes = personalization.struggles || [];
 
         const userGoals = goalTypes;
         const userStruggles = struggleTypes;
@@ -106,14 +98,14 @@ async function processScheduledCalls() {
 
         // Generate voice message
         console.log(
-          `Generating voice message for user ${user.id} with voice ${voiceId}, goals: ${userGoals.join(',')}, struggles: ${userStruggles.join(',')}`,
+          `Generating voice message for user ${user.id} with voice ${voiceId}, goals: ${userGoals.join(",")}, struggles: ${userStruggles.join(",")}`,
         );
         const messageText = await generateVoiceMessage(
           userGoals as any[],
           userStruggles as any[],
           user.name,
           otherGoalText, // Custom goal text for OTHER goals
-          otherStruggleText, // Custom struggle text for OTHER struggles  
+          otherStruggleText, // Custom struggle text for OTHER struggles
           goalDescription, // General goal description for all goals
         );
 
