@@ -170,10 +170,7 @@ export default function Personalization() {
       }
       
       setOtherStruggle(personalizationData.otherStruggle || "");
-      setVoice(
-        personalizationData.customVoice ? "" : personalizationData.voice,
-      );
-      setCustomVoice(personalizationData.customVoice || "");
+      setVoice(personalizationData.voice || "");
       setStep(0); // Start with summary view when there's existing data
     }
   }, [personalizationData]);
@@ -257,12 +254,11 @@ export default function Personalization() {
   };
 
   const handleSubmit = () => {
-    if (!voice && !customVoice) {
+    if (!voice) {
       toast({
         variant: "destructive",
         title: "Please select a voice",
-        description:
-          "Choose an inspirational figure's voice or enter a custom one.",
+        description: "Choose an inspirational figure's voice.",
       });
       return;
     }
@@ -274,8 +270,7 @@ export default function Personalization() {
       struggles: struggles,
       otherStruggle:
         struggles.includes(StruggleType.OTHER) ? otherStruggle : undefined,
-      voice: voice || customVoice,
-      customVoice: customVoice || undefined,
+      voice: voice,
     };
 
     submitPersonalizationMutation.mutate(personalData);
@@ -286,9 +281,7 @@ export default function Personalization() {
     if (voice) {
       // Find voice from our list of sample voices
       const selectedVoice = voices.find((v) => v.id === voice);
-      return selectedVoice ? selectedVoice.name : "Custom Voice";
-    } else if (customVoice) {
-      return customVoice;
+      return selectedVoice ? selectedVoice.name : "Unknown Voice";
     }
     return "Not Selected";
   };
@@ -899,23 +892,7 @@ export default function Personalization() {
                 </ul>
               </div>
 
-              <div>
-                <Label htmlFor="custom-voice" className="text-base font-medium">Other person not listed?</Label>
-                <p className="text-sm text-gray-500 mt-1 mb-2">
-                  Enter the name of your preferred inspirational figure
-                </p>
-                <Input
-                  id="custom-voice"
-                  className="mt-1"
-                  placeholder="Enter name (e.g., Tony Robbins, Brené Brown)"
-                  value={customVoice}
-                  onChange={(e) => setCustomVoice(e.target.value)}
-                  onClick={() => setVoice("")}
-                />
-                <p className="mt-2 text-xs text-gray-500">
-                  Note: Custom personalities are subject to availability and may use similar voice models
-                </p>
-              </div>
+
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={handlePreviousStep}>

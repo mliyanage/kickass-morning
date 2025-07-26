@@ -72,8 +72,7 @@ export function PersonalizationSection() {
   const otherGoal = personalizationData?.otherGoal || "";
   const otherStruggle = personalizationData?.otherStruggle || "";
   const goalDescription = personalizationData?.goalDescription || "";
-  const voice = personalizationData?.customVoice ? "" : (personalizationData?.voice || "");
-  const customVoice = personalizationData?.customVoice || "";
+  const voice = personalizationData?.voice || "";
   
   // Helper function to get goal display text
   const getGoalText = (goal: GoalType | string) => {
@@ -102,7 +101,6 @@ export function PersonalizationSection() {
   
   // Helper function to get voice display text with description
   const getVoiceText = () => {
-    if (customVoice) return customVoice;
     if (voice) {
       const voiceObj = voices.find(v => v.id === voice);
       if (voiceObj) {
