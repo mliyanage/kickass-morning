@@ -8,6 +8,7 @@ import { useLocation } from "wouter";
 import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
+import AppLayout from "@/components/layouts/AppLayout";
 
 export default function Signup() {
   const { toast } = useToast();
@@ -101,7 +102,8 @@ export default function Signup() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 px-4 sm:px-6">
+    <AppLayout>
+      <div className="max-w-md mx-auto mt-10 px-4 sm:px-6">
       <Card>
         <CardContent className="pt-6">
           <div className="text-center mb-6">
@@ -224,6 +226,7 @@ export default function Signup() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

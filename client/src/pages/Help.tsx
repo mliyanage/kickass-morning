@@ -1,63 +1,22 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
-import PublicLayout from "@/components/layouts/PublicLayout";
+import AppLayout from "@/components/layouts/AppLayout";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ArrowRight, Check, Clock, List, Phone, Settings, Speaker, User } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
 
 export default function Help() {
-  const [location] = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(() => {
-    // Check if we're likely in an authenticated context by looking at the current URL path
-    // If we're at /help and there are dashboard-related paths in history, assume authenticated initially
-    if (typeof window !== 'undefined') {
-      const currentPath = window.location.pathname;
-      const referrer = document.referrer;
-      
-      // If referrer contains dashboard paths, start with authenticated assumption
-      if (referrer && (referrer.includes('/dashboard') || referrer.includes('/personalization') || 
-          referrer.includes('/schedule-call') || referrer.includes('/call-history') || 
-          referrer.includes('/account'))) {
-        return true;
-      }
-      
-      // Check if there's a session cookie indicating authentication
-      if (document.cookie.includes('connect.sid')) {
-        return true;
-      }
-    }
-    return null;
-  });
+  return (
+    <AppLayout>
+      <div className="space-y-6">
+        <div className="text-center mb-16">
+          <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl text-white drop-shadow-lg mb-4">
+            How It Works
+          </h1>
+          <p className="text-xl text-white/90 max-w-3xl mx-auto leading-relaxed drop-shadow">
+            Learn how KickAss Morning can transform your mornings
+          </p>
+        </div>
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await fetch("/api/auth/check", {
-          credentials: "include",
-        });
-        const data = await res.json();
-        setIsAuthenticated(data.authenticated || false);
-      } catch (error) {
-        setIsAuthenticated(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  const helpContent = (
-    <div className="space-y-6">
-      <div className="text-center mb-16">
-        <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl text-white drop-shadow-lg mb-4">
-          How It Works
-        </h1>
-        <p className="text-xl text-white/90 max-w-3xl mx-auto leading-relaxed drop-shadow">
-          Learn how KickAss Morning can transform your mornings
-        </p>
-      </div>
-
-      <div className="bg-white/95 backdrop-blur-sm rounded-lg p-8 shadow-lg border border-white/20">
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg p-8 shadow-lg border border-white/20">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">KickAss Morning: Getting Started Guide</h2>
         <p className="text-md text-gray-600 mb-6">
           Welcome to KickAss Morning! This guide will walk you through using our AI-powered wake-up call service
@@ -279,13 +238,7 @@ export default function Help() {
             </CardContent>
           </Card>
         </div>
-    </div>
+      </div>
+    </AppLayout>
   );
-
-  // Default to PublicLayout while auth check is happening to prevent layout jumping
-  if (isAuthenticated === true) {
-    return <DashboardLayout>{helpContent}</DashboardLayout>;
-  } else {
-    return <PublicLayout>{helpContent}</PublicLayout>;
-  }
 }

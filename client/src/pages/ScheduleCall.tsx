@@ -19,7 +19,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
+import AppLayout from "@/components/layouts/AppLayout";
 
 // Timezone options
 const timezones = [
@@ -371,11 +371,11 @@ export default function ScheduleCall() {
   // Show loading state while checking phone verification or loading schedule data
   if (isLoading || isUserDataLoading || (scheduleIdToEdit && isLoadingSchedule)) {
     return (
-      <DashboardLayout>
+      <AppLayout>
         <div className="text-center py-16">
           <p>{scheduleIdToEdit ? "Loading schedule data..." : "Loading..."}</p>
         </div>
-      </DashboardLayout>
+      </AppLayout>
     );
   }
 
@@ -385,7 +385,7 @@ export default function ScheduleCall() {
 
   // Only render the schedule form if user is verified
   return (
-    <DashboardLayout>
+    <AppLayout>
       <div className="shadow sm:rounded-md sm:overflow-hidden">
         <div className="bg-white py-6 px-4 sm:p-6">
           <h2 className="text-lg leading-6 font-medium text-gray-900 mb-4">
@@ -502,6 +502,6 @@ export default function ScheduleCall() {
           </Card>
         </div>
       </div>
-    </DashboardLayout>
+    </AppLayout>
   );
 }

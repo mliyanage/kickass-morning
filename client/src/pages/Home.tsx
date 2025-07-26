@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLocation } from "wouter";
-import PublicLayout from "@/components/layouts/PublicLayout";
+import AppLayout from "@/components/layouts/AppLayout";
 
 export default function Home() {
   const [, setLocation] = useLocation();
 
   return (
-    <PublicLayout>
+    <AppLayout>
           {/* Hero Section */}
           <div className="text-center mb-16">
             <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl mb-6">
@@ -126,6 +126,6 @@ export default function Home() {
               Try It Now – Free Wake-Up Call
             </Button>
           </div>
-    </PublicLayout>
+    </AppLayout>
   );
 }

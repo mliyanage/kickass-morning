@@ -9,6 +9,7 @@ import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
+import AppLayout from "@/components/layouts/AppLayout";
 
 export default function Login() {
   const { toast } = useToast();
@@ -118,7 +119,8 @@ export default function Login() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 px-4 sm:px-6 login-page">
+    <AppLayout>
+      <div className="max-w-md mx-auto mt-10 px-4 sm:px-6 login-page">
       <Card>
         <CardContent className="pt-6">
           <div className="text-center mb-6">
@@ -243,6 +245,7 @@ export default function Login() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

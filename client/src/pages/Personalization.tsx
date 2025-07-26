@@ -18,7 +18,7 @@ import VoiceCard from "@/components/VoiceCard";
 import SelectionCard from "@/components/SelectionCard";
 import { GoalType, StruggleType } from "@shared/schema";
 import { PersonalizationData } from "@/types";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
+import AppLayout from "@/components/layouts/AppLayout";
 import { 
   Settings,
   Dumbbell, 
@@ -288,16 +288,16 @@ export default function Personalization() {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
+      <AppLayout>
         <div className="flex justify-center items-center py-16">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
-      </DashboardLayout>
+      </AppLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <AppLayout>
       <Card className="overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">
@@ -925,6 +925,6 @@ export default function Personalization() {
           )}
         </CardContent>
       </Card>
-    </DashboardLayout>
+    </AppLayout>
   );
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Schedule, CallHistory } from "@/types";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
+import AppLayout from "@/components/layouts/AppLayout";
 import ScheduleItem from "@/components/ScheduleItem";
 import CallHistoryItem from "@/components/CallHistoryItem";
 import { PersonalizationSection } from "@/components/PersonalizationSection";
@@ -241,17 +241,17 @@ export default function Dashboard() {
 
   if (isLoadingSchedules || isLoadingHistory) {
     return (
-      <DashboardLayout>
+      <AppLayout>
         <div className="text-center py-16">
           <p>Loading your dashboard...</p>
         </div>
-      </DashboardLayout>
+      </AppLayout>
     );
   }
 
   if (schedulesError || historyError) {
     return (
-      <DashboardLayout>
+      <AppLayout>
         <Card className="w-full max-w-md mx-auto">
           <CardContent className="pt-6">
             <div className="flex mb-4 gap-2">
@@ -270,12 +270,12 @@ export default function Dashboard() {
             </Button>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </AppLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <AppLayout>
       <div className="bg-white p-6 rounded-lg shadow">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
           ⚡ Ready to Take Charge, Boss!
@@ -561,6 +561,6 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </AppLayout>
   );
 }

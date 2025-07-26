@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
+import AppLayout from "@/components/layouts/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Phone, User } from "lucide-react";
@@ -55,17 +55,17 @@ export default function CallHistory() {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
+      <AppLayout>
         <div className="text-center py-16">
           <p>Loading your call history...</p>
         </div>
-      </DashboardLayout>
+      </AppLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout>
+      <AppLayout>
         <Card className="w-full max-w-md mx-auto">
           <CardContent className="pt-6">
             <div className="text-center">
@@ -78,12 +78,12 @@ export default function CallHistory() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </AppLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <AppLayout>
       <div className="shadow sm:rounded-md sm:overflow-hidden">
         <div className="bg-white py-6 px-4 sm:p-6">
           <div className="flex items-center justify-between mb-6">
@@ -161,6 +161,6 @@ export default function CallHistory() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </AppLayout>
   );
 }
