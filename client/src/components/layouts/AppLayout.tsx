@@ -32,18 +32,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
         return { isAuthenticated: true, isLoading: false };
       }
       
-      // For Help page, be more aggressive about detecting authentication
+      // For Help page, detect authentication more reliably
       if (currentPath === '/help') {
         const hasSessionCookie = document.cookie.includes('connect.sid');
-        // If there's any session cookie, assume authenticated
-        // Also check referrer for authenticated pages
-        if (hasSessionCookie || (referrer && 
+        const fromAuthenticatedPage = referrer && 
             (referrer.includes('/dashboard') || referrer.includes('/personalization') || 
              referrer.includes('/schedule-call') || referrer.includes('/call-history') ||
-             referrer.includes('/account')))) {
+             referrer.includes('/account'));
+        
+        // If coming from authenticated page or has session, assume authenticated
+        if (fromAuthenticatedPage || hasSessionCookie) {
           return { isAuthenticated: true, isLoading: false };
         }
-        // Otherwise start as unauthenticated but check quickly
+        // Otherwise check authentication
         return { isAuthenticated: false, isLoading: true };
       }
       
@@ -108,10 +109,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
     };
 
     // Only check auth when necessary:
-    // 1. Always check for Help page to get correct authentication state
+    // 1. Help page only if we're not already authenticated
     // 2. Public pages with session cookies (might be authenticated)
     // 3. When not authenticated but might need to be
-    if (isHelpPage || 
+    if ((isHelpPage && !authState.isAuthenticated) || 
         (hasSessionCookie && !authState.isAuthenticated) || 
         (!isPublicPage && !isStrictlyAuthenticatedPage && !isHelpPage)) {
       checkAuth();
