@@ -116,6 +116,35 @@ The current configuration in `.replit`:
 
 This setup allows Replit to automatically scale and restart your application as needed.
 
+## Session Store Warning Fix
+
+### Issue
+The warning you saw:
+```
+Warning: connect.session() MemoryStore is not designed for a production environment, 
+as it will leak memory, and will not scale past a single process.
+```
+
+### Solution Implemented
+- **Development**: Uses MemoryStore (acceptable for dev/testing)
+- **Production**: Uses PostgreSQL-based session storage via `connect-pg-simple`
+- **Benefits**: 
+  - No memory leaks in production
+  - Sessions persist across app restarts
+  - Scales to multiple processes
+  - Better security with `httpOnly` cookies
+
+### Configuration
+```javascript
+// Automatically detects environment and uses appropriate store
+const isProduction = process.env.NODE_ENV === 'production';
+store: isProduction ? new PostgreSqlStore({
+  pool: pool,
+  tableName: 'session',
+  createTableIfMissing: true
+}) : undefined
+```
+
 ## Conclusion
 
 The SIGTERM signal is often part of normal platform operations. With the monitoring improvements in place, you'll now have better visibility into:
@@ -123,5 +152,6 @@ The SIGTERM signal is often part of normal platform operations. With the monitor
 - Memory usage patterns
 - Application health status
 - Performance trends
+- Session storage efficiency
 
 This will help identify if future terminations are due to application issues or platform maintenance.

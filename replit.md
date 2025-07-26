@@ -128,10 +128,12 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 ```
 Changelog:
 - July 26, 2025. Production monitoring and stability improvements completed:
+  * Fixed production session store warning by implementing PostgreSQL-based session storage using connect-pg-simple
   * Added comprehensive process signal handling for SIGTERM/SIGINT signals to track deployment terminations
   * Implemented automatic memory monitoring with 5-minute interval logging for resource tracking
   * Enhanced /api/health endpoint with detailed system metrics (uptime, memory usage, environment)
   * Added uncaught exception and unhandled rejection logging for better error diagnostics
+  * Improved session security with httpOnly cookies and proper environment detection
   * Created deployment monitoring documentation to help diagnose future SIGTERM issues
 - July 26, 2025. Navigation system optimization completed:
   * Successfully completed major architectural refactor from multiple layouts (PublicLayout, DashboardLayout) to single adaptive AppLayout

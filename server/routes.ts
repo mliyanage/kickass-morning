@@ -23,6 +23,8 @@ import { generateVoiceMessage, generateSpeechAudio } from "./openai";
 import { sendOtpEmail } from "./email-utils";
 import * as nodeSchedule from "node-schedule";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import { pool } from "./db";
 
 // Extend express-session's SessionData interface
 declare module "express-session" {
@@ -112,13 +114,30 @@ const isPersonalized = async (
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup express-session middleware
+  // Setup PostgreSQL session store for production
+  const PostgreSqlStore = connectPgSimple(session);
+  
+  // Determine if we're in production environment
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  console.log(`[${new Date().toISOString()}] Session store: ${isProduction ? 'PostgreSQL' : 'Memory'} (NODE_ENV: ${process.env.NODE_ENV || 'undefined'})`);
+  
+  // Setup express-session middleware with appropriate store
   app.use(
     session({
+      store: isProduction ? new PostgreSqlStore({
+        pool: pool,
+        tableName: 'session',
+        createTableIfMissing: true
+      }) : undefined, // Use default MemoryStore for development
       secret: process.env.SESSION_SECRET || "wakeup-buddy-secret",
       resave: false,
-      saveUninitialized: true,
-      cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }, // 24 hours
+      saveUninitialized: false, // Changed to false for better security
+      cookie: { 
+        secure: false, // Set to true when using HTTPS in production
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        httpOnly: true // Prevent XSS attacks
+      },
     }),
   );
 
