@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
-import AuthLayout from "@/components/layouts/AuthLayout";
+import PublicLayout from "@/components/layouts/PublicLayout";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ArrowRight, Check, Clock, List, Phone, Settings, Speaker, User } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -33,8 +33,17 @@ export default function Help() {
 
   const helpContent = (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-primary-50 to-primary-100 py-6 px-4 sm:p-6 rounded-lg">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">KickAss Morning: Getting Started Guide</h1>
+      <div className="text-center mb-16">
+        <h1 className="text-4xl font-extrabold tracking-tight text-white drop-shadow-lg mb-4">
+          How It Works
+        </h1>
+        <p className="text-xl text-white/90 max-w-3xl mx-auto leading-relaxed drop-shadow">
+          Learn how KickAss Morning can transform your mornings
+        </p>
+      </div>
+
+      <div className="bg-white/95 backdrop-blur-sm rounded-lg p-8 shadow-lg border border-white/20">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">KickAss Morning: Getting Started Guide</h2>
         <p className="text-md text-gray-600 mb-6">
           Welcome to KickAss Morning! This guide will walk you through using our AI-powered wake-up call service
           to help you start your day motivated and energized.
@@ -254,17 +263,13 @@ export default function Help() {
               </Accordion>
             </CardContent>
           </Card>
-      </div>
+        </div>
     </div>
   );
 
   if (isAuthenticated) {
     return <DashboardLayout>{helpContent}</DashboardLayout>;
   } else {
-    return (
-      <AuthLayout title="How It Works" subtitle="Learn how KickAss Morning can transform your mornings">
-        {helpContent}
-      </AuthLayout>
-    );
+    return <PublicLayout>{helpContent}</PublicLayout>;
   }
 }
