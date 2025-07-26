@@ -6,8 +6,7 @@ import { ArrowRight, Check, Clock, List, Phone, Settings, Speaker, User } from "
 import { useEffect, useState } from "react";
 
 export default function Help() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -19,22 +18,16 @@ export default function Help() {
         setIsAuthenticated(data.authenticated || false);
       } catch (error) {
         setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
       }
     };
 
     checkAuth();
   }, []);
 
-  if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  }
-
   const helpContent = (
     <div className="space-y-6">
       <div className="text-center mb-16">
-        <h1 className="text-4xl font-extrabold tracking-tight text-white drop-shadow-lg mb-4">
+        <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl text-white drop-shadow-lg mb-4">
           How It Works
         </h1>
         <p className="text-xl text-white/90 max-w-3xl mx-auto leading-relaxed drop-shadow">
@@ -267,7 +260,8 @@ export default function Help() {
     </div>
   );
 
-  if (isAuthenticated) {
+  // Default to PublicLayout while auth check is happening to prevent layout jumping
+  if (isAuthenticated === true) {
     return <DashboardLayout>{helpContent}</DashboardLayout>;
   } else {
     return <PublicLayout>{helpContent}</PublicLayout>;
