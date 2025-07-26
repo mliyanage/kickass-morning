@@ -90,17 +90,28 @@ The fix was tested with Schedule 15:
 The scheduler had logic that prevented any schedule with `last_call_status = 'completed'` from being called again, even for recurring schedules on different days.
 
 ### Fix Applied:
-Added special handling for recurring schedules:
+Simplified logic to allow recurring schedules to run multiple times:
 ```sql
--- NEW: Allow recurring schedules to be called again on different days
-(is_recurring = true AND last_call_status = 'completed' AND DATE(last_called) < CURRENT_DATE)
+-- NEW: Allow completed recurring schedules to run again (removed date restriction)
+-- Only block active states: initiated, in-progress, pending
+(last_call_status NOT IN ('initiated', 'in-progress', 'pending'))
 ```
+
+## Final Logic Update
+
+**Issue Identified**: The date restriction `DATE(last_called) < CURRENT_DATE` was too restrictive:
+- Prevented multiple calls on the same day
+- Blocked users who want to test their schedules
+- Didn't allow for multiple daily wake-up times
+
+**Final Solution**: Allow completed recurring schedules to run again anytime, only blocking active call states.
 
 ## Impact
 
 This comprehensive fix ensures that:
-- All scheduled calls within the next 10 minutes are detected (time window fix)
-- Recurring schedules work properly across multiple days (status logic fix)
+- All scheduled calls within the past 10 minutes are detected (time window fix)
+- Recurring schedules can run multiple times per day (status logic fix)
+- Only active calls (initiated/in-progress/pending) are blocked to prevent duplicates
 - No calls are missed due to timing precision issues
 - The system is more reliable for users relying on precise wake-up times
-- Schedule 15 will now be called every Saturday at 23:15 UTC as intended
+- Schedule 15 will now be called every time it's scheduled (Saturday 23:15 UTC)
