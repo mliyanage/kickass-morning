@@ -908,9 +908,9 @@ export class DatabaseStorage implements IStorage {
       // Get current UTC time formatted as HH:MM
       const currentUTCTimeStr = currentTime.toISOString().substring(11, 16);
 
-      // Calculate time 10 minutes ago for the window
-      const tenMinutesAgo = new Date(currentTime.getTime() - 10 * 60 * 1000);
-      const tenMinutesAgoUTCStr = tenMinutesAgo.toISOString().substring(11, 16);
+      // Calculate time 10 minutes ahead for the window (forward-looking)
+      const tenMinutesAhead = new Date(currentTime.getTime() + 10 * 60 * 1000);
+      const tenMinutesAheadUTCStr = tenMinutesAhead.toISOString().substring(11, 16);
 
       // Current day of week in UTC (0-6, starting with Sunday)
       const currentUTCDayOfWeek = currentTime.getUTCDay();
@@ -931,7 +931,7 @@ export class DatabaseStorage implements IStorage {
         `Current UTC time: ${currentUTCTimeStr}, day: ${currentUTCDayStr}, date: ${currentUTCDateStr}`,
       );
       console.log(
-        `Time window: ${tenMinutesAgoUTCStr} to ${currentUTCTimeStr}`,
+        `Time window: ${currentUTCTimeStr} to ${tenMinutesAheadUTCStr}`,
       );
 
       // Query for pending schedules using UTC fields
@@ -945,8 +945,8 @@ export class DatabaseStorage implements IStorage {
             eq(schedules.isRecurring, true),
             // Check if today is one of the scheduled days using UTC weekdays
             sql`${schedules.weekdaysUTC} LIKE ${"%" + currentUTCDayStr + "%"}`,
-            // Check if current time is within the window
-            sql`${schedules.wakeupTimeUTC} >= ${tenMinutesAgoUTCStr} AND ${schedules.wakeupTimeUTC} <= ${currentUTCTimeStr}`,
+            // Check if schedule time is within the forward-looking window
+            sql`${schedules.wakeupTimeUTC} >= ${currentUTCTimeStr} AND ${schedules.wakeupTimeUTC} <= ${tenMinutesAheadUTCStr}`,
             // Only consider schedules that have never been called before OR were called more than 5 minutes ago
             sql`(
               ${schedules.lastCalled} IS NULL 
