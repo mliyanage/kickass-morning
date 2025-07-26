@@ -8,7 +8,27 @@ import { useLocation } from "wouter";
 
 export default function Help() {
   const [location] = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(() => {
+    // Check if we're likely in an authenticated context by looking at the current URL path
+    // If we're at /help and there are dashboard-related paths in history, assume authenticated initially
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname;
+      const referrer = document.referrer;
+      
+      // If referrer contains dashboard paths, start with authenticated assumption
+      if (referrer && (referrer.includes('/dashboard') || referrer.includes('/personalization') || 
+          referrer.includes('/schedule-call') || referrer.includes('/call-history') || 
+          referrer.includes('/account'))) {
+        return true;
+      }
+      
+      // Check if there's a session cookie indicating authentication
+      if (document.cookie.includes('connect.sid')) {
+        return true;
+      }
+    }
+    return null;
+  });
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -23,14 +43,7 @@ export default function Help() {
       }
     };
 
-    // If coming from a dashboard route, we're likely authenticated
-    // Use this to provide a smoother transition
-    if (document.referrer && (document.referrer.includes('/dashboard') || document.referrer.includes('/personalization') || document.referrer.includes('/schedule-call') || document.referrer.includes('/call-history') || document.referrer.includes('/account'))) {
-      setIsAuthenticated(true);
-      checkAuth(); // Still check, but don't wait for it
-    } else {
-      checkAuth();
-    }
+    checkAuth();
   }, []);
 
   const helpContent = (
