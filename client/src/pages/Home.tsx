@@ -122,7 +122,7 @@ export default function Home() {
             <p className="text-xl text-gray-700 mb-8">
               💡 Start with your first call. It might just change your life.
             </p>
-            <Button size="lg" className="text-lg px-8 py-4" onClick={() => setLocation("/signup")}>
+            <Button size="lg" className="text-lg px-8 py-4 bg-white text-primary hover:bg-gray-50 border-2 border-white shadow-lg" onClick={() => setLocation("/signup")}>
               Try It Now – Free Wake-Up Call
             </Button>
           </div>

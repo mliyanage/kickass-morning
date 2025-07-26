@@ -4,8 +4,10 @@ import PublicLayout from "@/components/layouts/PublicLayout";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ArrowRight, Check, Clock, List, Phone, Settings, Speaker, User } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 
 export default function Help() {
+  const [location] = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -21,7 +23,14 @@ export default function Help() {
       }
     };
 
-    checkAuth();
+    // If coming from a dashboard route, we're likely authenticated
+    // Use this to provide a smoother transition
+    if (document.referrer && (document.referrer.includes('/dashboard') || document.referrer.includes('/personalization') || document.referrer.includes('/schedule-call') || document.referrer.includes('/call-history') || document.referrer.includes('/account'))) {
+      setIsAuthenticated(true);
+      checkAuth(); // Still check, but don't wait for it
+    } else {
+      checkAuth();
+    }
   }, []);
 
   const helpContent = (
