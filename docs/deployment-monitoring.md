@@ -1,0 +1,127 @@
+# Deployment Monitoring and SIGTERM Issue Resolution
+
+## Issue Analysis
+
+The logs you provided show a SIGTERM signal termination:
+
+```
+2025-07-27 08:52:08.61 - system: received signal terminated
+2025-07-27 08:52:08.62 - command finished with error [npm run start]: signal: terminated  
+2025-07-27 08:52:08.65 - main done, exiting
+```
+
+## What SIGTERM Means
+
+**SIGTERM (Signal Terminated)** is a graceful shutdown request that can be caused by:
+
+1. **Memory Limits**: App exceeded allocated memory
+2. **CPU Limits**: Process used too much CPU time  
+3. **Health Check Failures**: Deployment system detected unresponsive app
+4. **Automatic Scaling**: Replit's autoscale system terminated instance during load balancing
+5. **Infrastructure Maintenance**: Platform-level restarts or updates
+
+## Monitoring Improvements Implemented
+
+### 1. Process Signal Handling
+Added comprehensive signal handling in `server/index.ts`:
+
+```javascript
+// Graceful shutdown on SIGTERM/SIGINT
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM signal. Starting graceful shutdown...');
+  process.exit(0);
+});
+
+// Enhanced error logging
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  console.error('Stack:', error.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+```
+
+### 2. Memory Monitoring
+Added automatic memory usage logging every 5 minutes:
+
+```javascript
+setInterval(() => {
+  const memUsage = process.memoryUsage();
+  const mbUsed = Math.round(memUsage.rss/1024/1024);
+  const heapUsed = Math.round(memUsage.heapUsed/1024/1024);
+  const heapTotal = Math.round(memUsage.heapTotal/1024/1024);
+  console.log(`Memory Usage: RSS=${mbUsed}MB, Heap=${heapUsed}MB/${heapTotal}MB`);
+}, 300000);
+```
+
+### 3. Enhanced Health Check Endpoint
+Created `/api/health` endpoint with detailed system information:
+
+```javascript
+app.get("/api/health", (req, res) => {
+  const memUsage = process.memoryUsage();
+  const uptime = process.uptime();
+  res.json({ 
+    status: "OK", 
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(uptime),
+    memory: {
+      rss: Math.round(memUsage.rss/1024/1024),
+      heapUsed: Math.round(memUsage.heapUsed/1024/1024),
+      heapTotal: Math.round(memUsage.heapTotal/1024/1024)
+    },
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+```
+
+## Next Steps for Production
+
+### 1. External Monitoring
+Set up external monitoring services like:
+- **UptimeRobot**: Monitor health endpoint every 1-5 minutes
+- **Pingdom**: Track response times and uptime
+- **DataDog/New Relic**: Comprehensive application monitoring
+
+### 2. Resource Optimization
+Monitor memory patterns and consider:
+- Implementing memory leak detection
+- Adding request rate limiting
+- Optimizing database queries
+- Caching frequently used data
+
+### 3. Alerting
+Configure alerts for:
+- Memory usage > 80%
+- Response time > 5 seconds  
+- Error rate > 5%
+- Downtime > 1 minute
+
+## Log Analysis Tips
+
+**Normal Restart**: `Application health check - OK` logs should resume after restart
+**Memory Issue**: Look for memory usage trending upward before termination
+**Error Crash**: Check for uncaught exceptions in logs before SIGTERM
+**Platform Issue**: Multiple similar timestamps across different apps
+
+## Deployment Configuration
+
+The current configuration in `.replit`:
+- **Deployment Target**: `autoscale` (automatic scaling)
+- **Build Command**: `npm run build`
+- **Start Command**: `npm run start`
+
+This setup allows Replit to automatically scale and restart your application as needed.
+
+## Conclusion
+
+The SIGTERM signal is often part of normal platform operations. With the monitoring improvements in place, you'll now have better visibility into:
+- When and why restarts occur
+- Memory usage patterns
+- Application health status
+- Performance trends
+
+This will help identify if future terminations are due to application issues or platform maintenance.

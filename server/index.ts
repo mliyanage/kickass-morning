@@ -7,6 +7,36 @@ import { startCallScheduler, startCleanupScheduler } from "./scheduler";
 import { initMailjet } from "./email-utils";
 import { detectEnvironment } from "./env-utils";
 
+// Enhanced process monitoring and graceful shutdown handling
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM signal. Starting graceful shutdown...');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('Received SIGINT signal. Starting graceful shutdown...');
+  process.exit(0);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  console.error('Stack:', error.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+// Memory monitoring for deployment health
+setInterval(() => {
+  const memUsage = process.memoryUsage();
+  const mbUsed = Math.round(memUsage.rss/1024/1024);
+  const heapUsed = Math.round(memUsage.heapUsed/1024/1024);
+  const heapTotal = Math.round(memUsage.heapTotal/1024/1024);
+  console.log(`[${new Date().toISOString()}] Memory Usage: RSS=${mbUsed}MB, Heap=${heapUsed}MB/${heapTotal}MB`);
+}, 300000); // Every 5 minutes
+
 // Create dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
