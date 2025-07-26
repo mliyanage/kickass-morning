@@ -71,7 +71,8 @@ function App() {
           if (
             currentPath !== "/" &&
             currentPath !== "/login" &&
-            currentPath !== "/signup"
+            currentPath !== "/signup" &&
+            currentPath !== "/help"
           ) {
             setLocation("/login");
           }
@@ -118,8 +119,8 @@ function App() {
     useEffect(() => {
       if (!isLoading && !isAuthenticated) {
         const currentPath = window.location.pathname;
-        // Only redirect if we're not already on login/signup
-        if (currentPath !== "/login" && currentPath !== "/signup") {
+        // Only redirect if we're not already on login/signup/help
+        if (currentPath !== "/login" && currentPath !== "/signup" && currentPath !== "/help") {
           setLocation("/login");
         }
       }
@@ -201,11 +202,7 @@ function App() {
             <CallHistory />
           </PersonalizedGuard>
         </Route>
-        <Route path="/help">
-          <AuthGuard>
-            <Help />
-          </AuthGuard>
-        </Route>
+        <Route path="/help" component={Help} />
         <Route component={NotFound} />
       </Switch>
       <Toaster />
