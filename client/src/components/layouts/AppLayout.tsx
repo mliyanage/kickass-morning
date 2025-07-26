@@ -19,11 +19,22 @@ interface AuthState {
 export default function AppLayout({ children }: AppLayoutProps) {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  
+  // Track if we're in an authenticated session to prevent unnecessary checks
+  const [wasAuthenticated, setWasAuthenticated] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('was_authenticated') === 'true';
+    }
+    return false;
+  });
+
   const [authState, setAuthState] = useState<AuthState>(() => {
     // Initialize with smart defaults to prevent layout jumping
     if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname;
       const referrer = document.referrer;
+      const hasSessionCookie = document.cookie.includes('connect.sid');
+      const wasAuth = sessionStorage.getItem('was_authenticated') === 'true';
       
       // Only assume authenticated for strictly authenticated routes
       if (currentPath.startsWith('/dashboard') || currentPath === '/personalization' || 
@@ -32,30 +43,25 @@ export default function AppLayout({ children }: AppLayoutProps) {
         return { isAuthenticated: true, isLoading: false };
       }
       
-      // For Help page, detect authentication more reliably
+      // For Help page, be very aggressive about maintaining authenticated state
       if (currentPath === '/help') {
-        const hasSessionCookie = document.cookie.includes('connect.sid');
         const fromAuthenticatedPage = referrer && 
             (referrer.includes('/dashboard') || referrer.includes('/personalization') || 
              referrer.includes('/schedule-call') || referrer.includes('/call-history') ||
              referrer.includes('/account'));
         
-        // If coming from authenticated page or has session, assume authenticated
-        if (fromAuthenticatedPage || hasSessionCookie) {
+        // Use multiple indicators to determine authentication
+        if (fromAuthenticatedPage || hasSessionCookie || wasAuth) {
           return { isAuthenticated: true, isLoading: false };
         }
-        // Otherwise check authentication
         return { isAuthenticated: false, isLoading: true };
       }
       
-      // For all public pages (home, login, signup, help from public), 
-      // check if there's a session cookie but default to not authenticated
-      const hasSessionCookie = document.cookie.includes('connect.sid');
-      if (currentPath === '/' || currentPath === '/login' || currentPath === '/signup' ||
-          (currentPath === '/help' && (!referrer || !referrer.includes('/dashboard')))) {
+      // For public pages, check session but default to not authenticated
+      if (currentPath === '/' || currentPath === '/login' || currentPath === '/signup') {
         return { 
           isAuthenticated: false, 
-          isLoading: hasSessionCookie // Only show loading if there might be a session
+          isLoading: hasSessionCookie && !wasAuth // Only show loading if session exists but not previously authenticated
         };
       }
     }
@@ -66,6 +72,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   useEffect(() => {
     const currentPath = window.location.pathname;
+    
+    // Store authentication state in session storage for reliable tracking
+    if (authState.isAuthenticated && !wasAuthenticated) {
+      sessionStorage.setItem('was_authenticated', 'true');
+      setWasAuthenticated(true);
+    } else if (!authState.isAuthenticated && wasAuthenticated) {
+      sessionStorage.removeItem('was_authenticated');
+      setWasAuthenticated(false);
+    }
     
     // Define strictly authenticated pages (where we never need to check auth if already authenticated)
     const isStrictlyAuthenticatedPage = currentPath.startsWith('/dashboard') || 
@@ -83,6 +98,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
     const isPublicPage = currentPath === '/' || currentPath === '/login' || currentPath === '/signup';
     const isHelpPage = currentPath === '/help';
     const hasSessionCookie = document.cookie.includes('connect.sid');
+    
+    // Also skip Help page if we were previously authenticated and have session cookie
+    if (isHelpPage && wasAuthenticated && hasSessionCookie && authState.isAuthenticated) {
+      return;
+    }
     
     // Skip auth check for public page navigation when no session cookie exists
     if (isPublicPage && !hasSessionCookie && !authState.isAuthenticated) {
