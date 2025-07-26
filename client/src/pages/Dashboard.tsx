@@ -29,6 +29,15 @@ const formatTimezone = (timezone: string): string => {
   return lastPart.replace(/_/g, " ");
 };
 
+// Format time with AM/PM indicator
+const formatTimeWithAmPm = (time: string): string => {
+  // Input time is in HH:mm format (24-hour)
+  const [hours, minutes] = time.split(':').map(Number);
+  const hour12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  return `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+};
+
 interface UserData {
   authenticated: boolean;
   user: {
@@ -187,7 +196,7 @@ export default function Dashboard() {
         const dayName = weekdayNames[nextDayIndex];
         // Format the timezone for display
         const formattedTimezone = formatTimezone(nextCall.timezone);
-        return `${nextDayIndex === todayDay ? "Today" : dayName} at ${nextCall.wakeupTime} (${formattedTimezone})`;
+        return `${nextDayIndex === todayDay ? "Today" : dayName} at ${formatTimeWithAmPm(nextCall.wakeupTime)} (${formattedTimezone})`;
       }
     } else if (nextCall.date) {
       const callDate = new Date(nextCall.date);
@@ -198,7 +207,7 @@ export default function Dashboard() {
       });
       // Format the timezone for display
       const formattedTimezone = formatTimezone(nextCall.timezone);
-      return `${formattedDate} at ${nextCall.wakeupTime} (${formattedTimezone})`;
+      return `${formattedDate} at ${formatTimeWithAmPm(nextCall.wakeupTime)} (${formattedTimezone})`;
     }
 
     return "Schedule details unavailable";
@@ -421,14 +430,23 @@ export default function Dashboard() {
 
           {/* Active wakeup schedule */}
           {schedules && schedules.length > 0 ? (
-            schedules.map((schedule: Schedule) => (
-              <ScheduleItem
-                key={schedule.id}
-                schedule={schedule}
-                onToggleSchedule={() => handleToggleSchedule(schedule.id)}
-                onEdit={() => setLocation(`/schedule-call?id=${schedule.id}`)}
-              />
-            ))
+            schedules
+              .sort((a: Schedule, b: Schedule) => {
+                // Sort by active status first (active = true comes first)
+                if (a.isActive !== b.isActive) {
+                  return a.isActive ? -1 : 1;
+                }
+                // Then sort by time for schedules with same active status
+                return a.wakeupTime.localeCompare(b.wakeupTime);
+              })
+              .map((schedule: Schedule) => (
+                <ScheduleItem
+                  key={schedule.id}
+                  schedule={schedule}
+                  onToggleSchedule={() => handleToggleSchedule(schedule.id)}
+                  onEdit={() => setLocation(`/schedule-call?id=${schedule.id}`)}
+                />
+              ))
           ) : (
             <div className="text-center py-8 bg-gray-50 rounded-md">
               <div className="text-4xl mb-4">⏰</div>

@@ -76,6 +76,15 @@ export default function ScheduleItem({
     return lastPart.replace(/_/g, " ");
   };
 
+  // Format time with AM/PM indicator
+  const formatTimeWithAmPm = (time: string): string => {
+    // Input time is in HH:mm format (24-hour)
+    const [hours, minutes] = time.split(':').map(Number);
+    const hour12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    return `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+  };
+
   return (
     <div className="border rounded-md overflow-hidden mb-4">
       <div className="flex items-center justify-between bg-gray-50 px-4 py-2 sm:px-6">
@@ -109,7 +118,7 @@ export default function ScheduleItem({
                 />
               </svg>
               <span className="text-sm text-gray-900">
-                {schedule.wakeupTime} ({getTimezoneDisplay(schedule.timezone)})
+                {formatTimeWithAmPm(schedule.wakeupTime)} ({getTimezoneDisplay(schedule.timezone)})
               </span>
             </div>
             <div className="mt-2 flex items-center">
