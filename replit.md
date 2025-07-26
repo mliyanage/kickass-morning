@@ -127,6 +127,11 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 
 ```
 Changelog:
+- July 26, 2025. Critical timezone bug fix completed:
+  * Fixed convertWeekdaysToUTC function where Saturday 10:05 AM Sydney time incorrectly saved as 'sun' instead of 'sat' in weekdays_utc field
+  * Corrected timezone conversion logic to use proper target date components instead of today's date
+  * Scheduler now accurately matches UTC weekdays for international users
+  * Verified fix works correctly for Australia/Sydney timezone schedules
 - July 25, 2025. Email service migration completed:
   * Migrated from SendGrid to Mailjet API for OTP email delivery
   * Updated email-utils.ts to use node-mailjet package instead of @sendgrid/mail

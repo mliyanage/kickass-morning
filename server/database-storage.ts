@@ -57,19 +57,13 @@ function convertWeekdaysToUTC(
       const targetDate = new Date(today);
       targetDate.setDate(today.getDate() + daysUntilTarget);
 
-      // Set the wakeup time in local timezone
+      // Set the wakeup time on the target date
       const [hours, minutes] = wakeupTime.split(":").map(Number);
-      const localDateTime = new Date(targetDate);
-      localDateTime.setHours(hours, minutes, 0, 0);
-
-      // Use the same timezone conversion logic as getTimezoneOffset function
-      const sampleDate = new Date(targetDate);
-      sampleDate.setHours(hours, minutes, 0, 0);
       
-      // Create ISO string for the local time in the specified timezone
-      const year = sampleDate.getFullYear();
-      const month = String(sampleDate.getMonth() + 1).padStart(2, '0');
-      const day = String(sampleDate.getDate()).padStart(2, '0');
+      // Use the target date components (not today's date)
+      const year = targetDate.getFullYear();
+      const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+      const day = String(targetDate.getDate()).padStart(2, '0');
       const hour = String(hours).padStart(2, '0');
       const minute = String(minutes).padStart(2, '0');
       
@@ -79,6 +73,7 @@ function convertWeekdaysToUTC(
       const localTimeWithTz = new Date(isoString);
       
       console.log(`[WEEKDAY DEBUG] Converting ${localDay} ${hour}:${minute} in ${timezone}`);
+      console.log(`[WEEKDAY DEBUG] Target date: ${targetDate.toDateString()}`);
       console.log(`[WEEKDAY DEBUG] ISO string: ${isoString}`);
       console.log(`[WEEKDAY DEBUG] Local date with timezone: ${localTimeWithTz.toString()}`);
       console.log(`[WEEKDAY DEBUG] UTC day number: ${localTimeWithTz.getUTCDay()}`);

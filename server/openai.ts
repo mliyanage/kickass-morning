@@ -45,14 +45,15 @@ export async function generateVoiceMessage(
   // Join multiple goals and struggles with commas and 'and'
   const goalsText = formatListForPrompt(formattedGoals);
   const strugglesText = formatListForPrompt(formattedStruggles);
-  console.log("Goals:", goalsText);
-  console.log("Struggles:", strugglesText);
-  
+
   // Combine goals with goal description if provided
-  const enhancedGoalsText = goalDescription 
+  const enhancedGoalsText = goalDescription
     ? `${goalsText}. Additional context: ${goalDescription}`
     : goalsText;
-    
+
+  console.log("My Goals:", enhancedGoalsText);
+  console.log("My Struggles:", strugglesText);
+
   try {
     // The newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
     const response = await openai.chat.completions.create({
