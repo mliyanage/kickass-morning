@@ -130,6 +130,7 @@ Changelog:
 - July 26, 2025. Critical scheduler bug fix completed:
   * Fixed schedule detection issue where forward-scheduled calls were being missed
   * Changed scheduler time window from backward-looking (past 10 minutes) to forward-looking (next 10 minutes)
+  * Fixed recurring schedule logic to allow completed schedules to be called again on different days
   * Schedule 15 (23:15 UTC) will now be properly detected during 23:10 UTC scheduler runs
   * Eliminated race conditions in schedule timing that caused missed wake-up calls
 - July 26, 2025. Production monitoring and stability improvements completed:

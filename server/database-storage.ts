@@ -954,19 +954,19 @@ export class DatabaseStorage implements IStorage {
               ${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'
             )`,
 
-            // And if they've been called before, make sure it wasn't successfully completed
+            // For recurring schedules, allow calls if:
+            // 1. Never called before, OR
+            // 2. Last call was completed but on a different day (recurring), OR  
+            // 3. Last call failed and retry is enabled, OR
+            // 4. Last call is not in active states (initiated/in-progress/pending)
             sql`(
               ${schedules.lastCallStatus} IS NULL
               OR 
-              (${schedules.callRetry} = true AND (
-                  ${schedules.lastCallStatus} = 'failed'
-              ))
+              (${schedules.isRecurring} = true AND ${schedules.lastCallStatus} = 'completed' AND DATE(${schedules.lastCalled}) < CURRENT_DATE)
               OR
-              (${schedules.lastCallStatus} != 'initiated' 
-               AND ${schedules.lastCallStatus} != 'in-progress'
-               AND ${schedules.lastCallStatus} != 'pending'
-               AND ${schedules.lastCallStatus} != 'completed'
-              )
+              (${schedules.callRetry} = true AND ${schedules.lastCallStatus} = 'failed')
+              OR
+              (${schedules.lastCallStatus} NOT IN ('initiated', 'in-progress', 'pending'))
             )`,
           ),
         );
