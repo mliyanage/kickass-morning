@@ -127,6 +127,12 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 
 ```
 Changelog:
+- July 27, 2025. Session store memory leak fix completed:
+  * Fixed MemoryStore warning in test environment deployments  
+  * Updated session configuration to use PostgreSQL sessions for both test and production environments
+  * Previously only production used PostgreSQL sessions, causing memory leak warnings in test deployments
+  * Now development uses Memory sessions, while test and production use PostgreSQL sessions
+  * Eliminates "MemoryStore is not designed for production environment" warnings
 - July 27, 2025. Multi-environment deployment setup completed:
   * Added environment-aware database connection supporting TEST_DATABASE_URL for test deployments
   * Enhanced environment detection to support test, production, and development configurations
