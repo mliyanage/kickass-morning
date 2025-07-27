@@ -93,6 +93,36 @@ Monitor memory patterns and consider:
 - Optimizing database queries
 - Caching frequently used data
 
+## Memory Leak Prevention
+
+### Fixed Development Environment Issues
+To prevent production memory leaks similar to the MemoryStore issue:
+
+1. **Session Storage**: ✅ Fixed - Uses PostgreSQL in production, Memory only in development
+2. **Scheduler Jobs**: ✅ Fixed - Added graceful shutdown with `stopAllSchedulers()`
+3. **Toast Timeouts**: ✅ Fixed - Proper timeout cleanup in frontend
+4. **Audio Cache**: ✅ Fixed - Consistent mock filenames, no file accumulation
+
+### Scheduler Cleanup
+```javascript
+// Graceful shutdown now properly cleans up all scheduled jobs
+process.on('SIGTERM', () => {
+  stopAllSchedulers(); // Cancels all node-schedule jobs
+  process.exit(0);
+});
+```
+
+### Frontend Timer Management
+```javascript
+// Toast timeouts are now properly cleared to prevent memory leaks
+case "REMOVE_TOAST":
+  const timeout = toastTimeouts.get(action.toastId)
+  if (timeout) {
+    clearTimeout(timeout)
+    toastTimeouts.delete(action.toastId)
+  }
+```
+
 ### 3. Alerting
 Configure alerts for:
 - Memory usage > 80%

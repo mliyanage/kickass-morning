@@ -55,14 +55,23 @@ export async function textToSpeech(
         "Using mock ElevenLabs text-to-speech due to missing API key",
         "elevenlabs",
       );
-      const mockFilePath = path.join(AUDIO_DIR, `mock-voice-${Date.now()}.mp3`);
-      // Create an empty file as a placeholder
-      await fsPromises.writeFile(mockFilePath, "");
+      
+      // Use a consistent mock filename to avoid creating many files
+      const mockFilename = `mock-voice-${elevenLabsVoiceId}.mp3`;
+      const mockFilePath = path.join(AUDIO_DIR, mockFilename);
+      
+      // Only create the mock file if it doesn't already exist
+      if (!fs.existsSync(mockFilePath)) {
+        await fsPromises.writeFile(mockFilePath, "");
+        log(`Created mock audio file: ${mockFilename}`, "elevenlabs");
+      } else {
+        log(`Using existing mock audio file: ${mockFilename}`, "elevenlabs");
+      }
 
       // Return mock data
       return {
         filePath: mockFilePath,
-        url: `/audio-cache/${path.basename(mockFilePath)}`,
+        url: `/audio-cache/${mockFilename}`,
       };
     }
 

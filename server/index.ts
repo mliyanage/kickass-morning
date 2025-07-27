@@ -3,18 +3,20 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import { fileURLToPath } from 'url';
-import { startCallScheduler, startCleanupScheduler } from "./scheduler";
+import { startCallScheduler, startCleanupScheduler, stopAllSchedulers } from "./scheduler";
 import { initMailjet } from "./email-utils";
 import { detectEnvironment } from "./env-utils";
 
 // Enhanced process monitoring and graceful shutdown handling
 process.on('SIGTERM', () => {
   console.log('Received SIGTERM signal. Starting graceful shutdown...');
+  stopAllSchedulers();
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
   console.log('Received SIGINT signal. Starting graceful shutdown...');
+  stopAllSchedulers();
   process.exit(0);
 });
 

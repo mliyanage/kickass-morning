@@ -8,6 +8,8 @@ import path from "path";
 import fs from "fs";
 
 let isSchedulerRunning = false;
+let callSchedulerJob: schedule.Job | null = null;
+let cleanupSchedulerJob: schedule.Job | null = null;
 
 /**
  * Start the call scheduler
@@ -23,7 +25,7 @@ export function startCallScheduler() {
   isSchedulerRunning = true;
 
   // Run every 5 minutes
-  const job = schedule.scheduleJob("*/5 * * * *", async () => {
+  callSchedulerJob = schedule.scheduleJob("*/5 * * * *", async () => {
     try {
       await processScheduledCalls();
     } catch (error) {
@@ -37,7 +39,7 @@ export function startCallScheduler() {
   });
 
   console.log("Call scheduler started successfully");
-  return job;
+  return callSchedulerJob;
 }
 
 /**
@@ -182,7 +184,7 @@ export async function cleanupTempAudioFiles() {
 // Schedule cleanup to run once a day
 export function startCleanupScheduler() {
   // Run at midnight every day
-  const job = schedule.scheduleJob("0 0 * * *", async () => {
+  cleanupSchedulerJob = schedule.scheduleJob("0 0 * * *", async () => {
     try {
       await cleanupTempAudioFiles();
     } catch (error) {
@@ -191,5 +193,28 @@ export function startCleanupScheduler() {
   });
 
   console.log("Cleanup scheduler started successfully");
-  return job;
+  return cleanupSchedulerJob;
+}
+
+/**
+ * Gracefully stop all schedulers and clean up resources
+ * This should be called during application shutdown
+ */
+export function stopAllSchedulers() {
+  console.log("Stopping all schedulers...");
+  
+  if (callSchedulerJob) {
+    callSchedulerJob.cancel();
+    callSchedulerJob = null;
+    console.log("Call scheduler stopped");
+  }
+  
+  if (cleanupSchedulerJob) {
+    cleanupSchedulerJob.cancel();
+    cleanupSchedulerJob = null;
+    console.log("Cleanup scheduler stopped");
+  }
+  
+  isSchedulerRunning = false;
+  console.log("All schedulers stopped successfully");
 }

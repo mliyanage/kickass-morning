@@ -127,6 +127,12 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 
 ```
 Changelog:
+- July 27, 2025. Memory leak prevention completed:
+  * Added graceful scheduler shutdown to prevent hanging node-schedule jobs in production
+  * Fixed toast timeout cleanup to prevent frontend timer accumulation  
+  * Optimized mock audio file creation to use consistent filenames instead of timestamp-based names
+  * Enhanced SIGTERM/SIGINT handlers to properly clean up all scheduled tasks
+  * Eliminated all potential development-mode configurations that could cause production memory issues
 - July 26, 2025. Critical scheduler bug fix completed:
   * Fixed schedule detection issue where forward-scheduled calls were being missed
   * Corrected scheduler logic from inconsistent forward/backward mix to consistent backward-looking window (past 10 minutes)
