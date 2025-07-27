@@ -132,6 +132,7 @@ Changelog:
   * Corrected scheduler logic from inconsistent forward/backward mix to consistent backward-looking window (past 10 minutes)
   * Fixed recurring schedule logic to allow completed schedules to be called again (removed restrictive date limitation)
   * Schedule 15 (23:15 UTC) will now be properly detected during 23:15 UTC scheduler runs (includes exact time)
+  * Fixed midnight boundary crossing issue that prevented Schedule 14 (00:05 UTC) from being detected
   * Eliminated race conditions in schedule timing that caused missed wake-up calls
   * Aligned retry logic for failed calls with backward-looking time window for logical consistency
 - July 26, 2025. Production monitoring and stability improvements completed:

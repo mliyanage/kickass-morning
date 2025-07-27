@@ -108,10 +108,31 @@ Simplified logic to allow recurring schedules to run multiple times:
 
 ## Impact
 
+## Midnight Boundary Fix
+
+**Additional Issue Discovered**: Schedule 14 (00:05 UTC) was missed because the time window `23:59 to 00:09` crosses midnight, but string comparison logic failed.
+
+**Problem**: `"00:05" >= "23:59"` evaluates to `false` in string comparison.
+
+**Solution**: Added midnight-aware time window logic:
+```sql
+CASE 
+  WHEN start_time > end_time THEN
+    -- Midnight crossing: use OR logic (schedule >= start OR schedule <= end)
+    (schedule_time >= start_time OR schedule_time <= end_time)
+  ELSE
+    -- Normal case: use AND logic (schedule >= start AND schedule <= end)  
+    (schedule_time >= start_time AND schedule_time <= end_time)
+END
+```
+
+## Final Impact
+
 This comprehensive fix ensures that:
 - All scheduled calls within the past 10 minutes are detected (time window fix)
+- Midnight boundary crossings work correctly (midnight fix)
 - Recurring schedules can run multiple times per day (status logic fix)
 - Only active calls (initiated/in-progress/pending) are blocked to prevent duplicates
 - No calls are missed due to timing precision issues
 - The system is more reliable for users relying on precise wake-up times
-- Schedule 15 will now be called every time it's scheduled (Saturday 23:15 UTC)
+- Schedule 14 (00:05 UTC) and Schedule 15 (23:15 UTC) both work correctly
