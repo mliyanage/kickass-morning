@@ -25,6 +25,7 @@ import * as nodeSchedule from "node-schedule";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
+import { detectEnvironment } from './env-utils';
 
 // Extend express-session's SessionData interface
 declare module "express-session" {
@@ -118,7 +119,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const PostgreSqlStore = connectPgSimple(session);
   
   // Determine if we're in production environment
-  const isProduction = process.env.NODE_ENV === 'production';
+  const env = detectEnvironment();
+  const isProduction = env === 'production';
   
   console.log(`[${new Date().toISOString()}] Session store: ${isProduction ? 'PostgreSQL' : 'Memory'} (NODE_ENV: ${process.env.NODE_ENV || 'undefined'})`);
   

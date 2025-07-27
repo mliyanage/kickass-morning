@@ -127,6 +127,12 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 
 ```
 Changelog:
+- July 27, 2025. Multi-environment deployment setup completed:
+  * Added environment-aware database connection supporting TEST_DATABASE_URL for test deployments
+  * Enhanced environment detection to support test, production, and development configurations
+  * Created comprehensive deployment documentation with step-by-step setup instructions
+  * Configured automatic database selection based on DEPLOYMENT_ENV and NODE_ENV variables
+  * Added environment-specific connection pooling and error handling for better production stability
 - July 27, 2025. Memory leak prevention completed:
   * Added graceful scheduler shutdown to prevent hanging node-schedule jobs in production
   * Fixed toast timeout cleanup to prevent frontend timer accumulation  
