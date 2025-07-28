@@ -778,68 +778,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isActive: true,
         });
 
-        // Schedule the call
-        const nextCallTime = getNextCallTime(
-          validatedData.wakeupTime,
-          validatedData.timezone,
-          validatedData.weekdays,
-          validatedData.isRecurring,
-          validatedData.date,
-        );
-
-        if (nextCallTime) {
-          // Schedule the job using node-schedule library
-          const job = nodeSchedule.scheduleJob(nextCallTime, async function () {
-            try {
-              const user = await storage.getUser(req.session.userId!);
-              const scheduleData = await storage.getSchedule(schedule.id);
-
-              if (user && user.phone && scheduleData && scheduleData.isActive) {
-                // Get personalization data for more detailed message generation
-                const personalization = await storage.getPersonalization(
-                  req.session.userId!,
-                );
-
-                // Generate message for the call with main goal and struggle from schedule
-                // but using full personalization data for context
-                const message = await generateVoiceMessage(
-                  [scheduleData.goalType as GoalType], // Use schedule's goal as primary focus
-                  [scheduleData.struggleType as StruggleType], // Use schedule's struggle as primary focus
-                  user.name || "there",
-                  personalization?.otherGoal,
-                  personalization?.otherStruggle,
-                );
-
-                // Make the call
-                const call = await makeCall(
-                  user.phone,
-                  message,
-                  scheduleData.voiceId,
-                );
-
-                // Log the call in history
-                await storage.createCallHistory({
-                  scheduleId: schedule.id,
-                  userId: req.session.userId!,
-                  callTime: new Date(),
-                  voice: scheduleData.voiceId,
-                  status: call.status as CallStatus,
-                  duration: call.duration,
-                  recordingUrl: call.recordingUrl,
-                  callSid: call.callSid, // Add the Twilio Call SID
-                });
-              }
-            } catch (error) {
-              console.error("Scheduled call error:", error);
-            }
-          });
-        }
+        // Note: Calls are now handled by the centralized scheduler (scheduler.ts)
+        // No need to create individual node-schedule jobs here as the main scheduler
+        // will detect and process this schedule based on database state
 
         res.status(201).json({
           message: "Schedule created successfully.",
           schedule: {
             id: schedule.id,
-            nextCallTime: nextCallTime?.toISOString(),
           },
         });
       } catch (error) {
@@ -924,15 +870,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Mark schedule as inactive for tomorrow only (in a real app, we would implement more complex logic here)
         await storage.updateScheduleStatus(scheduleId, false);
 
-        // Schedule to reactivate after 24 hours
-        const reactivateTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        // Use node-schedule directly
-        const reactivationJob = nodeSchedule.scheduleJob(
-          reactivateTime,
-          async function () {
-            await storage.updateScheduleStatus(scheduleId, true);
-          },
-        );
+        // Note: Schedule will need to be manually reactivated by user
+        // Automatic reactivation has been removed to prevent phantom calls from old node-schedule jobs
 
         res.status(200).json({ message: "Tomorrow's call has been skipped." });
       } catch (error) {
