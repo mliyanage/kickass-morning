@@ -127,6 +127,13 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 
 ```
 Changelog:
+- July 28, 2025. Critical duplicate call bug fix completed:
+  * Fixed SQL string comparison bug causing duplicate wake-up calls at incorrect times
+  * Root cause: SQL query used string comparison instead of proper time casting, making "21:00" appear within "07:00-07:10" window
+  * Updated getPendingSchedules query to use PostgreSQL ::time casting for accurate time comparisons
+  * Schedule 14 (21:00 UTC) no longer incorrectly triggers during 07:00-07:10 UTC window
+  * Eliminates all duplicate calls caused by string vs time data type comparison issues
+  * Time window logic now works correctly for both normal cases and midnight boundary crossings
 - July 28, 2025. Critical phantom call bug fix completed:
   * Fixed issue where calls were initiated even when no schedules were found in database
   * Root cause: Dual scheduling system with legacy node-schedule jobs running alongside main scheduler  

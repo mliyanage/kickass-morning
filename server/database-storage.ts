@@ -947,14 +947,15 @@ export class DatabaseStorage implements IStorage {
             // Check if today is one of the scheduled days using UTC weekdays
             sql`${schedules.weekdaysUTC} LIKE ${"%" + currentUTCDayStr + "%"}`,
             // Check if schedule time is within the backward-looking window (handle midnight crossing)
+            // Use proper time casting to avoid string comparison issues
             sql`
               CASE 
-                WHEN ${tenMinutesAgoUTCStr} > ${currentUTCTimeStr} THEN
+                WHEN ${tenMinutesAgoUTCStr}::time > ${currentUTCTimeStr}::time THEN
                   -- Midnight crossing: schedule time should be >= start OR <= end
-                  (${schedules.wakeupTimeUTC} >= ${tenMinutesAgoUTCStr} OR ${schedules.wakeupTimeUTC} <= ${currentUTCTimeStr})
+                  (${schedules.wakeupTimeUTC}::time >= ${tenMinutesAgoUTCStr}::time OR ${schedules.wakeupTimeUTC}::time <= ${currentUTCTimeStr}::time)
                 ELSE
                   -- Normal case: schedule time should be between start and end
-                  (${schedules.wakeupTimeUTC} >= ${tenMinutesAgoUTCStr} AND ${schedules.wakeupTimeUTC} <= ${currentUTCTimeStr})
+                  (${schedules.wakeupTimeUTC}::time >= ${tenMinutesAgoUTCStr}::time AND ${schedules.wakeupTimeUTC}::time <= ${currentUTCTimeStr}::time)
               END
             `,
             // Only consider schedules that have never been called before OR were called more than 5 minutes ago
