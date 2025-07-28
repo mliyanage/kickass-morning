@@ -22,10 +22,6 @@ export function startCallScheduler() {
   }
 
   console.log("Starting call scheduler...");
-  
-  // Cancel all existing node-schedule jobs to prevent phantom calls
-  cancelAllNodeScheduleJobs();
-  
   isSchedulerRunning = true;
 
   // Run every 5 minutes
@@ -200,25 +196,7 @@ export function startCleanupScheduler() {
   return cleanupSchedulerJob;
 }
 
-/**
- * Cancel all existing node-schedule jobs to prevent phantom calls
- * This cleans up any orphaned jobs from the legacy scheduling system
- */
-export function cancelAllNodeScheduleJobs() {
-  console.log("Canceling all existing node-schedule jobs to prevent phantom calls...");
-  
-  // Get all scheduled jobs and cancel them
-  const jobs = schedule.scheduledJobs;
-  let canceledCount = 0;
-  
-  for (const jobName in jobs) {
-    jobs[jobName].cancel();
-    canceledCount++;
-    console.log(`Canceled job: ${jobName}`);
-  }
-  
-  console.log(`Canceled ${canceledCount} existing node-schedule jobs`);
-}
+
 
 /**
  * Gracefully stop all schedulers and clean up resources
@@ -239,8 +217,7 @@ export function stopAllSchedulers() {
     console.log("Cleanup scheduler stopped");
   }
   
-  // Also cancel all other node-schedule jobs
-  cancelAllNodeScheduleJobs();
+
   
   isSchedulerRunning = false;
   console.log("All schedulers stopped successfully");
