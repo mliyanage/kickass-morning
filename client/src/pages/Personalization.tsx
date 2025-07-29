@@ -617,13 +617,19 @@ export default function Personalization() {
                     value={otherGoal}
                     onChange={(e) => setOtherGoal(e.target.value)}
                     placeholder="E.g., Family time, spiritual practice, etc."
+                    maxLength={100}
                   />
+                  <div className="flex justify-end mt-1">
+                    <span className="text-xs text-gray-400">
+                      {otherGoal.length}/100
+                    </span>
+                  </div>
                 </div>
               )}
 
               <div className="border border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
                 <Label htmlFor="goal-description" className="text-base font-medium">
-                  Tell us more about your goals and challenges (optional)
+                  Tell us more about your goals and challenges
                 </Label>
                 <p className="text-sm text-gray-500 mt-1 mb-2">
                   Share specific details about your morning goals to help us personalize your wake-up messages
@@ -635,10 +641,16 @@ export default function Personalization() {
                   placeholder="I want to wake up early to... The specific thing I'm working toward is... My ideal morning would include..."
                   value={goalDescription}
                   onChange={(e) => setGoalDescription(e.target.value)}
+                  maxLength={500}
                 />
-                <p className="mt-2 text-xs text-gray-500">
-                  The more details you provide, the better we can tailor your morning motivation messages
-                </p>
+                <div className="flex justify-between items-center mt-2">
+                  <p className="text-xs text-gray-500">
+                    The more details you provide, the better we can tailor your morning motivation messages
+                  </p>
+                  <span className="text-xs text-gray-400">
+                    {goalDescription.length}/500
+                  </span>
+                </div>
               </div>
 
               <div className="flex justify-end">
@@ -803,7 +815,13 @@ export default function Personalization() {
                     value={otherStruggle}
                     onChange={(e) => setOtherStruggle(e.target.value)}
                     placeholder="E.g., Sleep disorder, noisy environment, etc."
+                    maxLength={100}
                   />
+                  <div className="flex justify-end mt-1">
+                    <span className="text-xs text-gray-400">
+                      {otherStruggle.length}/100
+                    </span>
+                  </div>
                 </div>
               )}
 

@@ -188,8 +188,8 @@ export const personalizationSchema = z.object({
       ]),
     )
     .min(1, "Select at least one goal"),
-  otherGoal: z.string().optional(),
-  goalDescription: z.string().optional(),
+  otherGoal: z.string().max(100, "Custom goal must be 100 characters or less").optional(),
+  goalDescription: z.string().max(500, "Goal description must be 500 characters or less").optional(),
   struggles: z
     .array(
       z.enum([
@@ -201,9 +201,9 @@ export const personalizationSchema = z.object({
       ]),
     )
     .min(1, "Select at least one struggle"),
-  otherStruggle: z.string().optional(),
+  otherStruggle: z.string().max(100, "Custom struggle must be 100 characters or less").optional(),
   voice: z.string(),
-  customVoice: z.string().optional(),
+  customVoice: z.string().max(50, "Custom voice must be 50 characters or less").optional(),
 });
 
 // Schema for schedule
