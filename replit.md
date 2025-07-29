@@ -127,15 +127,18 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 
 ```
 Changelog:
-- July 29, 2025. DST-proof scheduling system completed:
+- July 29, 2025. DST-proof scheduling system completed and fully operational:
   * Implemented complete DST-aware architecture using date-fns-tz library for timezone handling
   * Removed all UTC storage fields (wakeupTimeUTC, weekdaysUTC) from database schema
   * Schedules now store only local time and timezone, with runtime conversion for accuracy
   * Updated createSchedule to store local data without UTC conversion during creation
   * Enhanced getPendingSchedules with runtime timezone filtering using shouldScheduleRunNow helper
+  * Fixed NULL handling in duplicate prevention SQL queries (lastCallStatus IS NULL OR != 'completed')
   * Eliminated 10-minute duplicate intervals and fixed string comparison bugs
   * System now maintains user's local time expectations during DST transitions
   * Timezone conversions happen at execution time, ensuring accuracy across seasonal changes
+  * Successfully tested: 22:25 Sydney time → 12:25 UTC conversion and call delivery
+  * End-to-end flow verified: schedule detection → AI voice generation → Twilio call → status tracking
   * Backward compatibility removed - clean, simple DST-proof architecture
 - July 29, 2025. Enhanced duplicate call prevention completed:
   * Completely rewrote getPendingSchedules query logic to eliminate all duplicate call scenarios

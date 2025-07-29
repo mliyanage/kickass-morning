@@ -16,6 +16,7 @@ import {
 import { db } from "./db";
 import { eq, and, or, lt, gt, desc, sql } from "drizzle-orm";
 import { IStorage } from "./storage";
+import { convertLocalTimeToUTC, shouldScheduleRunToday } from './timezone-utils';
 
 // Helper function to convert weekdays from local timezone to UTC
 function convertWeekdaysToUTC(
@@ -874,7 +875,7 @@ export class DatabaseStorage implements IStorage {
             eq(schedules.isRecurring, true),
             // Prevent duplicate calls: only allow if last call was not completed (with 10-minute delay for non-completed calls)
             sql`(
-              ${schedules.lastCallStatus} != 'completed' 
+              (${schedules.lastCallStatus} IS NULL OR ${schedules.lastCallStatus} != 'completed')
               AND (${schedules.lastCalled} IS NULL OR ${schedules.lastCalled} < NOW() - INTERVAL '10 minutes')
             )`,
           ),
@@ -917,7 +918,7 @@ export class DatabaseStorage implements IStorage {
     tenMinutesAgo: Date
   ): boolean {
     try {
-      const { convertLocalTimeToUTC, shouldScheduleRunToday } = require('./timezone-utils');
+      // Functions imported at top of file
 
       // Check if this schedule should run today based on local weekdays and timezone
       if (!shouldScheduleRunToday(localWeekdays, localTime, timezone, currentTime)) {
