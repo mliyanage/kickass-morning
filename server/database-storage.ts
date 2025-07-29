@@ -935,7 +935,7 @@ export class DatabaseStorage implements IStorage {
         `Time window: ${tenMinutesAgoUTCStr} to ${currentUTCTimeStr}`,
       );
 
-      // Query for pending schedules using UTC fields
+      // Query for pending schedules using UTC fields - simplified logic to prevent duplicates
       const pendingRecurringSchedules = await db
         .select()
         .from(schedules)
@@ -946,8 +946,8 @@ export class DatabaseStorage implements IStorage {
             eq(schedules.isRecurring, true),
             // Check if today is one of the scheduled days using UTC weekdays
             sql`${schedules.weekdaysUTC} LIKE ${"%" + currentUTCDayStr + "%"}`,
-            // Check if schedule time is within the backward-looking window (handle midnight crossing)
-            // Use proper time casting to avoid string comparison issues
+            // Check if schedule time is within the backward-looking window using proper time comparison
+            // Handle midnight crossing (e.g., 23:50 to 00:10 window)
             sql`
               CASE 
                 WHEN ${tenMinutesAgoUTCStr}::time > ${currentUTCTimeStr}::time THEN
@@ -958,24 +958,22 @@ export class DatabaseStorage implements IStorage {
                   (${schedules.wakeupTimeUTC}::time >= ${tenMinutesAgoUTCStr}::time AND ${schedules.wakeupTimeUTC}::time <= ${currentUTCTimeStr}::time)
               END
             `,
-            // Only consider schedules that have never been called before OR were called more than 5 minutes ago
-            sql`(
-              ${schedules.lastCalled} IS NULL 
-              OR 
-              ${schedules.lastCalled} < NOW() - INTERVAL '5 minutes'
-            )`,
-
-            // For recurring schedules, allow calls if:
-            // 1. Never called before, OR
-            // 2. Last call failed and retry is enabled, OR
-            // 3. Last call is not in active states (initiated/in-progress/pending)
-            // Note: Completed calls are allowed to run again for recurring schedules
+            // Prevent duplicate calls: only allow if never called before OR last call failed OR last call was in active state but more than 10 minutes ago
+            // CRITICAL: Do NOT allow completed calls to trigger again within the same day to prevent duplicates
             sql`(
               ${schedules.lastCallStatus} IS NULL
               OR 
-              (${schedules.callRetry} = true AND ${schedules.lastCallStatus} = 'failed')
+              ${schedules.lastCallStatus} = 'failed'
               OR
-              (${schedules.lastCallStatus} NOT IN ('initiated', 'in-progress', 'pending'))
+              (${schedules.lastCallStatus} IN ('initiated', 'in-progress', 'pending') AND ${schedules.lastCalled} < NOW() - INTERVAL '10 minutes')
+            )`,
+            // Additional check: prevent calls if already completed today (prevent same-day duplicates)
+            sql`(
+              ${schedules.lastCalled} IS NULL 
+              OR 
+              ${schedules.lastCallStatus} != 'completed'
+              OR
+              DATE(${schedules.lastCalled}) != CURRENT_DATE
             )`,
           ),
         );
