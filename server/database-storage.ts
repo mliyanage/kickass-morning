@@ -895,7 +895,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(callHistory.callTime));
   }
 
-  // New methods for scheduler using UTC times
+  // DST-proof scheduler using runtime timezone conversion
   async getPendingSchedules(
     currentTime: Date = new Date(),
   ): Promise<Schedule[]> {
@@ -909,34 +909,18 @@ export class DatabaseStorage implements IStorage {
       const currentUTCTimeStr = currentTime.toISOString().substring(11, 16);
 
       // Use a backward-looking window to catch schedules that should have been called
-      // This allows us to catch failed calls and avoid timing issues
       const tenMinutesAgo = new Date(currentTime.getTime() - 10 * 60 * 1000);
       const tenMinutesAgoUTCStr = tenMinutesAgo.toISOString().substring(11, 16);
 
-      // Current day of week in UTC (0-6, starting with Sunday)
-      const currentUTCDayOfWeek = currentTime.getUTCDay();
-      const currentUTCDayStr = [
-        "sun",
-        "mon",
-        "tue",
-        "wed",
-        "thu",
-        "fri",
-        "sat",
-      ][currentUTCDayOfWeek];
-
-      // Current date in UTC (YYYY-MM-DD)
-      const currentUTCDateStr = currentTime.toISOString().split("T")[0];
-
       console.log(
-        `Current UTC time: ${currentUTCTimeStr}, day: ${currentUTCDayStr}, date: ${currentUTCDateStr}`,
+        `Current UTC time: ${currentUTCTimeStr}`,
       );
       console.log(
         `Time window: ${tenMinutesAgoUTCStr} to ${currentUTCTimeStr}`,
       );
 
-      // Query for pending schedules using UTC fields - simplified logic to prevent duplicates
-      const pendingRecurringSchedules = await db
+      // Get all active recurring schedules (we'll filter by timezone conversion in JavaScript)
+      const allActiveSchedules = await db
         .select()
         .from(schedules)
         .innerJoin(users, eq(schedules.userId, users.id))
@@ -944,20 +928,6 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(schedules.isActive, true),
             eq(schedules.isRecurring, true),
-            // Check if today is one of the scheduled days using UTC weekdays
-            sql`${schedules.weekdaysUTC} LIKE ${"%" + currentUTCDayStr + "%"}`,
-            // Check if schedule time is within the backward-looking window using proper time comparison
-            // Handle midnight crossing (e.g., 23:50 to 00:10 window)
-            sql`
-              CASE 
-                WHEN ${tenMinutesAgoUTCStr}::time > ${currentUTCTimeStr}::time THEN
-                  -- Midnight crossing: schedule time should be >= start OR <= end
-                  (${schedules.wakeupTimeUTC}::time >= ${tenMinutesAgoUTCStr}::time OR ${schedules.wakeupTimeUTC}::time <= ${currentUTCTimeStr}::time)
-                ELSE
-                  -- Normal case: schedule time should be between start and end
-                  (${schedules.wakeupTimeUTC}::time >= ${tenMinutesAgoUTCStr}::time AND ${schedules.wakeupTimeUTC}::time <= ${currentUTCTimeStr}::time)
-              END
-            `,
             // Prevent duplicate calls: only allow if last call was not completed (with 10-minute delay for non-completed calls)
             sql`(
               ${schedules.lastCallStatus} != 'completed' 
@@ -966,23 +936,70 @@ export class DatabaseStorage implements IStorage {
           ),
         );
 
-      // For now, skip one-time schedules (can be implemented later)
-      const pendingOneTimeSchedules: any[] = [];
-
-      // Extract just the schedule objects and combine results
-      const results = [
-        ...pendingRecurringSchedules.map((r) => r.schedules),
-        ...pendingOneTimeSchedules.map((r) => r.schedules),
-      ];
+      // Filter schedules using DST-aware timezone conversion
+      const pendingSchedules = allActiveSchedules.filter((row) => {
+        const schedule = row.schedules;
+        return this.shouldScheduleRunNow(
+          schedule.wakeupTime,
+          schedule.weekdays,
+          schedule.timezone,
+          currentTime,
+          tenMinutesAgo
+        );
+      });
 
       console.log(
-        `Found ${results.length} pending schedules in UTC (${pendingRecurringSchedules.length} recurring, ${pendingOneTimeSchedules.length} one-time)`,
+        `Found ${pendingSchedules.length} pending schedules after DST-aware filtering (from ${allActiveSchedules.length} total active)`,
       );
+
+      // Extract just the schedule objects
+      const results = pendingSchedules.map((r) => r.schedules);
 
       return results;
     } catch (error) {
       console.error("Error checking pending schedules:", error);
       return [];
+    }
+  }
+
+  /**
+   * DST-aware helper to check if a schedule should run now
+   */
+  private shouldScheduleRunNow(
+    localTime: string,
+    localWeekdays: string,
+    timezone: string,
+    currentTime: Date,
+    tenMinutesAgo: Date
+  ): boolean {
+    try {
+      const { convertLocalTimeToUTC, shouldScheduleRunToday } = require('./timezone-utils');
+
+      // Check if this schedule should run today based on local weekdays and timezone
+      if (!shouldScheduleRunToday(localWeekdays, localTime, timezone, currentTime)) {
+        return false;
+      }
+
+      // Convert the local schedule time to current UTC time (DST-aware)
+      const { utcTime } = convertLocalTimeToUTC(localTime, timezone, currentTime);
+
+      // Check if the UTC time is within our 10-minute backward window
+      const currentUTCTimeStr = currentTime.toISOString().substring(11, 16);
+      const tenMinutesAgoUTCStr = tenMinutesAgo.toISOString().substring(11, 16);
+
+      // Handle midnight crossing
+      const isMidnightCrossing = tenMinutesAgoUTCStr > currentUTCTimeStr;
+
+      if (isMidnightCrossing) {
+        // Midnight crossing: schedule time should be >= start OR <= end
+        return utcTime >= tenMinutesAgoUTCStr || utcTime <= currentUTCTimeStr;
+      } else {
+        // Normal case: schedule time should be between start and end
+        return utcTime >= tenMinutesAgoUTCStr && utcTime <= currentUTCTimeStr;
+      }
+    } catch (error) {
+      console.error('Error checking if schedule should run now:', error);
+      return false;
     }
   }
 
