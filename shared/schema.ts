@@ -87,30 +87,22 @@ export const voices = pgTable("voices", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Schedule for wakeup calls
+// Schedule for wakeup calls - DST-proof with local time storage
 export const schedules = pgTable("schedules", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")
     .notNull()
-    .references(() => users.id),
-  wakeupTime: text("wakeup_time").notNull(), // User's local time (for display)
-  wakeupTimeUTC: text("wakeup_time_utc"), // UTC time (for scheduling) - nullable for migration
-  timezone: text("timezone").notNull(),
-  weekdays: text("weekdays").notNull(),
-  isRecurring: boolean("is_recurring").default(true),
-  date: text("date"), // Local date (for display)
-  weekdaysUTC: text("weekdays_utc"), // UTC weekdays (for scheduling recurring calls)
-  callRetry: boolean("call_retry").default(true),
-  advanceNotice: boolean("advance_notice").default(false),
-  goalType: text("goal_type").notNull(),
-  struggleType: text("struggle_type").notNull(),
-  voiceId: text("voice_id").notNull(),
-  isActive: boolean("is_active").default(true),
-  lastCalled: timestamp("last_called"), // When the schedule was last used to make a call
-  lastCallStatus: text("last_call_status"), // Status of the last call (ANSWERED, MISSED, FAILED)
-  lastCallSid: text("last_call_sid"), // Twilio SID of the last call for tracking
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    .references(() => users.id, { onDelete: "cascade" }),
+  wakeupTime: text("wakeup_time").notNull(), // HH:MM format in user's local time
+  timezone: text("timezone").notNull(), // IANA timezone identifier
+  weekdays: text("weekdays").notNull(), // comma-separated days: "mon,tue,wed"  
+  isRecurring: boolean("is_recurring").notNull().default(true),
+  isActive: boolean("is_active").notNull().default(true),
+  lastCalled: timestamp("last_called"),
+  lastCallSid: text("last_call_sid"),
+  lastCallStatus: text("last_call_status"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 // Call history

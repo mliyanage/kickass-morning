@@ -612,85 +612,29 @@ export class DatabaseStorage implements IStorage {
   // Schedule related methods
   async createSchedule(data: any): Promise<Schedule> {
     try {
-      // Convert weekdays array to comma-separated string for storage
+      // DST-proof: Store only local time and timezone, convert at runtime
       const weekdaysStr = Array.isArray(data.weekdays)
         ? data.weekdays.join(",")
         : data.weekdays;
 
-      // Calculate UTC weekdays for scheduling
-      const weekdaysUTC = convertWeekdaysToUTC(
-        weekdaysStr,
-        data.wakeupTime,
-        data.timezone,
-      );
-
-      // Convert local time to UTC time for scheduling
-      const { format } = await import("date-fns-tz");
-
-      // Get timezone offset
-      const tzOffset = getTimezoneOffset(data.timezone);
-
-      // Create a date object with the wake-up time in the user's timezone
-      const timeComponents = data.wakeupTime
-        .split(":")
-        .map((n: string) => parseInt(n, 10));
-      const today = new Date();
-      today.setHours(timeComponents[0], timeComponents[1], 0, 0);
-
-      // Create a date string in the user's timezone
-      const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-      const timezonedDateStr = `${dateStr}T${data.wakeupTime}:00${tzOffset}`;
-
-      // Parse it as a UTC time
-      const utcTime = new Date(timezonedDateStr);
-      const wakeupTimeUTC = utcTime.toISOString().substring(11, 16); // HH:MM format
-
-      // For one-time schedules, also convert the date
-      let dateUTC = null;
-      if (!data.isRecurring && data.date) {
-        // Create a date string with the scheduled date and time
-        const [year, month, day] = data.date
-          .split("-")
-          .map((n: string) => parseInt(n, 10));
-        const localDateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${data.wakeupTime}:00${tzOffset}`;
-
-        // Parse as UTC date
-        const utcDate = new Date(localDateStr);
-        dateUTC = utcDate.toISOString().substring(0, 10); // YYYY-MM-DD format
-      }
-
       console.log(
-        `Creating schedule: Local time ${data.wakeupTime} (${data.timezone}) -> UTC time ${wakeupTimeUTC}`,
+        `Creating DST-proof schedule: Local time ${data.wakeupTime} in ${data.timezone}, weekdays: ${weekdaysStr}`,
       );
-      if (dateUTC) {
-        console.log(
-          `One-time schedule: Local date ${data.date} -> UTC date ${dateUTC}`,
-        );
-      }
 
-      // Insert schedule with both local and UTC times
+      // Insert schedule with only local data - no UTC conversion at creation time
       const [schedule] = await db
         .insert(schedules)
         .values({
           userId: data.userId,
-          wakeupTime: data.wakeupTime, // Local time (for display)
-          wakeupTimeUTC: wakeupTimeUTC, // UTC time (for scheduling)
-          timezone: data.timezone,
-          weekdays: weekdaysStr,
-          weekdaysUTC: weekdaysUTC, // UTC weekdays (for scheduling)
+          wakeupTime: data.wakeupTime, // Local time (HH:MM)
+          timezone: data.timezone, // IANA timezone
+          weekdays: weekdaysStr, // Local weekdays (mon,tue,wed)
           isRecurring: data.isRecurring,
-          date: data.date || null, // Local date (for display)
-          callRetry: data.callRetry,
-          advanceNotice: data.advanceNotice,
-          goalType: data.goalType,
-          struggleType: data.struggleType,
-          voiceId: data.voiceId,
           isActive: data.isActive !== undefined ? data.isActive : true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
         })
         .returning();
 
+      console.log('Created DST-proof schedule:', schedule);
       return schedule;
     } catch (error) {
       console.error("Error creating schedule:", error);
