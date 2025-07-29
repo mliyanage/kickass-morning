@@ -1,36 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-async function throwIfResNotOk(res: Response) {
-  if (!res.ok) {
-    // Try to parse response as JSON first to extract error message
-    try {
-      const errorData = await res.json();
-      if (errorData.message) {
-        // If the server returned a message, use it for the error
-        throw new Error(errorData.message);
-      }
-    } catch (e) {
-      // If parsing fails, fall back to text
-      const text = await res.text() || res.statusText;
-      
-      // Create user-friendly error message based on status code
-      switch (res.status) {
-        case 400:
-          throw new Error(`Invalid request: ${text}`);
-        case 401:
-          throw new Error(`Authentication required: ${text}`);
-        case 403:
-          throw new Error(`Access denied: ${text}`);
-        case 404:
-          throw new Error(`Not found: ${text}`);
-        case 500:
-          throw new Error(`Server error: Please try again later`);
-        default:
-          throw new Error(`${res.status}: ${text}`);
-      }
-    }
-  }
-}
+// Removed throwIfResNotOk function to prevent double body reading issues
 
 export async function apiRequest(
   method: string,
@@ -44,14 +14,30 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  // Handle authentication errors specially
-  if (res.status === 401) {
-    const errorData = await res.json();
-    throw new Error(errorData.message || "Authentication required. Please log in again.");
+  // Handle all error status codes in one place to avoid double body reading
+  if (!res.ok) {
+    try {
+      const errorData = await res.json();
+      if (res.status === 401) {
+        throw new Error(errorData.message || "Authentication required. Please log in again.");
+      }
+      throw new Error(errorData.message || `Request failed with status ${res.status}`);
+    } catch (jsonError) {
+      // If JSON parsing fails, use status-based error messages
+      switch (res.status) {
+        case 401:
+          throw new Error("Authentication required. Please log in again.");
+        case 403:
+          throw new Error("Access denied");
+        case 404:
+          throw new Error("Resource not found");
+        case 500:
+          throw new Error("Server error. Please try again later");
+        default:
+          throw new Error(`Request failed with status ${res.status}`);
+      }
+    }
   }
-  
-  // For other error status codes
-  await throwIfResNotOk(res);
   
   // Parse and return JSON for successful responses
   return await res.json();
@@ -71,7 +57,28 @@ export const getQueryFn: <T>(options: {
       return null;
     }
 
-    await throwIfResNotOk(res);
+    // Handle errors without double body reading
+    if (!res.ok) {
+      try {
+        const errorData = await res.json();
+        throw new Error(errorData.message || `Request failed with status ${res.status}`);
+      } catch (jsonError) {
+        // If JSON parsing fails, use status-based error messages
+        switch (res.status) {
+          case 401:
+            throw new Error("Authentication required. Please log in again.");
+          case 403:
+            throw new Error("Access denied");
+          case 404:
+            throw new Error("Resource not found");
+          case 500:
+            throw new Error("Server error. Please try again later");
+          default:
+            throw new Error(`Request failed with status ${res.status}`);
+        }
+      }
+    }
+
     return await res.json();
   };
 
