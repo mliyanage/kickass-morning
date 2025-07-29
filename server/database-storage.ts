@@ -958,11 +958,10 @@ export class DatabaseStorage implements IStorage {
                   (${schedules.wakeupTimeUTC}::time >= ${tenMinutesAgoUTCStr}::time AND ${schedules.wakeupTimeUTC}::time <= ${currentUTCTimeStr}::time)
               END
             `,
-            // Prevent duplicate calls: only allow if never called before OR last call was not completed (with 10-minute delay)
+            // Prevent duplicate calls: only allow if last call was not completed (with 10-minute delay for non-completed calls)
             sql`(
-              ${schedules.lastCallStatus} IS NULL
-              OR 
-              (${schedules.lastCallStatus} != 'completed' AND ${schedules.lastCalled} < NOW() - INTERVAL '10 minutes')
+              ${schedules.lastCallStatus} != 'completed' 
+              AND (${schedules.lastCalled} IS NULL OR ${schedules.lastCalled} < NOW() - INTERVAL '10 minutes')
             )`,
           ),
         );
