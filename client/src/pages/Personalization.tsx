@@ -644,9 +644,14 @@ export default function Personalization() {
                   maxLength={500}
                 />
                 <div className="flex justify-between items-center mt-2">
-                  <p className="text-xs text-gray-500">
-                    The more details you provide, the better we can tailor your morning motivation messages
-                  </p>
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg px-3 py-2 flex-1 mr-3">
+                    <p className="text-sm font-medium text-blue-800 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      The more details you provide, the better we can tailor your morning motivation messages
+                    </p>
+                  </div>
                   <span className="text-xs text-gray-400">
                     {goalDescription.length}/500
                   </span>
