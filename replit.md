@@ -127,6 +127,13 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 
 ```
 Changelog:
+- July 30, 2025. Critical duplicate call prevention bug fix completed:
+  * Fixed SQL logic in getPendingSchedules that was preventing completed calls from running again on different days
+  * Root cause: Overly restrictive condition "(lastCallStatus != 'completed')" blocked all completed schedules permanently
+  * Updated logic to allow different-day calls while preventing same-day duplicates using timezone-aware date comparison
+  * Schedule 18 (7:00 AM Sydney) now correctly eligible to run again after July 30th completion
+  * Fixed condition: "DATE(lastCalled in timezone) < DATE(NOW in timezone)" allows next-day recurring calls
+  * Maintains 10-minute retry delay for failed calls while enabling daily recurring functionality
 - July 29, 2025. DST-proof scheduling system completed and fully operational:
   * Implemented complete DST-aware architecture using date-fns-tz library for timezone handling
   * Removed all UTC storage fields (wakeupTimeUTC, weekdaysUTC) from database schema
