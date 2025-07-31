@@ -16,7 +16,10 @@ import {
 import { db } from "./db";
 import { eq, and, or, lt, gt, desc, sql } from "drizzle-orm";
 import { IStorage } from "./storage";
-import { convertLocalTimeToUTC, shouldScheduleRunToday } from './timezone-utils';
+import {
+  convertLocalTimeToUTC,
+  shouldScheduleRunToday,
+} from "./timezone-utils";
 
 // Helper function to convert weekdays from local timezone to UTC
 function convertWeekdaysToUTC(
@@ -60,29 +63,35 @@ function convertWeekdaysToUTC(
 
       // Set the wakeup time on the target date
       const [hours, minutes] = wakeupTime.split(":").map(Number);
-      
+
       // Use the target date components (not today's date)
       const year = targetDate.getFullYear();
-      const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-      const day = String(targetDate.getDate()).padStart(2, '0');
-      const hour = String(hours).padStart(2, '0');
-      const minute = String(minutes).padStart(2, '0');
-      
+      const month = String(targetDate.getMonth() + 1).padStart(2, "0");
+      const day = String(targetDate.getDate()).padStart(2, "0");
+      const hour = String(hours).padStart(2, "0");
+      const minute = String(minutes).padStart(2, "0");
+
       // Get timezone offset and create proper timezone-aware date
       const offsetStr = getTimezoneOffset(timezone);
       const isoString = `${year}-${month}-${day}T${hour}:${minute}:00${offsetStr}`;
       const localTimeWithTz = new Date(isoString);
-      
-      console.log(`[WEEKDAY DEBUG] Converting ${localDay} ${hour}:${minute} in ${timezone}`);
+
+      console.log(
+        `[WEEKDAY DEBUG] Converting ${localDay} ${hour}:${minute} in ${timezone}`,
+      );
       console.log(`[WEEKDAY DEBUG] Target date: ${targetDate.toDateString()}`);
       console.log(`[WEEKDAY DEBUG] ISO string: ${isoString}`);
-      console.log(`[WEEKDAY DEBUG] Local date with timezone: ${localTimeWithTz.toString()}`);
-      console.log(`[WEEKDAY DEBUG] UTC day number: ${localTimeWithTz.getUTCDay()}`);
-      
+      console.log(
+        `[WEEKDAY DEBUG] Local date with timezone: ${localTimeWithTz.toString()}`,
+      );
+      console.log(
+        `[WEEKDAY DEBUG] UTC day number: ${localTimeWithTz.getUTCDay()}`,
+      );
+
       // Convert to UTC and get the day
       const utcDay = localTimeWithTz.getUTCDay();
       const utcDayName = reverseMap[utcDay];
-      
+
       console.log(`[WEEKDAY DEBUG] UTC day name: ${utcDayName}`);
 
       if (utcDayName && !utcWeekdays.includes(utcDayName)) {
@@ -635,7 +644,7 @@ export class DatabaseStorage implements IStorage {
         })
         .returning();
 
-      console.log('Created DST-proof schedule:', schedule);
+      console.log("Created DST-proof schedule:", schedule);
       return schedule;
     } catch (error) {
       console.error("Error creating schedule:", error);
@@ -676,8 +685,14 @@ export class DatabaseStorage implements IStorage {
         const weekdays = data.weekdays || currentSchedule.weekdays;
 
         // Calculate UTC weekdays for scheduling
-        const weekdaysStr = Array.isArray(weekdays) ? weekdays.join(",") : weekdays;
-        const weekdaysUTC = convertWeekdaysToUTC(weekdaysStr, wakeupTime, timezone);
+        const weekdaysStr = Array.isArray(weekdays)
+          ? weekdays.join(",")
+          : weekdays;
+        const weekdaysUTC = convertWeekdaysToUTC(
+          weekdaysStr,
+          wakeupTime,
+          timezone,
+        );
 
         // Get timezone offset string (e.g., "+10:00")
         const tzOffset = getTimezoneOffset(timezone);
@@ -739,7 +754,7 @@ export class DatabaseStorage implements IStorage {
 
             // Get the time components from wakeupTime
             const [hours, minutes] = wakeupTime.split(":").map(Number);
-            
+
             // Apply the time to the schedule date
             scheduleDate.setUTCHours(hours, minutes, 0, 0);
 
@@ -857,9 +872,7 @@ export class DatabaseStorage implements IStorage {
       const tenMinutesAgo = new Date(currentTime.getTime() - 10 * 60 * 1000);
       const tenMinutesAgoUTCStr = tenMinutesAgo.toISOString().substring(11, 16);
 
-      console.log(
-        `Current UTC time: ${currentUTCTimeStr}`,
-      );
+      console.log(`Current UTC time: ${currentUTCTimeStr}`);
       console.log(
         `Time window: ${tenMinutesAgoUTCStr} to ${currentUTCTimeStr}`,
       );
@@ -876,7 +889,10 @@ export class DatabaseStorage implements IStorage {
             // Allow retries for failed calls within 10 minutes, or any completed calls
             sql`(
               ${schedules.lastCalled} IS NULL 
-              OR ${schedules.lastCallStatus} = 'completed'
+              OR (
+                ${schedules.lastCallStatus} = 'completed' 
+                AND DATE(${schedules.lastCalled} AT TIME ZONE 'UTC' AT TIME ZONE ${schedules.timezone}) < DATE(NOW() AT TIME ZONE ${schedules.timezone})
+              )
               OR (${schedules.lastCallStatus} != 'completed' AND ${schedules.lastCalled} > NOW() - INTERVAL '10 minutes')
             )`,
           ),
@@ -890,7 +906,7 @@ export class DatabaseStorage implements IStorage {
           schedule.weekdays,
           schedule.timezone,
           currentTime,
-          tenMinutesAgo
+          tenMinutesAgo,
         );
       });
 
@@ -916,18 +932,24 @@ export class DatabaseStorage implements IStorage {
     localWeekdays: string,
     timezone: string,
     currentTime: Date,
-    tenMinutesAgo: Date
+    tenMinutesAgo: Date,
   ): boolean {
     try {
       // Functions imported at top of file
 
       // Check if this schedule should run today based on local weekdays and timezone
-      if (!shouldScheduleRunToday(localWeekdays, localTime, timezone, currentTime)) {
+      if (
+        !shouldScheduleRunToday(localWeekdays, localTime, timezone, currentTime)
+      ) {
         return false;
       }
 
       // Convert the local schedule time to current UTC time (DST-aware)
-      const { utcTime } = convertLocalTimeToUTC(localTime, timezone, currentTime);
+      const { utcTime } = convertLocalTimeToUTC(
+        localTime,
+        timezone,
+        currentTime,
+      );
 
       // Check if the UTC time is within our 10-minute backward window
       const currentUTCTimeStr = currentTime.toISOString().substring(11, 16);
@@ -944,7 +966,7 @@ export class DatabaseStorage implements IStorage {
         return utcTime >= tenMinutesAgoUTCStr && utcTime <= currentUTCTimeStr;
       }
     } catch (error) {
-      console.error('Error checking if schedule should run now:', error);
+      console.error("Error checking if schedule should run now:", error);
       return false;
     }
   }
@@ -1040,8 +1062,6 @@ export class DatabaseStorage implements IStorage {
         .from(callHistory)
         .where(eq(callHistory.callSid, callSid))
         .limit(1);
-
-
 
       // Step 3: If we found a related schedule, update its last call status too
       if (callHistoryEntry.length > 0 && callHistoryEntry[0].scheduleId) {
