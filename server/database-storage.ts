@@ -886,10 +886,13 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(schedules.isActive, true),
             eq(schedules.isRecurring, true),
-            // Allow retries for failed calls within 10 minutes, or any completed calls
+            // Allow retries for failed calls within 10 minutes, or completed calls from different days
             sql`(
               ${schedules.lastCalled} IS NULL 
-              OR ${schedules.lastCallStatus} = 'completed'
+              OR (
+                ${schedules.lastCallStatus} = 'completed' 
+                AND DATE(${schedules.lastCalled} AT TIME ZONE 'UTC' AT TIME ZONE ${schedules.timezone}) < DATE(NOW() AT TIME ZONE ${schedules.timezone})
+              )
               OR (${schedules.lastCallStatus} != 'completed' AND ${schedules.lastCalled} > NOW() - INTERVAL '10 minutes')
             )`,
           ),
@@ -932,13 +935,8 @@ export class DatabaseStorage implements IStorage {
     tenMinutesAgo: Date,
   ): boolean {
     try {
-      console.log(`[DEBUG] Checking schedule: ${localTime} ${timezone} (${localWeekdays})`);
-
       // Check if this schedule should run today based on local weekdays and timezone
-      const shouldRunToday = shouldScheduleRunToday(localWeekdays, localTime, timezone, currentTime);
-      console.log(`[DEBUG] Should run today: ${shouldRunToday}`);
-      
-      if (!shouldRunToday) {
+      if (!shouldScheduleRunToday(localWeekdays, localTime, timezone, currentTime)) {
         return false;
       }
 
@@ -953,24 +951,16 @@ export class DatabaseStorage implements IStorage {
       const currentUTCTimeStr = currentTime.toISOString().substring(11, 16);
       const tenMinutesAgoUTCStr = tenMinutesAgo.toISOString().substring(11, 16);
 
-      console.log(`[DEBUG] Local time ${localTime} ${timezone} → UTC time ${utcTime}`);
-      console.log(`[DEBUG] Time window: ${tenMinutesAgoUTCStr} to ${currentUTCTimeStr}`);
-
       // Handle midnight crossing
       const isMidnightCrossing = tenMinutesAgoUTCStr > currentUTCTimeStr;
-      console.log(`[DEBUG] Midnight crossing: ${isMidnightCrossing}`);
 
-      let isInWindow = false;
       if (isMidnightCrossing) {
         // Midnight crossing: schedule time should be >= start OR <= end
-        isInWindow = utcTime >= tenMinutesAgoUTCStr || utcTime <= currentUTCTimeStr;
+        return utcTime >= tenMinutesAgoUTCStr || utcTime <= currentUTCTimeStr;
       } else {
         // Normal case: schedule time should be between start and end
-        isInWindow = utcTime >= tenMinutesAgoUTCStr && utcTime <= currentUTCTimeStr;
+        return utcTime >= tenMinutesAgoUTCStr && utcTime <= currentUTCTimeStr;
       }
-
-      console.log(`[DEBUG] Is in time window: ${isInWindow}`);
-      return isInWindow;
     } catch (error) {
       console.error("Error checking if schedule should run now:", error);
       return false;
