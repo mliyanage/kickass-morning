@@ -127,6 +127,13 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 
 ```
 Changelog:
+- July 31, 2025. Simplified retry logic for failed calls implemented:
+  * Replaced complex same-day duplicate prevention with clean 10-minute retry window
+  * Failed calls now get exactly 2 retry attempts within 10 minutes, then stop permanently
+  * Completed calls can run again anytime (for daily recurring schedules)
+  * Eliminated redundant timezone-based same-day logic since 10-minute window handles duplicates
+  * New logic: (never called) OR (completed) OR (failed within 10 minutes) - much cleaner
+  * Example: Call fails at 12:10 PM → retries at 12:15 PM and 12:20 PM → stops at 12:25 PM
 - July 30, 2025. Critical duplicate call prevention bug fix completed:
   * Fixed SQL logic in getPendingSchedules that was preventing completed calls from running again on different days
   * Root cause: Overly restrictive condition "(lastCallStatus != 'completed')" blocked all completed schedules permanently

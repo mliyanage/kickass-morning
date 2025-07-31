@@ -873,11 +873,11 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(schedules.isActive, true),
             eq(schedules.isRecurring, true),
-            // Prevent same-day duplicates but allow calls on different days
+            // Allow retries for failed calls within 10 minutes, or any completed calls
             sql`(
               ${schedules.lastCalled} IS NULL 
-              OR DATE(${schedules.lastCalled} AT TIME ZONE 'UTC' AT TIME ZONE ${schedules.timezone}) < DATE(NOW() AT TIME ZONE ${schedules.timezone})
-              OR (${schedules.lastCallStatus} != 'completed' AND ${schedules.lastCalled} < NOW() - INTERVAL '10 minutes')
+              OR ${schedules.lastCallStatus} = 'completed'
+              OR (${schedules.lastCallStatus} != 'completed' AND ${schedules.lastCalled} > NOW() - INTERVAL '10 minutes')
             )`,
           ),
         );
