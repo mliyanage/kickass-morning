@@ -117,14 +117,14 @@ async function processScheduledCalls() {
         );
 
         // Make the call using personalization voice
+        console.log(`[CALL TIMING] ${new Date().toISOString()} - Initiating call for schedule ${schedule.id}`);
         const call = await makeCall(user.phone, messageText, voiceId);
+        console.log(`[CALL TIMING] ${new Date().toISOString()} - Call initiated for schedule ${schedule.id}, initial status: ${call.status}, SID: ${call.callSid}`);
 
         // Update the last called time and status for this schedule immediately after call
         const currentTime = new Date();
         console.log(
-          `Updating schedule ${schedule.id} last called time:`,
-          currentTime,
-          `with status: ${call.status}`,
+          `[CALL TIMING] ${currentTime.toISOString()} - Updating schedule ${schedule.id} database with status: ${call.status}`,
         );
 
         try {
