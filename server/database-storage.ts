@@ -893,10 +893,12 @@ export class DatabaseStorage implements IStorage {
                 ${schedules.lastCallStatus} = 'completed' 
                 AND DATE(${schedules.lastCalled} AT TIME ZONE 'UTC' AT TIME ZONE ${schedules.timezone}) < DATE(NOW() AT TIME ZONE ${schedules.timezone})
               )
-              OR (${schedules.lastCallStatus} != 'completed' AND ${schedules.lastCalled} > NOW() - INTERVAL '10 minutes')
+              OR (${schedules.lastCallStatus} = 'failed' AND ${schedules.lastCalled} > NOW() - INTERVAL '10 minutes')
             )`,
           ),
         );
+      
+
 
       // Filter schedules using DST-aware timezone conversion
       const pendingSchedules = allActiveSchedules.filter((row) => {

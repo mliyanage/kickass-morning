@@ -127,13 +127,14 @@ KickAss Morning is an AI-powered motivational wake-up service that delivers pers
 
 ```
 Changelog:
-- July 31, 2025. Enhanced retry logic with same-day duplicate prevention implemented:
-  * Failed calls get exactly 2 retry attempts within 10 minutes, then stop permanently
+- July 31, 2025. Fixed critical race condition causing duplicate calls every 5 minutes:
+  * Root cause: SQL condition allowed pending calls to be retried, causing 10:10, 10:15, 10:20 PM duplicates
+  * Changed retry condition from "!= completed" to "= failed" to exclude pending calls
+  * Pending calls now properly blocked to prevent race conditions during Twilio webhook delays
+  * Failed calls still get exactly 2 retry attempts within 10 minutes, then stop permanently
   * Completed calls blocked from running again on the same day (timezone-aware)
-  * Different-day recurring calls work normally for completed schedules
-  * Prevents multiple calls at 5:00, 5:05, 5:10 PM for same schedule
   * Final logic: (never called) OR (completed AND different day) OR (failed within 10 minutes)
-  * Example: Call succeeds at 5:00 PM → blocked until next day at 5:00 PM
+  * Eliminates all duplicate call scenarios while maintaining proper retry functionality
 - July 30, 2025. Critical duplicate call prevention bug fix completed:
   * Fixed SQL logic in getPendingSchedules that was preventing completed calls from running again on different days
   * Root cause: Overly restrictive condition "(lastCallStatus != 'completed')" blocked all completed schedules permanently
