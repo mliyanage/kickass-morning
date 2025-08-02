@@ -47,6 +47,7 @@ export const users = pgTable("users", {
   phone: text("phone"),
   phoneVerified: boolean("phone_verified").default(false),
   isPersonalized: boolean("is_personalized").default(false),
+  welcomeEmailSent: boolean("welcome_email_sent").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

@@ -277,6 +277,19 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async updateWelcomeEmailSent(userId: number): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({
+        welcomeEmailSent: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return user;
+  }
+
   // OTP related methods
   // Email OTP methods
   async createEmailOtp(data: {

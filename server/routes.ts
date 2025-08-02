@@ -20,7 +20,7 @@ import {
 import { generateOTP, getNextCallTime } from "./utils";
 import { sendSMS, makeCall } from "./twilio";
 import { generateVoiceMessage, generateSpeechAudio } from "./openai";
-import { sendOtpEmail } from "./email-utils";
+import { sendOtpEmail, sendWelcomeEmail } from "./email-utils";
 import * as nodeSchedule from "node-schedule";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
@@ -781,6 +781,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Note: Calls are now handled by the centralized scheduler (scheduler.ts)
         // No need to create individual node-schedule jobs here as the main scheduler
         // will detect and process this schedule based on database state
+
+        // Check if this is the user's first schedule and send welcome email
+        const userSchedules = await storage.getUserSchedules(user.id);
+        if (userSchedules.length === 1 && !user.welcomeEmailSent) {
+          // This is their first schedule, send welcome email
+          const firstName = user.name ? user.name.split(' ')[0] : 'there';
+          const emailSent = await sendWelcomeEmail(user.email, firstName);
+          
+          if (emailSent) {
+            // Mark welcome email as sent
+            await storage.updateWelcomeEmailSent(user.id);
+            console.log(`Welcome email sent to ${user.email} (${firstName})`);
+          } else {
+            console.warn(`Failed to send welcome email to ${user.email}`);
+          }
+        }
 
         res.status(201).json({
           message: "Schedule created successfully.",

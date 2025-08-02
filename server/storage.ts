@@ -24,6 +24,7 @@ export interface IStorage {
     userId: number,
     isPersonalized: boolean,
   ): Promise<User | undefined>;
+  updateWelcomeEmailSent(userId: number): Promise<User | undefined>;
 
   // OTP related
   createEmailOtp(data: {
@@ -149,6 +150,7 @@ export class MemStorage implements IStorage {
       phone: null,
       phoneVerified: false,
       isPersonalized: false,
+      welcomeEmailSent: false,
       createdAt: now,
       updatedAt: now,
     };
@@ -180,6 +182,17 @@ export class MemStorage implements IStorage {
     if (!user) return undefined;
 
     user.isPersonalized = isPersonalized;
+    user.updatedAt = new Date();
+
+    this.users.set(userId, user);
+    return user;
+  }
+
+  async updateWelcomeEmailSent(userId: number): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+
+    user.welcomeEmailSent = true;
     user.updatedAt = new Date();
 
     this.users.set(userId, user);

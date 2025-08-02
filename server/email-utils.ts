@@ -53,8 +53,8 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
         Messages: [
           {
             From: {
-              Email: "notifications@kickassmorning.com",
-              Name: "KickAss Morning"
+              Email: "gangoda@kickassmorning.com",
+              Name: "Gangoda from KickAss Morning"
             },
             To: [
               {
@@ -75,6 +75,125 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
     console.error('Mailjet email error:', error);
     return false;
   }
+}
+
+/**
+ * Send a welcome email to new users who scheduled their first call
+ * 
+ * @param email Recipient email address
+ * @param firstName User's first name
+ * @returns Promise resolving to true if email was sent successfully, false otherwise
+ */
+export async function sendWelcomeEmail(email: string, firstName: string): Promise<boolean> {
+  const subject = "you're in — thanks for joining me";
+  
+  const text = `Hey ${firstName},
+
+Thanks so much for signing up for Kickass Morning — this means a lot to me.
+
+Waking up early has been something I've struggled with pretty much my whole life. Alarms never worked. Even when I got enough sleep, I'd just shut them off and roll back over.
+
+But whenever I had someone call me — like a friend needing a ride to the airport, or an early appointment — I'd wake up immediately, no hesitation.
+
+That's what gave me the idea:
+What if I could recreate that feeling of someone counting on me — using AI?
+
+So I built this little tool, first just for myself. And now you're one of the very first people to try it out.
+
+It's still early days, and I'd really love your feedback.
+Please use it for a few days and let me know how it goes — good or bad, I want to hear it.
+You can just reply to this email or write to me at gangoda@kickassmorning.com.
+
+Here are a few quick tips to get the most out of it:
+
+☀️ Save the number you get the call from
+Make it something motivating like "Drill Sergeant" or "Coach You Got This"
+
+🔕 Don't keep your phone on silent
+And try to actually answer when it rings — that's the whole magic
+
+⏱️ Don't go too hard too fast
+Set your first call just 30 minutes earlier than your usual wake-up. After a week, you can push it earlier.
+
+I'm also working on a few things behind the scenes:
+
+Letting you connect landline or second numbers
+
+Adding weekly "success report cards"
+
+More voices and even motivational texts
+
+Wake-up calls for other goals, not just mornings
+
+If this helps you even a little, would you mind sharing it on your social media?
+That would seriously help me keep building and improving it.
+
+You can link to kickassmorning.com — and I'll be super grateful 🙏
+
+Thanks again. You've officially got someone to call you out of bed.
+Let's crush the morning together.
+
+– Gangoda
+Founder, Kickass Morning`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6; color: #333;">
+      <p>Hey ${firstName},</p>
+      
+      <p>Thanks so much for signing up for Kickass Morning — this means a lot to me.</p>
+      
+      <p>Waking up early has been something I've struggled with pretty much my whole life. Alarms never worked. Even when I got enough sleep, I'd just shut them off and roll back over.</p>
+      
+      <p>But whenever I had someone call me — like a friend needing a ride to the airport, or an early appointment — I'd wake up immediately, no hesitation.</p>
+      
+      <p><strong>That's what gave me the idea:</strong><br>
+      What if I could recreate that feeling of someone counting on me — using AI?</p>
+      
+      <p>So I built this little tool, first just for myself. And now you're one of the very first people to try it out.</p>
+      
+      <p>It's still early days, and I'd really love your feedback.<br>
+      Please use it for a few days and let me know how it goes — good or bad, I want to hear it.<br>
+      You can just reply to this email or write to me at <a href="mailto:gangoda@kickassmorning.com">gangoda@kickassmorning.com</a>.</p>
+      
+      <h3 style="color: #5E35B1;">Here are a few quick tips to get the most out of it:</h3>
+      
+      <p><strong>☀️ Save the number you get the call from</strong><br>
+      Make it something motivating like "Drill Sergeant" or "Coach You Got This"</p>
+      
+      <p><strong>🔕 Don't keep your phone on silent</strong><br>
+      And try to actually answer when it rings — that's the whole magic</p>
+      
+      <p><strong>⏱️ Don't go too hard too fast</strong><br>
+      Set your first call just 30 minutes earlier than your usual wake-up. After a week, you can push it earlier.</p>
+      
+      <h3 style="color: #5E35B1;">I'm also working on a few things behind the scenes:</h3>
+      
+      <ul>
+        <li>Letting you connect landline or second numbers</li>
+        <li>Adding weekly "success report cards"</li>
+        <li>More voices and even motivational texts</li>
+        <li>Wake-up calls for other goals, not just mornings</li>
+      </ul>
+      
+      <p>If this helps you even a little, would you mind sharing it on your social media?<br>
+      That would seriously help me keep building and improving it.</p>
+      
+      <p>You can link to <a href="https://kickassmorning.com">kickassmorning.com</a> — and I'll be super grateful 🙏</p>
+      
+      <p>Thanks again. You've officially got someone to call you out of bed.<br>
+      Let's crush the morning together.</p>
+      
+      <p style="margin-top: 30px;">– Gangoda<br>
+      <em>Founder, Kickass Morning</em></p>
+    </div>
+  `;
+  
+  return await sendEmail({
+    to: email,
+    subject,
+    text,
+    html
+  });
 }
 
 /**
