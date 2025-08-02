@@ -7,6 +7,51 @@ KickAss Morning is an AI-powered motivational wake-up service designed to help u
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
+
+### End-to-End Architecture Overview
+KickAss Morning uses a **unified server architecture** where both frontend and backend run on the same Express server, making deployment simple and secure.
+
+#### Request Flow & Routing
+```
+├── Express Server (Port 5000)
+    ├── API Routes (/api/*)     → Backend logic
+    ├── Static Assets (/audio-cache) → Audio files
+    └── Everything Else (*)    → React App (Vite)
+```
+
+**Key Files:**
+- `server/index.ts` - Main server entry point
+- `server/vite.ts` - Integrates Vite dev server as middleware
+- `vite.config.ts` - Configures build process and aliases
+
+#### Client ↔ Backend Communication
+All client requests go through unified query client (`client/src/lib/queryClient.ts`):
+- **Automatic Cookie Management**: `credentials: "include"` sends session cookies
+- **Error Handling**: Unified error responses with status-specific messages
+- **TanStack Query Integration**: Efficient data fetching with automatic cache invalidation
+
+#### Security Architecture
+**Session-Based Authentication:**
+- Sessions stored in PostgreSQL database (not localStorage/memory)
+- HTTP-only cookies prevent XSS attacks
+- HTTPS-only cookies in production
+- SameSite protection against CSRF
+
+**Multi-Layer Verification:**
+1. **Email OTP** → Basic account access
+2. **Phone SMS** → Core app features (scheduling calls)
+3. **Personalization** → Full feature access
+
+**Authentication Middleware:**
+- `isAuthenticated` - Verifies session exists
+- `isPhoneVerified` - Ensures phone verification completed
+- Zod validation on all API endpoints
+
+#### Navigation & State Management
+- **Adaptive Layout System**: Smart authentication state detection
+- **Route Protection**: Automatic redirects based on auth status
+- **Persistent State**: SessionStorage for reliable user experience
+
 ### Frontend
 - **Framework**: React 18 with TypeScript
 - **Styling**: TailwindCSS with Shadcn/UI
