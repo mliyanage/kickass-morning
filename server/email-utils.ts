@@ -32,6 +32,8 @@ interface EmailParams {
   subject: string;
   text: string;
   html: string;
+  fromEmail?: string;
+  fromName?: string;
 }
 
 /**
@@ -53,8 +55,8 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
         Messages: [
           {
             From: {
-              Email: "gangoda@kickassmorning.com",
-              Name: "Gangoda from KickAss Morning"
+              Email: params.fromEmail || "notifications@kickassmorning.com",
+              Name: params.fromName || "KickAss Morning"
             },
             To: [
               {
@@ -192,7 +194,9 @@ Founder, Kickass Morning`;
     to: email,
     subject,
     text,
-    html
+    html,
+    fromEmail: "gangoda@kickassmorning.com",
+    fromName: "Gangoda from KickAss Morning"
   });
 }
 
