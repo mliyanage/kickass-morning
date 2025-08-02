@@ -1123,7 +1123,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: Request, res: Response) => {
       try {
         console.log("Received Twilio webhook:", req.body);
-        console.log(`[WEBHOOK TIMING] ${new Date().toISOString()} - Processing status update for ${req.body.CallSid}: ${req.body.CallStatus}`);
 
         // Extract data from the webhook
         const { CallSid, CallStatus } = req.body;
@@ -1181,9 +1180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Mapped status: ${status}`); // Debug log to confirm mapping
 
         // Update the call status in the database
-        console.log(`[WEBHOOK TIMING] ${new Date().toISOString()} - Updating database status to: ${status} for CallSid: ${CallSid}`);
         await storage.updateCallStatus(CallSid, status);
-        console.log(`[WEBHOOK TIMING] ${new Date().toISOString()} - Database status update completed for CallSid: ${CallSid}`);
 
         // Respond to Twilio
         res.sendStatus(200);

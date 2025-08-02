@@ -19,6 +19,7 @@ import SelectionCard from "@/components/SelectionCard";
 import { GoalType, StruggleType } from "@shared/schema";
 import { PersonalizationData } from "@/types";
 import AppLayout from "@/components/layouts/AppLayout";
+import { trackEngagement } from "../../lib/analytics";
 import { 
   Settings,
   Dumbbell, 
@@ -180,6 +181,9 @@ export default function Personalization() {
       return await apiRequest("POST", "/api/user/personalization", data);
     },
     onSuccess: async () => {
+      // Track personalization completion for marketing analytics
+      trackEngagement('personalization_completed');
+      
       // Invalidate and refetch the personalization cache immediately
       await queryClient.invalidateQueries({
         queryKey: ["/api/user/personalization"]

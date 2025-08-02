@@ -10,6 +10,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { PhoneVerificationRequest } from "@/types";
 import AppLayout from "@/components/layouts/AppLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { trackConversion } from "../../lib/analytics";
 
 // List of common country codes
 const countryCodes = [
