@@ -1,190 +1,333 @@
-# Multi-Environment Deployment Guide
+# Deployment Environments Guide
 
 ## Overview
 
-KickAss Morning supports multiple deployment environments with dedicated databases for proper data isolation and testing workflows.
+KickAss Morning is designed for flexible deployment across multiple environments. This guide covers production deployment on AWS Elastic Beanstalk with a separate RDS PostgreSQL database.
 
-## Database Setup
+## Architecture Decision
 
-### 1. Create Separate Databases
+We use AWS Elastic Beanstalk for application hosting with a separate RDS instance for the database, rather than EB-managed RDS. This provides:
+- Greater database control and flexibility
+- Independent scaling of compute and database resources
+- Easier database backup and maintenance
+- Ability to persist data across application redeployments
 
-**Test Environment:**
-- Create a new Replit PostgreSQL database specifically for testing
-- Use environment variable: `TEST_DATABASE_URL`
+## Environment Configuration
 
-**Production Environment:**
-- Use your existing production PostgreSQL database
-- Keep existing environment variable: `DATABASE_URL`
+### Development Environment (Current)
+- **Platform**: Replit
+- **Database**: Neon PostgreSQL (serverless)
+- **Sessions**: Memory-based
+- **Features**: Full development setup with hot reloading
 
-### 2. Environment Detection Logic
+### Production Environment (AWS)
+- **Platform**: AWS Elastic Beanstalk (Node.js 20)
+- **Database**: AWS RDS PostgreSQL (separate instance)
+- **Sessions**: PostgreSQL-backed sessions
+- **Features**: Production-optimized with proper scaling
 
-The app automatically detects environments based on:
-- **Development**: `NODE_ENV !== 'production'` OR running locally
-- **Test**: `NODE_ENV === 'test'` OR `DEPLOYMENT_ENV === 'test'`
-- **Production**: `NODE_ENV === 'production'` AND `DEPLOYMENT_ENV === 'production'`
+## Pre-Deployment Requirements
 
-## Deployment Configuration
+### 1. AWS Account Setup
+- AWS account with appropriate permissions
+- AWS CLI installed and configured
+- EB CLI installed
 
-### Test Environment
+### 2. Environment Variables Required
 ```bash
-# Test deployment secrets
-NODE_ENV=test
-DEPLOYMENT_ENV=test
-TEST_DATABASE_URL=postgresql://user:pass@host:port/test_db
-TWILIO_ACCOUNT_SID=AC... (test credentials)
-MAILJET_API_KEY=... (test credentials)
-```
+# Database
+DATABASE_URL=postgresql://username:password@rds-endpoint:5432/database
 
-### Production Environment
-```bash
-# Production deployment secrets
+# Email Service
+MAILJET_API_KEY=your_mailjet_api_key
+MAILJET_SECRET_KEY=your_mailjet_secret_key
+
+# SMS/Voice Service
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=your_twilio_phone_number
+
+# AI Services
+OPENAI_API_KEY=your_openai_api_key
+
+# Analytics (Optional)
+VITE_GA_MEASUREMENT_ID=your_google_analytics_id
+
+# Environment
 NODE_ENV=production
-DEPLOYMENT_ENV=production
-DATABASE_URL=postgresql://user:pass@host:port/prod_db
-TWILIO_ACCOUNT_SID=AC... (production credentials)
-MAILJET_API_KEY=... (production credentials)
 ```
 
-## Environment-Specific Features
+### 3. Database Migration Strategy
+- Export development data if needed
+- Run database schema migration on RDS
+- Verify all indexes and constraints
 
-### Database Connection
-- **Test**: Uses `TEST_DATABASE_URL` with test data
-- **Production**: Uses `DATABASE_URL` with live user data
+## Step-by-Step AWS Deployment Process
 
-### External Services
-- **Test**: Can use Twilio test credentials and Mailjet test API
-- **Production**: Uses live credentials for real calls and emails
+### Phase 1: Database Setup (RDS)
 
-### Session Storage
-- **Test**: PostgreSQL-based sessions (test database)
-- **Production**: PostgreSQL-based sessions (production database)
+1. **Create RDS PostgreSQL Instance**
+   ```bash
+   # Create DB subnet group
+   aws rds create-db-subnet-group \
+     --db-subnet-group-name kickass-morning-subnet-group \
+     --db-subnet-group-description "Subnet group for KickAss Morning" \
+     --subnet-ids subnet-12345 subnet-67890
 
-## Step-by-Step Deployment Process
+   # Create RDS instance
+   aws rds create-db-instance \
+     --db-instance-identifier kickass-morning-db \
+     --db-instance-class db.t3.micro \
+     --engine postgres \
+     --engine-version 15.4 \
+     --master-username kickassuser \
+     --master-user-password YOUR_SECURE_PASSWORD \
+     --allocated-storage 20 \
+     --db-name kickassmorning \
+     --vpc-security-group-ids sg-12345 \
+     --db-subnet-group-name kickass-morning-subnet-group \
+     --backup-retention-period 7 \
+     --storage-encrypted
+   ```
 
-### 1. Create Separate Databases
+2. **Configure Security Group**
+   - Allow inbound PostgreSQL (port 5432) from EB environment
+   - Restrict access to application servers only
 
-**For Test Environment:**
-1. Create a new Replit project or fork your existing one
-2. Go to Database tab in Replit
-3. Create a new PostgreSQL database specifically for testing
-4. Copy the database connection URL
-5. Add to Replit Secrets as `TEST_DATABASE_URL`
+3. **Get Database Endpoint**
+   ```bash
+   aws rds describe-db-instances --db-instance-identifier kickass-morning-db
+   ```
 
-**For Production Environment:**
-1. Use your existing production database
-2. Ensure `DATABASE_URL` is set in production secrets
+### Phase 2: Application Preparation
 
-### 2. Configure Environment Variables
+1. **Install EB CLI**
+   ```bash
+   pip install awsebcli
+   ```
 
-**Test Deployment Secrets:**
-```
-NODE_ENV=test
-DEPLOYMENT_ENV=test
-TEST_DATABASE_URL=postgresql://user:pass@host:port/test_db
-TWILIO_ACCOUNT_SID=AC... (test credentials)
-TWILIO_AUTH_TOKEN=... (test token)
-TWILIO_PHONE_NUMBER=+1... (test number)
-MAILJET_API_KEY=... (test API key)
-MAILJET_SECRET_KEY=... (test secret)
-```
+2. **Create .ebextensions Directory**
+   ```bash
+   mkdir .ebextensions
+   ```
 
-**Production Deployment Secrets:**
-```
-NODE_ENV=production
-DEPLOYMENT_ENV=production
-DATABASE_URL=postgresql://user:pass@host:port/prod_db
-TWILIO_ACCOUNT_SID=AC... (production credentials)
-TWILIO_AUTH_TOKEN=... (production token)  
-TWILIO_PHONE_NUMBER=+1... (production number)
-MAILJET_API_KEY=... (production API key)
-MAILJET_SECRET_KEY=... (production secret)
-```
+3. **Create EB Configuration Files**
+   
+   **.ebextensions/01-nodejs.config**
+   ```yaml
+   option_settings:
+     aws:elasticbeanstalk:application:environment:
+       NODE_ENV: production
+     aws:elasticbeanstalk:container:nodejs:
+       NodeCommand: "npm start"
+       NodeVersion: 20.9.0
+   ```
 
-### 3. Deploy Applications
+   **.ebextensions/02-environment.config**
+   ```yaml
+   option_settings:
+     aws:elasticbeanstalk:application:environment:
+       NODE_OPTIONS: "--max-old-space-size=1024"
+   ```
 
-**Test Environment:**
-1. Fork your main project in Replit
-2. Name it "kickass-morning-test"
-3. Set test environment variables in Secrets
-4. Click Deploy button
-5. Choose "Reserved VM" for consistent testing
+4. **Update package.json Scripts**
+   ```json
+   {
+     "scripts": {
+       "start": "node server/index.js",
+       "build": "npm run build:client && npm run build:server",
+       "build:client": "vite build client",
+       "build:server": "tsc server/index.ts --outDir build"
+     }
+   }
+   ```
 
-**Production Environment:**
-1. In your main project
-2. Set production environment variables in Secrets
-3. Click Deploy button
-4. Choose "Autoscale" for production scaling
-5. Configure custom domain if desired
+### Phase 3: Elastic Beanstalk Setup
 
-### 4. Database Migration
+1. **Initialize EB Application**
+   ```bash
+   eb init
+   ```
+   - Select region (e.g., us-east-1)
+   - Choose Node.js platform
+   - Set application name: kickass-morning
 
-**After deploying each environment:**
-1. The app will automatically detect the environment
-2. Connect to the appropriate database
-3. Run `npm run db:push` to apply schema changes
-4. Verify tables are created correctly
+2. **Create EB Environment**
+   ```bash
+   eb create production
+   ```
+   - Choose load balancer type: Application Load Balancer
+   - Enable spot fleet requests: No (for stability)
 
-### 5. Verification Steps
+3. **Configure Environment Variables**
+   ```bash
+   eb setenv \
+     DATABASE_URL=postgresql://kickassuser:password@your-rds-endpoint:5432/kickassmorning \
+     MAILJET_API_KEY=your_key \
+     MAILJET_SECRET_KEY=your_secret \
+     TWILIO_ACCOUNT_SID=your_sid \
+     TWILIO_AUTH_TOKEN=your_token \
+     TWILIO_PHONE_NUMBER=your_number \
+     OPENAI_API_KEY=your_openai_key \
+     NODE_ENV=production
+   ```
 
-**Test Environment Checklist:**
-- [ ] App loads at test URL
-- [ ] Database connection shows test database in logs
-- [ ] User registration works with test emails
-- [ ] SMS works with test phone numbers
-- [ ] Scheduler runs but doesn't make real calls
+### Phase 4: Database Schema Setup
 
-**Production Environment Checklist:**
-- [ ] App loads at production URL
-- [ ] Database connection shows production database in logs
-- [ ] Real user registration and verification works
-- [ ] Live calls and SMS work correctly
-- [ ] All production integrations functional
+1. **Run Database Migration**
+   ```bash
+   # Connect to RDS instance
+   psql postgresql://kickassuser:password@your-rds-endpoint:5432/kickassmorning
 
-## Database Migration Strategy
+   # Or use the application's built-in migration
+   npm run db:push
+   ```
 
-### Schema Updates
+2. **Verify Schema**
+   ```sql
+   \dt  -- List all tables
+   \d users  -- Describe users table
+   \d schedules  -- Describe schedules table
+   \d calls  -- Describe calls table
+   ```
+
+### Phase 5: Deployment
+
+1. **Deploy Application**
+   ```bash
+   eb deploy
+   ```
+
+2. **Monitor Deployment**
+   ```bash
+   eb logs
+   eb health
+   eb status
+   ```
+
+3. **Test Application**
+   ```bash
+   eb open
+   ```
+
+## Post-Deployment Configuration
+
+### 1. Domain Setup
+- Configure custom domain through Route 53
+- Set up SSL certificate via Certificate Manager
+- Update CORS settings if needed
+
+### 2. Monitoring Setup
+- CloudWatch alarms for application health
+- RDS monitoring for database performance
+- Log aggregation setup
+
+### 3. Backup Strategy
+- RDS automated backups (already configured)
+- Application code backup via git
+- Environment configuration backup
+
+## Environment Variables Security
+
+### Sensitive Data Management
+- Use AWS Systems Manager Parameter Store for secrets
+- Rotate API keys regularly
+- Monitor for exposed credentials
+
+### Example Parameter Store Setup
 ```bash
-# Test environment
-DEPLOYMENT_ENV=test npm run db:push
-
-# Production environment  
-DEPLOYMENT_ENV=production npm run db:push
+aws ssm put-parameter \
+  --name "/kickass-morning/production/database-url" \
+  --value "postgresql://..." \
+  --type "SecureString"
 ```
 
-### Data Migration
-- Test database: Can be reset/seeded with test data
-- Production database: Requires careful migration planning
+## Scaling Configuration
 
-## Monitoring
+### Auto Scaling Settings
+```yaml
+# .ebextensions/03-scaling.config
+option_settings:
+  aws:autoscaling:asg:
+    MinSize: 1
+    MaxSize: 4
+  aws:autoscaling:trigger:
+    MeasureName: CPUUtilization
+    Unit: Percent
+    UpperThreshold: 80
+    LowerThreshold: 20
+```
 
-### Environment-Specific Health Checks
-- Test: `https://test-app.replit.app/api/health`
-- Production: `https://prod-app.replit.app/api/health`
+### Database Scaling
+- Monitor RDS CPU and memory usage
+- Scale up instance class if needed
+- Consider read replicas for high traffic
 
-### Separate Logging
-Each environment maintains isolated:
-- Call history
-- User data
-- System logs
-- Error tracking
+## Troubleshooting
 
-## Best Practices
+### Common Issues
+1. **Database Connection Timeouts**
+   - Check security group rules
+   - Verify RDS endpoint accessibility
+   - Test connection from EB instance
 
-### Test Environment
-- Use test phone numbers for Twilio
-- Use test email addresses for Mailjet
-- Can reset database regularly
-- Safe for experimental features
+2. **Environment Variable Issues**
+   - Verify all required variables are set
+   - Check for typos in variable names
+   - Ensure secure string values are accessible
 
-### Production Environment
-- Real user data and phone numbers
-- Live payment processing (if applicable)
-- Careful deployment procedures
-- Regular backups
+3. **Build Failures**
+   - Check Node.js version compatibility
+   - Verify all dependencies are in package.json
+   - Review build logs for specific errors
 
-## Security Considerations
+### Monitoring Commands
+```bash
+# Application logs
+eb logs
 
-1. **Separate Credentials**: Never use production API keys in test
-2. **Data Isolation**: Test and production data never mix
-3. **Access Control**: Different team access levels per environment
-4. **Backup Strategy**: Production requires automated backups
+# Environment health
+eb health --refresh
+
+# RDS monitoring
+aws rds describe-db-instances --db-instance-identifier kickass-morning-db
+
+# CloudWatch metrics
+aws cloudwatch get-metric-statistics \
+  --namespace AWS/ElasticBeanstalk \
+  --metric-name EnvironmentHealth \
+  --dimensions Name=EnvironmentName,Value=production
+```
+
+## Maintenance
+
+### Regular Tasks
+- Monitor application performance
+- Review RDS performance insights
+- Update dependencies
+- Rotate API keys
+- Review CloudWatch alarms
+
+### Backup Verification
+- Test RDS backup restoration
+- Verify application configuration backup
+- Document recovery procedures
+
+## Cost Optimization
+
+### EB Instance Optimization
+- Use t3.micro for low traffic
+- Enable spot instances for non-critical environments
+- Monitor usage patterns for right-sizing
+
+### RDS Optimization
+- Use db.t3.micro for development
+- Scale to db.t3.small or larger for production
+- Monitor storage growth and optimize queries
+
+---
+
+**Last Updated**: August 3, 2025
+**Environment**: Production-ready AWS deployment
+**Database**: Separate RDS PostgreSQL instance
+**Scaling**: Auto-scaling enabled with monitoring

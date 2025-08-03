@@ -94,6 +94,15 @@ All client requests go through unified query client (`client/src/lib/queryClient
 
 ## Recent Changes
 
+**August 3, 2025**: Production deployment setup for AWS Elastic Beanstalk:
+- Created comprehensive AWS deployment configuration with separate RDS database
+- Implemented parameterized email system (personal Gangoda email for welcome, generic for OTP)
+- Added complete welcome email system triggered on first schedule creation
+- Created production-ready build scripts and EB configuration files
+- Documented step-by-step deployment process with security considerations
+- Cost-optimized architecture: ~$30-40/month with t3.small EB + db.t3.micro RDS
+- Established monitoring, scaling, and backup strategies for production environment
+
 **August 2, 2025**: Implemented Google Analytics 4 for marketing campaign tracking:
 - Added comprehensive conversion tracking: signup → phone verification → first schedule → first call
 - Implemented Meta ads campaign detection via UTM parameters and Facebook Click ID (fbclid)
@@ -102,3 +111,13 @@ All client requests go through unified query client (`client/src/lib/queryClient
 - Integrated automatic page view tracking for single-page application navigation
 - Supports affiliate marketing performance monitoring through UTM source tracking
 - Production-ready setup with environment variable validation and graceful fallbacks
+
+## Production Deployment
+
+**Platform**: AWS Elastic Beanstalk with separate RDS PostgreSQL database
+**Architecture**: Unified server approach (Express serves both API and React frontend)
+**Build Process**: Vite builds client, esbuild bundles server for Node.js production
+**Database**: Separate RDS instance (not EB-managed) for better control and persistence
+**Security**: VPC security groups, database encryption, HTTPS with SSL certificates
+**Monitoring**: CloudWatch logs, health checks, auto-scaling based on CPU utilization
+**Cost**: Approximately $30-40/month for production-ready setup
