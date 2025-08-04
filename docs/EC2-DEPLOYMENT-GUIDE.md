@@ -169,17 +169,30 @@ sudo chown kickass:kickass /opt/kickass-morning
 ### 1. Upload Application Code
 
 ```bash
-# Option A: Upload pre-built package
-# Build locally first: npm run build
-# Create deployment package: zip -r kickass-morning.zip dist/ package.json .ebextensions/ shared/
-# Upload to EC2:
-scp -i your-key.pem kickass-morning.zip ubuntu@$INSTANCE_IP:/tmp/
+# RECOMMENDED: Upload pre-built package
+# Build locally first:
+npm run build
 
-# Option B: Clone and build on server
-sudo -u kickass git clone https://github.com/your-repo/kickass-morning.git /opt/kickass-morning/app
+# Create deployment package:
+zip -r kickass-morning-deploy.zip \
+  dist/ \
+  package.json \
+  package-lock.json \
+  shared/ \
+  audio-cache/ \
+  -x "node_modules/*" "*.git*" "client/*"
+
+# Upload to EC2:
+scp -i your-key.pem kickass-morning-deploy.zip ubuntu@$INSTANCE_IP:/tmp/
+
+# Extract on server:
+sudo mkdir -p /opt/kickass-morning/app
+sudo chown kickass:kickass /opt/kickass-morning/app
 cd /opt/kickass-morning/app
+sudo -u kickass unzip /tmp/kickass-morning-deploy.zip
+
+# Install only production dependencies:
 sudo -u kickass npm ci --only=production
-sudo -u kickass npm run build
 ```
 
 ### 2. Create Environment Configuration
