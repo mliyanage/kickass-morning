@@ -112,12 +112,21 @@ All client requests go through unified query client (`client/src/lib/queryClient
 - Supports affiliate marketing performance monitoring through UTM source tracking
 - Production-ready setup with environment variable validation and graceful fallbacks
 
-## Production Deployment
+## Production Deployment Options
 
+### Option A: AWS Elastic Beanstalk (Managed)
 **Platform**: AWS Elastic Beanstalk with separate RDS PostgreSQL database
-**Architecture**: Unified server approach (Express serves both API and React frontend)
-**Build Process**: Vite builds client, esbuild bundles server for Node.js production
-**Database**: Separate RDS instance (not EB-managed) for better control and persistence
-**Security**: VPC security groups, database encryption, HTTPS with SSL certificates
-**Monitoring**: CloudWatch logs, health checks, auto-scaling based on CPU utilization
-**Cost**: Approximately $30-40/month for production-ready setup
+**Cost**: ~$30-40/month | **Maintenance**: Low | **Scaling**: Automatic
+**Features**: Managed platform, auto-scaling, load balancing, health checks
+
+### Option B: AWS EC2 (Manual Setup)
+**Platform**: EC2 Ubuntu + Nginx + PM2 with separate RDS PostgreSQL database
+**Cost**: ~$20-25/month | **Maintenance**: Moderate | **Scaling**: Manual
+**Features**: Full control, custom configuration, cost-effective
+
+**Common Architecture:**
+- Unified server approach (Express serves both API and React frontend)
+- Build process: Vite builds client, esbuild bundles server for Node.js production
+- Separate RDS instance (not managed) for better control and persistence
+- Security: VPC security groups, database encryption, HTTPS with SSL certificates
+- Monitoring: CloudWatch logs and custom health monitoring

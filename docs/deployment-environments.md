@@ -20,11 +20,26 @@ We use AWS Elastic Beanstalk for application hosting with a separate RDS instanc
 - **Sessions**: Memory-based
 - **Features**: Full development setup with hot reloading
 
-### Production Environment (AWS)
+### Production Environment Options
+
+#### Option A: AWS Elastic Beanstalk
 - **Platform**: AWS Elastic Beanstalk (Node.js 20)
 - **Database**: AWS RDS PostgreSQL (separate instance)
-- **Sessions**: PostgreSQL-backed sessions
-- **Features**: Production-optimized with proper scaling
+- **Cost**: ~$30-40/month
+- **Maintenance**: Low (managed platform)
+- **Scaling**: Automatic
+
+#### Option B: AWS EC2 (Manual Setup)
+- **Platform**: EC2 Ubuntu 22.04 + Nginx + PM2
+- **Database**: AWS RDS PostgreSQL (separate instance)
+- **Cost**: ~$20-25/month
+- **Maintenance**: Moderate (manual updates)
+- **Scaling**: Manual or custom autoscaling
+
+**Common Features:**
+- PostgreSQL-backed sessions
+- SSL/TLS encryption
+- Production-optimized configuration
 
 ## Pre-Deployment Requirements
 
