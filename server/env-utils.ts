@@ -15,7 +15,7 @@ export const ENVIRONMENT_URLS = {
   development:
     "https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev",
   test: "https://kickass-morning-test.replit.app",
-  production: "https://wakeup-genius-mliyanage1.replit.app",
+  production: "https://app.kickassmorning.com",
 };
 
 /**
