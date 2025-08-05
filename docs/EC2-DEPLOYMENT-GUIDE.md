@@ -272,14 +272,17 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 psql "$DATABASE_URL" -c "SELECT version();"
 
 ## Phase 6: Nginx Configuration
 
-### 1. Create Nginx Configuration
+### 1. Create Nginx Configuration (Amazon Linux)
 
 ```bash
-# Create site configuration
-sudo tee /etc/nginx/sites-available/kickass-morning > /dev/null <<EOF
+# Check Nginx configuration directory structure
+ls -la /etc/nginx/
+
+# For Amazon Linux, create configuration directly in conf.d
+sudo tee /etc/nginx/conf.d/kickass-morning.conf > /dev/null <<EOF
 server {
     listen 80;
-    server_name kickassmorning.com www.kickassmorning.com;
+    server_name app.kickassmorning.com;
 
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -310,16 +313,16 @@ server {
 }
 EOF
 
-# Enable site
-sudo ln -s /etc/nginx/sites-available/kickass-morning /etc/nginx/sites-enabled/
-sudo rm /etc/nginx/sites-enabled/default
+# Remove default configuration if it exists
+sudo rm -f /etc/nginx/conf.d/default.conf
 
 # Test configuration
 sudo nginx -t
 
-# Restart Nginx
-sudo systemctl restart nginx
+# Start and enable Nginx
+sudo systemctl start nginx
 sudo systemctl enable nginx
+sudo systemctl status nginx
 ```
 
 ## Phase 7: SSL Certificate Setup
@@ -327,14 +330,15 @@ sudo systemctl enable nginx
 ### 1. Install Certbot
 
 ```bash
-# Install Certbot
-sudo apt install -y certbot python3-certbot-nginx
+# Install Certbot (Amazon Linux)
+sudo yum install -y certbot python3-certbot-nginx
 
 # Obtain SSL certificate
-sudo certbot --nginx -d kickassmorning.com -d www.kickassmorning.com
+sudo certbot --nginx -d app.kickassmorning.com
 
 # Set up automatic renewal
 sudo systemctl enable certbot.timer
+sudo systemctl start certbot.timer
 ```
 
 ## Phase 8: Start Application
