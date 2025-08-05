@@ -1,4 +1,4 @@
-# EC2 Manual Deployment Guide
+# EC2 Manual Deployment Guide for Amazon Linux
 
 ## Overview
 
@@ -6,7 +6,7 @@ Deploy KickAss Morning directly on an EC2 instance with complete control over th
 
 ## Architecture
 
-- **EC2 Instance**: Ubuntu 22.04 LTS with Node.js 20
+- **EC2 Instance**: Amazon Linux 2023 with Node.js 20
 - **Database**: Separate RDS PostgreSQL instance
 - **Reverse Proxy**: Nginx for HTTPS and static file serving
 - **Process Manager**: PM2 for application lifecycle management
@@ -128,8 +128,8 @@ export INSTANCE_IP=$(aws ec2 describe-instances \
   --query 'Reservations[0].Instances[0].PublicIpAddress' \
   --output text)
 
-# SSH to instance
-ssh -i your-key.pem ubuntu@$INSTANCE_IP
+# SSH to instance (Amazon Linux uses ec2-user)
+ssh -i your-key.pem ec2-user@$INSTANCE_IP
 ```
 
 ### 2. Install Dependencies (Amazon Linux)
@@ -163,8 +163,12 @@ sudo useradd -r -d /opt/kickass-morning -s /bin/bash kickass
 sudo mkdir -p /opt/kickass-morning
 sudo chown kickass:kickass /opt/kickass-morning
 
-# Set up proper PATH for kickass user
-echo 'export PATH=/usr/bin:$PATH' | sudo tee -a /opt/kickass-morning/.bashrc
+# Find current PATH and npm location for proper user setup
+echo "Current PATH: $PATH"
+echo "NPM location: $(which npm)"
+
+# Set up proper PATH for kickass user (copy from current user)
+echo "export PATH=$PATH" | sudo tee /opt/kickass-morning/.bashrc
 sudo chown kickass:kickass /opt/kickass-morning/.bashrc
 ```
 
@@ -202,11 +206,11 @@ sudo -u kickass npm ci --only=production
 ### 2. Create Environment Configuration
 
 ```bash
-# Create environment file
-sudo -u kickass tee /opt/kickass-morning/.env > /dev/null <<EOF
+# Create environment file with proper SSL configuration for RDS
+sudo tee /opt/kickass-morning/.env > /dev/null <<EOF
 NODE_ENV=production
 PORT=3000
-DATABASE_URL=postgresql://kickassuser:your-password@your-rds-endpoint:5432/kickassmorning
+DATABASE_URL=postgresql://kickassuser:your-password@your-rds-endpoint:5432/kickassmorning?sslmode=require
 MAILJET_API_KEY=your_mailjet_api_key
 MAILJET_SECRET_KEY=your_mailjet_secret_key
 TWILIO_ACCOUNT_SID=your_twilio_sid
@@ -217,6 +221,7 @@ EOF
 
 # Secure environment file
 sudo chmod 600 /opt/kickass-morning/.env
+sudo chown kickass:kickass /opt/kickass-morning/.env
 ```
 
 ### 3. Create PM2 Configuration
@@ -251,9 +256,18 @@ sudo chown kickass:kickass /opt/kickass-morning/logs
 ## Phase 5: Database Migration
 
 ```bash
-# Run database migration
+# Run database migration with SSL certificate workaround
 cd /opt/kickass-morning/app
-sudo -u kickass bash -c 'source /opt/kickass-morning/.env && npm run db:push'
+
+# Method 1: Run as current user (recommended)
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+source /opt/kickass-morning/.env && npm run db:push
+
+# Method 2: Run as kickass user (if PATH is set correctly)
+sudo -u kickass bash -c 'export NODE_TLS_REJECT_UNAUTHORIZED=0 && cd /opt/kickass-morning/app && source /opt/kickass-morning/.bashrc && source /opt/kickass-morning/.env && npm run db:push'
+
+# Verify database connection
+NODE_TLS_REJECT_UNAUTHORIZED=0 psql "$DATABASE_URL" -c "SELECT version();"
 ```
 
 ## Phase 6: Nginx Configuration
@@ -378,9 +392,9 @@ EOF
 ### 2. Set Up CloudWatch Monitoring
 
 ```bash
-# Install CloudWatch agent
-wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
-sudo dpkg -i amazon-cloudwatch-agent.deb
+# Install CloudWatch agent (Amazon Linux)
+wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+sudo rpm -U amazon-cloudwatch-agent.rpm
 
 # Configure CloudWatch (optional)
 # Follow AWS CloudWatch agent configuration guide
@@ -423,12 +437,18 @@ sudo certbot renew
 ### Database Management
 
 ```bash
-# Connect to database
-psql "$DATABASE_URL"
+# Connect to database (with SSL workaround)
+cd /opt/kickass-morning/app
+source /opt/kickass-morning/.env
+NODE_TLS_REJECT_UNAUTHORIZED=0 psql "$DATABASE_URL"
 
 # Run migrations
-cd /opt/kickass-morning/app
-sudo -u kickass bash -c 'source /opt/kickass-morning/.env && npm run db:push'
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+source /opt/kickass-morning/.env && npm run db:push
+
+# Quick database verification commands
+NODE_TLS_REJECT_UNAUTHORIZED=0 psql "$DATABASE_URL" -c "\dt"  # List tables
+NODE_TLS_REJECT_UNAUTHORIZED=0 psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM users;"  # Count users
 ```
 
 ## Deployment Updates
@@ -442,11 +462,14 @@ sudo -u kickass pm2 stop kickass-morning
 # Update code (if using git)
 cd /opt/kickass-morning/app
 sudo -u kickass git pull origin main
-sudo -u kickass npm ci --only=production
-sudo -u kickass npm run build
 
-# Run any database migrations
-sudo -u kickass bash -c 'source /opt/kickass-morning/.env && npm run db:push'
+# Install dependencies and build
+sudo -u kickass bash -c 'source /opt/kickass-morning/.bashrc && npm ci --only=production'
+sudo -u kickass bash -c 'source /opt/kickass-morning/.bashrc && npm run build'
+
+# Run any database migrations (with SSL workaround)
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+source /opt/kickass-morning/.env && npm run db:push
 
 # Start application
 sudo -u kickass pm2 start kickass-morning
@@ -464,17 +487,20 @@ sudo -u kickass pm2 reload kickass-morning
 ### 1. Database Backups
 
 ```bash
-# Create backup script
-sudo tee /opt/kickass-morning/backup-db.sh > /dev/null <<EOF
+# Create backup script with SSL workaround
+sudo tee /opt/kickass-morning/backup-db.sh > /dev/null <<'EOF'
 #!/bin/bash
-DATE=\$(date +%Y%m%d_%H%M%S)
-pg_dump "\$DATABASE_URL" > /opt/kickass-morning/backups/db_backup_\$DATE.sql
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+source /opt/kickass-morning/.env
+DATE=$(date +%Y%m%d_%H%M%S)
+pg_dump "$DATABASE_URL" > /opt/kickass-morning/backups/db_backup_$DATE.sql
 # Keep only last 7 days
 find /opt/kickass-morning/backups -name "db_backup_*.sql" -mtime +7 -delete
 EOF
 
 sudo chmod +x /opt/kickass-morning/backup-db.sh
 sudo mkdir -p /opt/kickass-morning/backups
+sudo chown kickass:kickass /opt/kickass-morning/backups
 
 # Set up daily backup cron
 echo "0 2 * * * /opt/kickass-morning/backup-db.sh" | sudo -u kickass crontab -
@@ -495,21 +521,50 @@ sudo tar -czf /opt/kickass-morning/backups/app_backup_$(date +%Y%m%d).tar.gz \
 1. **Application won't start**
    ```bash
    sudo -u kickass pm2 logs kickass-morning
+   # Check if PATH is set correctly for kickass user
+   sudo -u kickass bash -c 'echo $PATH'
    ```
 
 2. **Database connection issues**
    ```bash
-   # Test database connectivity
+   # Test database connectivity with SSL workaround
+   export NODE_TLS_REJECT_UNAUTHORIZED=0
+   source /opt/kickass-morning/.env
    psql "$DATABASE_URL" -c "SELECT version();"
+   
+   # Test network connectivity
+   telnet your-rds-endpoint 5432
    ```
 
-3. **Nginx configuration issues**
+3. **NPM command not found for kickass user**
+   ```bash
+   # Check npm location
+   which npm
+   
+   # Update kickass user's PATH
+   echo "export PATH=$(echo $PATH)" | sudo tee /opt/kickass-morning/.bashrc
+   
+   # Or use full path
+   sudo -u kickass $(which npm) --version
+   ```
+
+4. **SSL Certificate errors (self-signed certificate)**
+   ```bash
+   # Use NODE_TLS_REJECT_UNAUTHORIZED=0 for database operations
+   export NODE_TLS_REJECT_UNAUTHORIZED=0
+   
+   # Or download RDS certificate bundle
+   wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -O /opt/kickass-morning/rds-ca-bundle.pem
+   # Update DATABASE_URL to include: ?sslmode=require&sslrootcert=/opt/kickass-morning/rds-ca-bundle.pem
+   ```
+
+5. **Nginx configuration issues**
    ```bash
    sudo nginx -t
-   sudo journalctl -u nginx
+   sudo systemctl status nginx
    ```
 
-4. **SSL certificate issues**
+6. **SSL certificate issues**
    ```bash
    sudo certbot certificates
    sudo certbot renew --dry-run

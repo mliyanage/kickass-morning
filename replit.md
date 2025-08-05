@@ -94,6 +94,14 @@ All client requests go through unified query client (`client/src/lib/queryClient
 
 ## Recent Changes
 
+**August 5, 2025**: Updated EC2 deployment guide for Amazon Linux production deployment:
+- Revised complete EC2 deployment guide for Amazon Linux 2023 (not Ubuntu)
+- Fixed PostgreSQL RDS SSL certificate authentication issues with NODE_TLS_REJECT_UNAUTHORIZED workaround
+- Updated npm PATH configuration for dedicated kickass user on Amazon Linux
+- Added proper database migration commands with SSL certificate handling
+- Included comprehensive troubleshooting section for Amazon Linux specific issues
+- Verified build structure: dist/public/ (frontend) and dist/index.js (server bundle)
+
 **August 3, 2025**: Production deployment setup for AWS Elastic Beanstalk:
 - Created comprehensive AWS deployment configuration with separate RDS database
 - Implemented parameterized email system (personal Gangoda email for welcome, generic for OTP)
