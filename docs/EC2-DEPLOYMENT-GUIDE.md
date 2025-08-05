@@ -132,18 +132,18 @@ export INSTANCE_IP=$(aws ec2 describe-instances \
 ssh -i your-key.pem ubuntu@$INSTANCE_IP
 ```
 
-### 2. Install Dependencies
+### 2. Install Dependencies (Amazon Linux)
 
 ```bash
 # Update system
-sudo apt update && sudo apt upgrade -y
+sudo yum update -y
 
 # Install Node.js 20
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
+curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+sudo yum install -y nodejs
 
 # Install additional tools
-sudo apt install -y nginx git unzip postgresql-client
+sudo yum install -y nginx git unzip postgresql15
 
 # Install PM2 globally
 sudo npm install -g pm2
@@ -153,15 +153,19 @@ node --version  # Should be v20.x
 npm --version   # Should be 10.x
 ```
 
-### 3. Create Application User
+### 3. Create Application User (Amazon Linux)
 
 ```bash
 # Create dedicated user for the application
-sudo adduser --system --group --home /opt/kickass-morning kickass
+sudo useradd -r -d /opt/kickass-morning -s /bin/bash kickass
 
-# Switch to application directory
+# Create and set permissions for application directory
 sudo mkdir -p /opt/kickass-morning
 sudo chown kickass:kickass /opt/kickass-morning
+
+# Set up proper PATH for kickass user
+echo 'export PATH=/usr/bin:$PATH' | sudo tee -a /opt/kickass-morning/.bashrc
+sudo chown kickass:kickass /opt/kickass-morning/.bashrc
 ```
 
 ## Phase 4: Application Deployment
