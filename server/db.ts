@@ -38,9 +38,14 @@ const env = detectEnvironment();
 
 console.log(`[${env.toUpperCase()}] Connecting to database: ${databaseUrl.split('@')[1] || 'local'}`);
 
+// Clean up the database URL for production (remove problematic SSL parameters)
+const cleanDatabaseUrl = env === 'production' 
+  ? databaseUrl.replace(/[?&]sslcert=disable/g, '').replace(/[?&]sslmode=require/g, '')
+  : databaseUrl;
+
 // Configure connection pool with better settings for AWS RDS
 export const pool = new Pool({ 
-  connectionString: databaseUrl,
+  connectionString: cleanDatabaseUrl,
   max: env === 'production' ? 10 : 5, // More connections in production
   idleTimeoutMillis: 30000, // 30 seconds idle timeout
   connectionTimeoutMillis: 10000, // 10 seconds connection timeout
