@@ -1,0 +1,29 @@
+[ec2-user@ip-10-0-1-195 app]$ export $(cat /opt/kickass-morning/.env | xargs) && node dist/index.js
+Application running in production environment
+[PRODUCTION] Connecting to database: kickass-morning-db.cbsci0wy027n.us-east-2.rds.amazonaws.com:5432/kickassmorning?sslmode=require&sslcert=disable
+Twilio client initialized successfully
+Starting application in production environment
+[2025-08-05T12:48:52.514Z] Session store: PostgreSQL (Environment: production)
+Mailjet initialized successfully
+12:48:52 PM [express] serving on port 5000
+12:48:52 PM [express] Starting scheduled tasks...
+Starting call scheduler...
+Processing scheduled calls at 2025-08-05T12:48:52.611Z
+Checking for pending schedules at 2025-08-05T12:48:52.611Z
+Current UTC time: 12:48
+Time window: 12:38 to 12:48
+Call scheduler started successfully
+Cleanup scheduler started successfully
+12:48:52 PM [express] Scheduled tasks started successfully
+Error checking pending schedules: TypeError: gr.readFileSync is not a function
+    at parse (file:///opt/kickass-morning/app/node_modules/@neondatabase/serverless/index.mjs:857:16)
+    at new ConnectionParameters (file:///opt/kickass-morning/app/node_modules/@neondatabase/serverless/index.mjs:869:23)
+    at new Client (file:///opt/kickass-morning/app/node_modules/@neondatabase/serverless/index.mjs:1226:35)
+    at new NeonClient (file:///opt/kickass-morning/app/node_modules/@neondatabase/serverless/index.mjs:1570:121)
+    at Cn.newClient (file:///opt/kickass-morning/app/node_modules/@neondatabase/serverless/index.mjs:1378:74)
+    at Cn.connect (file:///opt/kickass-morning/app/node_modules/@neondatabase/serverless/index.mjs:1378:23)
+    at Cn.query (file:///opt/kickass-morning/app/node_modules/@neondatabase/serverless/index.mjs:1407:63)
+    at Cn.query (file:///opt/kickass-morning/app/node_modules/@neondatabase/serverless/index.mjs:1623:14)
+    at NeonPreparedQuery.execute (file:///opt/kickass-morning/app/node_modules/drizzle-orm/neon-serverless/session.js:76:33)
+    at file:///opt/kickass-morning/app/node_modules/drizzle-orm/pg-core/query-builders/select.js:708:30
+Found 0 pending schedules

@@ -1,10 +1,7 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 import { detectEnvironment } from './env-utils';
-
-neonConfig.webSocketConstructor = ws;
 
 /**
  * Get the appropriate database URL based on the current environment
@@ -40,12 +37,13 @@ const env = detectEnvironment();
 
 console.log(`[${env.toUpperCase()}] Connecting to database: ${databaseUrl.split('@')[1] || 'local'}`);
 
-// Configure connection pool with better settings for Neon
+// Configure connection pool with better settings for AWS RDS
 export const pool = new Pool({ 
   connectionString: databaseUrl,
   max: env === 'production' ? 10 : 5, // More connections in production
   idleTimeoutMillis: 30000, // 30 seconds idle timeout
   connectionTimeoutMillis: 10000, // 10 seconds connection timeout
+  ssl: env === 'production' ? { rejectUnauthorized: false } : false, // SSL for RDS
 });
 
 // Handle pool errors gracefully
