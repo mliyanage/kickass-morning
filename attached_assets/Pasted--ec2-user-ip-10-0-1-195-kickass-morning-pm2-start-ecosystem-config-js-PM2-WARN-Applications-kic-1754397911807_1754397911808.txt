@@ -1,0 +1,40 @@
+[ec2-user@ip-10-0-1-195 kickass-morning]$ pm2 start ecosystem.config.js
+[PM2][WARN] Applications kickass-morning not running, starting...
+[PM2] App [kickass-morning] launched (1 instances)
+┌────┬────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name               │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ kickass-morning    │ default     │ 1.0.0   │ cluster │ 77965    │ 0s     │ 0    │ online    │ 0%       │ 42.9mb   │ ec2-user │ disabled │
+└────┴────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[ec2-user@ip-10-0-1-195 kickass-morning]$ pm2 status
+┌────┬────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name               │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ kickass-morning    │ default     │ 1.0.0   │ cluster │ 0        │ 0      │ 15   │ errored   │ 0%       │ 0b       │ ec2-user │ disabled │
+└────┴────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[ec2-user@ip-10-0-1-195 kickass-morning]$ curl -H "Host: app.kickassmorning.com" http://localhost
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+[ec2-user@ip-10-0-1-195 kickass-morning]$ sudo netstat -tlnp | grep :5000
+[ec2-user@ip-10-0-1-195 kickass-morning]$ 
