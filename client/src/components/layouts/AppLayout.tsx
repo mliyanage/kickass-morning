@@ -39,7 +39,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
       // Only assume authenticated for strictly authenticated routes
       if (currentPath.startsWith('/dashboard') || currentPath === '/personalization' || 
           currentPath === '/schedule-call' || currentPath === '/call-history' || 
-          currentPath === '/account') {
+          currentPath === '/account' || currentPath === '/phone-verification' || 
+          currentPath === '/otp-verification') {
         return { isAuthenticated: true, isLoading: false };
       }
       
@@ -48,7 +49,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
         const fromAuthenticatedPage = referrer && 
             (referrer.includes('/dashboard') || referrer.includes('/personalization') || 
              referrer.includes('/schedule-call') || referrer.includes('/call-history') ||
-             referrer.includes('/account'));
+             referrer.includes('/account') || referrer.includes('/phone-verification') ||
+             referrer.includes('/otp-verification'));
         
         // Use multiple indicators to determine authentication
         if (fromAuthenticatedPage || hasSessionCookie || wasAuth) {
@@ -86,7 +88,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
     const isStrictlyAuthenticatedPage = currentPath.startsWith('/dashboard') || 
                                        currentPath === '/personalization' || 
                                        currentPath === '/schedule-call' || 
-                                       currentPath === '/call-history';
+                                       currentPath === '/call-history' || 
+                                       currentPath === '/phone-verification' || 
+                                       currentPath === '/otp-verification';
     
     // Skip auth check if we're on strictly authenticated pages and already authenticated
     if (isStrictlyAuthenticatedPage && authState.isAuthenticated) {
