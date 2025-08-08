@@ -8,11 +8,16 @@ import type {
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
 
+// Auto-dismiss delay for better mobile UX
+const TOAST_AUTO_DISMISS_DELAY = 3000
+
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  autoDismiss?: boolean
+  duration?: number
 }
 
 const actionTypes = {
@@ -54,6 +59,7 @@ interface State {
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+const autoDismissTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
@@ -69,6 +75,24 @@ const addToRemoveQueue = (toastId: string) => {
   }, TOAST_REMOVE_DELAY)
 
   toastTimeouts.set(toastId, timeout)
+}
+
+const scheduleAutoDismiss = (toastId: string, duration: number = TOAST_AUTO_DISMISS_DELAY) => {
+  // Clear any existing auto-dismiss timeout
+  const existingTimeout = autoDismissTimeouts.get(toastId)
+  if (existingTimeout) {
+    clearTimeout(existingTimeout)
+  }
+
+  const timeout = setTimeout(() => {
+    autoDismissTimeouts.delete(toastId)
+    dispatch({
+      type: "DISMISS_TOAST",
+      toastId: toastId,
+    })
+  }, duration)
+
+  autoDismissTimeouts.set(toastId, timeout)
 }
 
 export const reducer = (state: State, action: Action): State => {
@@ -117,16 +141,23 @@ export const reducer = (state: State, action: Action): State => {
         // Clear all timeouts when removing all toasts
         toastTimeouts.forEach((timeout) => clearTimeout(timeout))
         toastTimeouts.clear()
+        autoDismissTimeouts.forEach((timeout) => clearTimeout(timeout))
+        autoDismissTimeouts.clear()
         return {
           ...state,
           toasts: [],
         }
       }
-      // Clear the specific timeout when removing a toast
+      // Clear the specific timeouts when removing a toast
       const timeout = toastTimeouts.get(action.toastId)
       if (timeout) {
         clearTimeout(timeout)
         toastTimeouts.delete(action.toastId)
+      }
+      const autoDismissTimeout = autoDismissTimeouts.get(action.toastId)
+      if (autoDismissTimeout) {
+        clearTimeout(autoDismissTimeout)
+        autoDismissTimeouts.delete(action.toastId)
       }
       return {
         ...state,
@@ -148,7 +179,7 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
+function toast({ autoDismiss = true, duration, ...props }: Toast) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -164,11 +195,18 @@ function toast({ ...props }: Toast) {
       ...props,
       id,
       open: true,
+      autoDismiss,
+      duration,
       onOpenChange: (open) => {
         if (!open) dismiss()
       },
     },
   })
+
+  // Schedule auto-dismiss if enabled
+  if (autoDismiss) {
+    scheduleAutoDismiss(id, duration)
+  }
 
   return {
     id: id,
