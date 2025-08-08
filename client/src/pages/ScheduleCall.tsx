@@ -21,50 +21,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import AppLayout from "@/components/layouts/AppLayout";
 import { trackConversion, trackEngagement } from "../../lib/analytics";
+import { getGroupedTimezones, getUserTimezone, type TimezoneOption } from "@/lib/timezones";
 
-// Timezone options
-const timezones = [
-  // North America
-  { value: "America/New_York", label: "Eastern Time - New York (UTC-5/4)" },
-  { value: "America/Chicago", label: "Central Time - Chicago (UTC-6/5)" },
-  { value: "America/Denver", label: "Mountain Time - Denver (UTC-7/6)" },
-  { value: "America/Los_Angeles", label: "Pacific Time - Los Angeles (UTC-8/7)" },
-  { value: "America/Anchorage", label: "Alaska Time (UTC-9/8)" },
-  { value: "America/Honolulu", label: "Hawaii Time (UTC-10)" },
-  { value: "America/Toronto", label: "Eastern Time - Toronto (UTC-5/4)" },
-  { value: "America/Vancouver", label: "Pacific Time - Vancouver (UTC-8/7)" },
-  { value: "America/Mexico_City", label: "Mexico City (UTC-6/5)" },
-  
-  // Europe
-  { value: "Europe/London", label: "London (UTC+0/1)" },
-  { value: "Europe/Paris", label: "Paris, Berlin, Rome (UTC+1/2)" },
-  { value: "Europe/Athens", label: "Athens, Helsinki (UTC+2/3)" },
-  { value: "Europe/Moscow", label: "Moscow (UTC+3)" },
-  
-  // Asia
-  { value: "Asia/Dubai", label: "Dubai (UTC+4)" },
-  { value: "Asia/Kolkata", label: "India (UTC+5:30)" },
-  { value: "Asia/Bangkok", label: "Bangkok, Jakarta (UTC+7)" },
-  { value: "Asia/Singapore", label: "Singapore, Manila (UTC+8)" },
-  { value: "Asia/Tokyo", label: "Tokyo, Seoul (UTC+9)" },
-  { value: "Asia/Hong_Kong", label: "Hong Kong, Beijing (UTC+8)" },
-  
-  // Australia & New Zealand
-  { value: "Australia/Perth", label: "Perth (UTC+8)" },
-  { value: "Australia/Sydney", label: "Sydney, Melbourne (UTC+10/11)" },
-  { value: "Australia/Brisbane", label: "Brisbane (UTC+10)" },
-  { value: "Pacific/Auckland", label: "Auckland (UTC+12/13)" },
-  
-  // South America
-  { value: "America/Sao_Paulo", label: "São Paulo (UTC-3/2)" },
-  { value: "America/Buenos_Aires", label: "Buenos Aires (UTC-3)" },
-  { value: "America/Santiago", label: "Santiago (UTC-4/3)" },
-  
-  // Africa
-  { value: "Africa/Cairo", label: "Cairo (UTC+2)" },
-  { value: "Africa/Johannesburg", label: "Johannesburg (UTC+2)" },
-  { value: "Africa/Lagos", label: "Lagos (UTC+1)" },
-];
+// Get timezone options from date-fns-tz
+const getTimezoneOptions = () => {
+  const grouped = getGroupedTimezones();
+  return grouped;
+};
 
 // Weekdays
 const weekdays = [
@@ -99,7 +62,7 @@ export default function ScheduleCall() {
     _setWakeupTime(value);
   };
   
-  const [timezone, _setTimezone] = useState("America/New_York");
+  const [timezone, _setTimezone] = useState(getUserTimezone());
   const setTimezone = (value: string) => {
     console.log("Setting timezone state to:", value);
     _setTimezone(value);
@@ -429,11 +392,18 @@ export default function ScheduleCall() {
                         <SelectValue placeholder="Select timezone" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectGroup>
-                          {timezones.map((tz) => (
-                            <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>
-                          ))}
-                        </SelectGroup>
+                        {Object.entries(timezoneGroups).map(([region, tzList]) => (
+                          <SelectGroup key={region}>
+                            <div className="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                              {region.replace('_', ' ')}
+                            </div>
+                            {tzList.map((tz: TimezoneOption) => (
+                              <SelectItem key={tz.value} value={tz.value}>
+                                {tz.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
