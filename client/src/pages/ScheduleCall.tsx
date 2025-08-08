@@ -90,6 +90,9 @@ export default function ScheduleCall() {
   const [callRetry, setCallRetry] = useState(true);
   const [advanceNotice, setAdvanceNotice] = useState(false);
   
+  // Initialize timezone groups
+  const timezoneGroups = getTimezoneOptions();
+  
   // For debugging
   useEffect(() => {
     console.log("selectedDays changed:", selectedDays);
@@ -397,7 +400,7 @@ export default function ScheduleCall() {
                             <div className="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                               {region.replace('_', ' ')}
                             </div>
-                            {tzList.map((tz: TimezoneOption) => (
+                            {(tzList as TimezoneOption[]).map((tz: TimezoneOption) => (
                               <SelectItem key={tz.value} value={tz.value}>
                                 {tz.label}
                               </SelectItem>
