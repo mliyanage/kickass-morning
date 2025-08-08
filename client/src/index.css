@@ -80,3 +80,14 @@
     @apply shadow-lg hover:shadow-xl transition-all duration-200;
   }
 }
+
+/* Mobile-first toast positioning */
+@media (max-width: 640px) {
+  [data-radix-toast-viewport] {
+    bottom: 0 !important;
+    top: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+  }
+}
