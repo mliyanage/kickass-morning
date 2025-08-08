@@ -100,6 +100,15 @@ All client requests go through unified query client (`client/src/lib/queryClient
 
 ## Recent Changes
 
+**August 8, 2025**: Replaced hardcoded timezone and country lists with professional libraries:
+- **Country Selection**: Replaced hardcoded list with `world-countries` package providing 240+ countries with flag icons
+- **Timezone Selection**: Replaced hardcoded timezones with comprehensive system using `date-fns-tz` and browser APIs
+- **Auto-detection**: Added automatic user timezone detection as default selection
+- **Grouped Interface**: Organized timezones by regions (America, Europe, Asia, etc.) for better UX
+- **Real-time Offsets**: Shows current UTC offsets including DST adjustments
+- **Backward Compatibility**: Maintains full compatibility with existing schedules and server-side timezone processing
+- **Comprehensive Coverage**: Now supports 400+ IANA timezones vs previous ~25 hardcoded options
+
 **August 8, 2025**: Enhanced mobile toast UX for better user experience:
 - Fixed toast positioning to appear at bottom on mobile devices (instead of top)
 - Made close button always visible with proper 44px touch target size
