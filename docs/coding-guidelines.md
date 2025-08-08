@@ -47,3 +47,6 @@
 
 - **Ask before making changes**  
 Always wait until I give clear instructions before changing or building. Sometimes I want to have a conversation with you and understand the options before jumping and changing the code or implementing new code.
+
+- **This app is in Production now**
+Make sure that you don't change ANYTHING unless I specifically ask you to change. Alwasy ask before making any change.

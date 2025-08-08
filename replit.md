@@ -6,6 +6,12 @@ KickAss Morning is an AI-powered motivational wake-up service designed to help u
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+**PRODUCTION SAFETY PROTOCOL:**
+- Application is currently deployed in production on AWS EC2
+- NO changes to code, database, or configuration without explicit user approval
+- Always plan changes first, show user what will be done, and wait for approval
+- Production stability is critical - avoid any risky modifications
+
 ## System Architecture
 
 ### End-to-End Architecture Overview
