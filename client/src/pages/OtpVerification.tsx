@@ -11,7 +11,7 @@ import {
   InputOTPGroup, 
   InputOTPSlot 
 } from "@/components/ui/input-otp";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
+import AppLayout from "@/components/layouts/AppLayout";
 import { trackConversion } from "../../lib/analytics";
 
 export default function OtpVerification() {
@@ -43,7 +43,7 @@ export default function OtpVerification() {
       trackConversion('phone_verified');
       
       toast({
-        title: "Yes! Phone verified 🎉",
+        title: "Phone verified successfully",
         description: "You're all set. Time to schedule your first kickass morning!",
       });
       localStorage.removeItem("verificationPhone");
@@ -107,7 +107,7 @@ export default function OtpVerification() {
     },
     onSuccess: () => {
       toast({
-        title: "New code sent! 📱",
+        title: "New code sent",
         description: "Check your phone for the fresh verification code.",
       });
     },
@@ -167,7 +167,7 @@ export default function OtpVerification() {
   };
 
   return (
-    <DashboardLayout>
+    <AppLayout>
       <div className="max-w-2xl mx-auto">
         <div className="bg-gradient-to-r from-blue-50 via-primary-50 to-purple-50 py-8 px-4 sm:p-8 rounded-lg shadow-sm">
           <Card className="bg-white border-0 shadow-sm">
@@ -240,6 +240,6 @@ export default function OtpVerification() {
           </Card>
         </div>
       </div>
-    </DashboardLayout>
+    </AppLayout>
   );
 }
