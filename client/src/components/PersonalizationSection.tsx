@@ -139,7 +139,7 @@ export function PersonalizationSection() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
-              🔹 Set Your Wake-Up Preferences
+              Set Your Wake-Up Preferences
             </h2>
             <p className="text-gray-600 mt-1">
               Build your perfect morning call.
@@ -179,7 +179,7 @@ export function PersonalizationSection() {
                           <path d="M20 6L9 17l-5-5" />
                         </svg>
                       </div>
-                      <h4 className="text-sm font-medium text-gray-700">💪 Goals</h4>
+                      <h4 className="text-sm font-medium text-gray-700">Goals</h4>
                     </div>
                     <div className="space-y-1 pl-1">
                       {goals.length > 0 ? (
@@ -204,7 +204,7 @@ export function PersonalizationSection() {
                           <line x1="12" y1="17" x2="12.01" y2="17"></line>
                         </svg>
                       </div>
-                      <h4 className="text-sm font-medium text-gray-700">⚡ Struggles</h4>
+                      <h4 className="text-sm font-medium text-gray-700">Struggles</h4>
                     </div>
                     <div className="space-y-1 pl-1">
                       {struggles.length > 0 ? (
@@ -230,7 +230,7 @@ export function PersonalizationSection() {
                           <line x1="8" y1="23" x2="16" y2="23"></line>
                         </svg>
                       </div>
-                      <h4 className="text-sm font-medium text-gray-700">🗣️ Voice</h4>
+                      <h4 className="text-sm font-medium text-gray-700">Voice</h4>
                     </div>
                     <div className="pl-8">
                       <p className="text-sm font-medium text-primary-700">{getVoiceText()}</p>

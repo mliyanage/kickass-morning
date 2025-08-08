@@ -278,7 +278,7 @@ export default function Dashboard() {
     <AppLayout>
       <div className="bg-white p-6 rounded-lg shadow">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          ⚡ Ready to Take Charge, Boss!
+          Ready to Take Charge, Boss!
         </h1>
         <p className="text-lg text-gray-600">
           Welcome to your KickAss Morning Dashboard.
@@ -294,10 +294,10 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                🔹 Try a Sample Call
+                Try a Sample Call
               </h2>
               <p className="text-gray-600 mt-1">
-                Experience your first AI-powered wake-up 💥
+                Experience your first AI-powered wake-up
               </p>
             </div>
           </div>
@@ -357,10 +357,10 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                🔹 Your Wake-Up Schedule
+                Your Wake-Up Schedule
               </h2>
               <p className="text-gray-600 mt-1">
-                ⏰ Let's set up your first real wake-up call.
+                Let's set up your first real wake-up call.
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 No more snoozing. No more excuses. Choose a time, pick your
