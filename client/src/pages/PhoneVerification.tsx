@@ -11,26 +11,7 @@ import { PhoneVerificationRequest } from "@/types";
 import AppLayout from "@/components/layouts/AppLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trackConversion } from "../../lib/analytics";
-
-// List of common country codes
-const countryCodes = [
-  { code: '+1', name: 'United States/Canada (+1)' },
-  { code: '+44', name: 'United Kingdom (+44)' },
-  { code: '+91', name: 'India (+91)' },
-  { code: '+61', name: 'Australia (+61)' },
-  { code: '+33', name: 'France (+33)' },
-  { code: '+49', name: 'Germany (+49)' },
-  { code: '+81', name: 'Japan (+81)' },
-  { code: '+86', name: 'China (+86)' },
-  { code: '+52', name: 'Mexico (+52)' },
-  { code: '+55', name: 'Brazil (+55)' },
-  { code: '+234', name: 'Nigeria (+234)' },
-  { code: '+27', name: 'South Africa (+27)' },
-  { code: '+82', name: 'South Korea (+82)' },
-  { code: '+65', name: 'Singapore (+65)' },
-  { code: '+971', name: 'UAE (+971)' },
-  { code: '+7', name: 'Russia (+7)' },
-];
+import { getPopularCountries } from "@/lib/countries";
 
 export default function PhoneVerification() {
   const { toast } = useToast();
@@ -38,6 +19,9 @@ export default function PhoneVerification() {
   const [phone, setPhone] = useState("");
   const [countryCode, setCountryCode] = useState("+1");
   const [returnUrl, setReturnUrl] = useState("/dashboard");
+  
+  // Get country options from the world-countries library
+  const countryOptions = getPopularCountries();
 
   // Check where the user was trying to go
   useEffect(() => {
@@ -144,9 +128,12 @@ export default function PhoneVerification() {
                         <SelectValue placeholder="Select country code" />
                       </SelectTrigger>
                       <SelectContent>
-                        {countryCodes.map((country) => (
+                        {countryOptions.map((country) => (
                           <SelectItem key={country.code} value={country.code}>
-                            {country.name}
+                            <span className="flex items-center gap-2">
+                              <span>{country.flag}</span>
+                              {country.name}
+                            </span>
                           </SelectItem>
                         ))}
                       </SelectContent>
