@@ -127,7 +127,7 @@ export default function Login() {
             <div className="flex justify-center mb-4">
               <Logo size="md" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">💥 Welcome Back, Boss!</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Welcome Back, Boss!</h2>
             <p className="mt-2 text-sm text-gray-600">Ready to crush another day? Let's get you signed in.</p>
           </div>
           
@@ -238,7 +238,7 @@ export default function Login() {
                     setLocation('/signup');
                   }}
                 >
-                  Join the boss squad! 💥
+                  Join the boss squad!
                 </a>
               </p>
             </div>

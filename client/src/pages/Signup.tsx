@@ -115,7 +115,7 @@ export default function Signup() {
             <div className="flex justify-center mb-4">
               <Logo size="md" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">💥 Let's Get You Out of Bed Like a Boss</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Let's Get You Out of Bed Like a Boss</h2>
             <p className="mt-2 text-sm text-gray-600">Set up your wake-up calls from voices that don't hit snooze.</p>
           </div>
           

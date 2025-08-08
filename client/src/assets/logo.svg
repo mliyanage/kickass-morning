@@ -14,10 +14,7 @@
     <!-- Alarm bells -->
     <path d="M12 18 L8 14 M48 18 L52 14" stroke="#FF6B35" stroke-width="2" stroke-linecap="round"/>
     
-    <!-- Energy lines (dynamic effect) -->
-    <path d="M2 30 L6 30 M54 30 L58 30" stroke="url(#gradient2)" stroke-width="2" stroke-linecap="round"/>
-    <path d="M8 15 L12 19 M48 19 L52 15" stroke="url(#gradient2)" stroke-width="2" stroke-linecap="round"/>
-    <path d="M8 45 L12 41 M48 41 L52 45" stroke="url(#gradient2)" stroke-width="2" stroke-linecap="round"/>
+
   </g>
   
   <!-- Text -->

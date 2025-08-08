@@ -100,6 +100,13 @@ All client requests go through unified query client (`client/src/lib/queryClient
 
 ## Recent Changes
 
+**August 8, 2025**: Cleaned up dashboard UX for more professional appearance:
+- **Removed Icons**: Removed excessive emoji icons from section titles and preference tiles
+- **Cleaner Logo**: Removed energy/blast lines from logo SVG for professional look
+- **Simplified Headers**: Cleaned up login/signup page headers by removing blast emojis
+- **Better Typography**: Maintained single professional icons per section while removing visual clutter
+- **Professional Design**: Dashboard now has cleaner, business-ready appearance without losing functionality
+
 **August 8, 2025**: Replaced hardcoded timezone and country lists with professional libraries:
 - **Country Selection**: Replaced hardcoded list with `world-countries` package providing 240+ countries with flag icons
 - **Timezone Selection**: Replaced hardcoded timezones with comprehensive system using `date-fns-tz` and browser APIs
