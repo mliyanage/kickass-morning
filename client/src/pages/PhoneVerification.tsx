@@ -38,7 +38,7 @@ export default function PhoneVerification() {
     },
     onSuccess: () => {
       toast({
-        title: "Boom! Code sent 🚀",
+        title: "Code sent successfully",
         description: "Check your phone for the verification code. You're almost there!",
       });
       // Store phone number in localStorage for the OTP verification page
@@ -93,7 +93,7 @@ export default function PhoneVerification() {
                 </div>
                 
                 <h1 className="text-3xl font-bold text-gray-900 mb-3">
-                  🔐 One Last Step to Unlock Your Kickass Mornings
+                  One Last Step to Unlock Your Kickass Mornings
                 </h1>
                 
                 <p className="text-lg text-gray-700 mb-2">
@@ -115,7 +115,7 @@ export default function PhoneVerification() {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="country-code" className="text-base font-medium text-gray-900">
-                      📱 Country Code
+                      Country Code
                     </Label>
                     <p className="text-sm text-gray-600 mb-2">
                       Select your country to auto-fill your code
@@ -142,7 +142,7 @@ export default function PhoneVerification() {
                   
                   <div>
                     <Label htmlFor="phone" className="text-base font-medium text-gray-900">
-                      📞 Phone Number
+                      Phone Number
                     </Label>
                     <p className="text-sm text-gray-600 mb-2">
                       We'll text your verification code here
