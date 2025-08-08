@@ -100,6 +100,14 @@ All client requests go through unified query client (`client/src/lib/queryClient
 
 ## Recent Changes
 
+**August 8, 2025**: Enhanced mobile toast UX for better user experience:
+- Fixed toast positioning to appear at bottom on mobile devices (instead of top)
+- Made close button always visible with proper 44px touch target size
+- Reduced auto-dismiss time from 5 seconds to 3 seconds for faster flow
+- Added swipe-to-dismiss functionality for natural mobile interaction
+- Implemented mobile-first CSS overrides to ensure consistent positioning
+- Improved mobile styling with appropriate padding and button sizing
+
 **August 5, 2025**: Updated EC2 deployment guide for Amazon Linux production deployment:
 - Revised complete EC2 deployment guide for Amazon Linux 2023 (not Ubuntu)
 - Fixed PostgreSQL RDS SSL certificate authentication issues with NODE_TLS_REJECT_UNAUTHORIZED workaround
