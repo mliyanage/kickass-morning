@@ -42,17 +42,24 @@ export default function CallHistoryItem({ call }: CallHistoryItemProps) {
     console.log('Formatting date:', dateString, 'with timezone:', timezone);
     
     if (timezone) {
-      // For scheduled calls with timezone, we need to interpret the stored time correctly
-      // The stored time represents the scheduled time, but it's stored as if it were UTC
-      // We need to convert it to show the actual scheduled time in the user's timezone
+      // For scheduled calls, we need to correctly interpret the stored time
+      // The stored time represents when the call was scheduled to occur
+      // We should display it in the context of the user's timezone
       
-      // Parse the stored time (which is stored as the local scheduled time)
       const storedTime = new Date(dateString);
       console.log('Stored time parsed as:', storedTime);
       
-      // The stored time like "2025-08-08T23:42:00.000Z" should be interpreted as 
-      // "23:42 in the user's timezone", not 23:42 UTC
-      const scheduledTime = new Date(storedTime);
+      // Extract the time components and reconstruct them as a local time
+      // This prevents timezone conversion issues
+      const year = storedTime.getUTCFullYear();
+      const month = storedTime.getUTCMonth();
+      const date = storedTime.getUTCDate();
+      const hours = storedTime.getUTCHours();
+      const minutes = storedTime.getUTCMinutes();
+      
+      // Create a local date object representing the scheduled time
+      const scheduledTime = new Date(year, month, date, hours, minutes);
+      console.log('Reconstructed scheduled time:', scheduledTime);
       
       const formatted = scheduledTime.toLocaleDateString('en-US', { 
         month: 'short', 
@@ -60,8 +67,7 @@ export default function CallHistoryItem({ call }: CallHistoryItemProps) {
         year: 'numeric',
         hour: 'numeric',
         minute: '2-digit',
-        hour12: true,
-        timeZone: 'UTC' // Treat stored time as the actual scheduled time
+        hour12: true
       });
       
       const cityName = timezone.split('/').pop()?.replace(/_/g, ' ') || '';

@@ -44,14 +44,30 @@ export default function CallHistory() {
   };
 
   const formatDateTime = (dateString: string, timezone?: string) => {
-    const date = new Date(dateString);
-    const cityName = timezone?.split('/').pop()?.replace(/_/g, ' ') || '';
-    return {
-      date: date.toLocaleDateString(),
-      time: timezone 
-        ? `${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${cityName})`
-        : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+    console.log('CallHistory formatting:', dateString, 'timezone:', timezone);
+    const storedTime = new Date(dateString);
+    
+    if (timezone) {
+      // Extract UTC components and treat them as local time for scheduled calls
+      const year = storedTime.getUTCFullYear();
+      const month = storedTime.getUTCMonth();
+      const date = storedTime.getUTCDate();
+      const hours = storedTime.getUTCHours();
+      const minutes = storedTime.getUTCMinutes();
+      
+      const scheduledTime = new Date(year, month, date, hours, minutes);
+      const cityName = timezone.split('/').pop()?.replace(/_/g, ' ') || '';
+      
+      return {
+        date: scheduledTime.toLocaleDateString(),
+        time: `${scheduledTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${cityName})`
+      };
+    } else {
+      return {
+        date: storedTime.toLocaleDateString(),
+        time: storedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+    }
   };
 
   if (isLoading) {

@@ -144,21 +144,17 @@ async function processScheduledCalls() {
 
         // Create a history record after updating the schedule
         
-        // Record the actual scheduled time in the user's timezone  
+        // Store the call time as a simple timestamp representing the scheduled time
         const [hours, minutes] = schedule.wakeupTime.split(':').map(Number);
         
-        // Get the current time in the user's timezone to determine the correct date
-        const now = new Date();
+        // Create a timestamp that represents the scheduled time in a timezone-neutral way
+        // We'll store just the date and time components, relying on the timezone field for context
         const { toZonedTime } = await import('date-fns-tz');
+        const now = new Date();
         const nowInUserTz = toZonedTime(now, schedule.timezone);
         
-        // Create the scheduled time using the correct date in the user's timezone
-        const scheduledTimeLocal = new Date();
-        scheduledTimeLocal.setFullYear(nowInUserTz.getFullYear(), nowInUserTz.getMonth(), nowInUserTz.getDate());
-        scheduledTimeLocal.setHours(hours, minutes, 0, 0);
-        
-        // Store the scheduled time (this represents the local scheduled time)
-        const scheduledCallTime = scheduledTimeLocal;
+        // Create the scheduled time using today's date in the user's timezone
+        const scheduledCallTime = new Date(nowInUserTz.getFullYear(), nowInUserTz.getMonth(), nowInUserTz.getDate(), hours, minutes, 0, 0);
         
         const callHistory = await storage.createCallHistory({
           userId: user.id,
