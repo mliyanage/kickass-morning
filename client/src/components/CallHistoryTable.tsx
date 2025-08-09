@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 interface CallRecord {
   id: number;
   callTime: string;
+  timezone?: string;
   voice: string;
   status: 'answered' | 'missed' | 'failed';
   duration?: number;
@@ -58,7 +59,9 @@ export function CallHistoryTable({ calls, onPlayRecording }: CallHistoryTablePro
           {calls.map((call) => (
             <TableRow key={call.id}>
               <TableCell className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-neutral-900">
-                {format(new Date(call.callTime), 'MMM d, yyyy (h:mm a)')}
+                {call.timezone 
+                  ? `${format(new Date(call.callTime), 'MMM d, yyyy, h:mm a')} (${call.timezone.split('/').pop()?.replace(/_/g, ' ')})`
+                  : format(new Date(call.callTime), 'MMM d, yyyy, h:mm a')}
               </TableCell>
               <TableCell className="whitespace-nowrap px-3 py-4 text-sm text-neutral-500">{call.voice}</TableCell>
               <TableCell className="whitespace-nowrap px-3 py-4 text-sm">

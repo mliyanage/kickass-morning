@@ -84,6 +84,7 @@ export interface CallHistory {
   scheduleId: number;
   userId: number;
   callTime: string;
+  timezone?: string; // IANA timezone of the scheduled call
   voice: string;
   status: "answered" | "missed" | "failed";
   duration: number | null;

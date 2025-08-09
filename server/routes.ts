@@ -700,10 +700,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             callRetry: validatedData.callRetry,
             advanceNotice: validatedData.advanceNotice,
             // Keep existing values if present, otherwise use from personalization
-            goalType: existingSchedule.goalType || personalization.goals[0],
-            struggleType:
-              existingSchedule.struggleType || personalization.struggles[0],
-            voiceId: existingSchedule.voiceId || personalization.voice,
+            goalType: undefined,
+            struggleType: undefined,
+            voiceId: undefined,
           };
 
           console.log("Updating schedule with data:", updateData);
@@ -846,12 +845,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             timezone: schedule.timezone,
             weekdays: weekdays,
             isRecurring: schedule.isRecurring,
-            date: schedule.date,
-            callRetry: schedule.callRetry,
-            advanceNotice: schedule.advanceNotice,
-            goalType: schedule.goalType,
-            struggleType: schedule.struggleType,
-            voiceId: schedule.voiceId,
+            date: undefined,
+            callRetry: undefined,
+            advanceNotice: undefined,
+            goalType: undefined,
+            struggleType: undefined,
+            voiceId: undefined,
             isActive: schedule.isActive,
             createdAt: schedule.createdAt,
           };
@@ -995,7 +994,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createCallHistory({
           scheduleId: null,
           userId: req.session.userId!,
-          callTime: new Date(),
+          callTime: new Date(), // For sample calls, use actual time
+          timezone: null, // Sample calls don't have a specific timezone
           voice: personalization.voice,
           callSid: call.callSid, // Add the Twilio Call SID
           status: call.status as CallStatus,

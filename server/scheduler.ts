@@ -142,10 +142,17 @@ async function processScheduledCalls() {
         }
 
         // Create a history record after updating the schedule
+        // Create a proper timestamp representing the scheduled call time in the schedule's timezone
+        const [hours, minutes] = schedule.wakeupTime.split(':').map(Number);
+        const now = new Date();
+        const scheduledCallTime = new Date(now);
+        scheduledCallTime.setHours(hours, minutes, 0, 0);
+        
         const callHistory = await storage.createCallHistory({
           userId: user.id,
           scheduleId: schedule.id,
-          callTime: new Date(),
+          callTime: scheduledCallTime, // Use the scheduled time instead of current UTC time
+          timezone: schedule.timezone, // Store the schedule's timezone
           voice: voiceId, // Use the voice from personalization
           status: call.status as CallStatus,
           duration: call.duration,

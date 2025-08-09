@@ -114,6 +114,7 @@ export const callHistory = pgTable("call_history", {
     .notNull()
     .references(() => users.id),
   callTime: timestamp("call_time").notNull(),
+  timezone: text("timezone"), // IANA timezone of the scheduled call
   voice: text("voice").notNull(),
   status: text("status").notNull(),
   callSid: text("call_sid"), // Twilio call SID for tracking
