@@ -62,20 +62,20 @@ export default function OtpVerification() {
       try {
         const userResponse = await apiRequest("GET", "/api/auth/check");
         if (userResponse?.user && !userResponse.user.isPersonalized) {
-          // If not personalized, redirect to personalization instead of dashboard
+          // If not personalized, redirect to personalization first
           setTimeout(() => {
             setLocation("/personalization");
           }, 500);
         } else {
-          // Navigate to the return URL if personalization is complete
+          // If personalization is already done, redirect to dashboard
           setTimeout(() => {
-            setLocation(returnUrl);
+            setLocation("/dashboard");
           }, 500);
         }
       } catch (error) {
         // If we can't check personalization status, default to dashboard
         setTimeout(() => {
-          setLocation(returnUrl);
+          setLocation("/dashboard");
         }, 500);
       }
     },
