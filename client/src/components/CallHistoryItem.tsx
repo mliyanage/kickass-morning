@@ -37,10 +37,10 @@ export default function CallHistoryItem({ call }: CallHistoryItemProps) {
     playRecordingMutation.mutate();
   };
 
-  // Format date
-  const formatDate = (dateString: string) => {
+  // Format date with timezone support
+  const formatDate = (dateString: string, timezone?: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
+    const formatted = date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric', 
       year: 'numeric',
@@ -48,6 +48,13 @@ export default function CallHistoryItem({ call }: CallHistoryItemProps) {
       minute: '2-digit',
       hour12: true
     });
+    
+    if (timezone) {
+      const cityName = timezone.split('/').pop()?.replace(/_/g, ' ') || '';
+      return `${formatted} (${cityName})`;
+    }
+    
+    return formatted;
   };
 
   // Format duration
@@ -61,7 +68,7 @@ export default function CallHistoryItem({ call }: CallHistoryItemProps) {
   return (
     <tr>
       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-        {formatDate(call.callTime)}
+        {formatDate(call.callTime, call.timezone)}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
         {call.voice}

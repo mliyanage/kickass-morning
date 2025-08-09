@@ -7,14 +7,12 @@ import { Calendar, Clock, Phone, User } from "lucide-react";
 interface CallHistory {
   id: number;
   userId: number;
-  scheduledTime: string;
-  actualTime: string;
+  callTime: string;
+  timezone?: string;
   status: "pending" | "completed" | "failed" | "no_answer";
   duration?: number;
   callSid: string;
-  goalType: string;
-  struggleType: string;
-  voiceId: string;
+  voice: string;
   createdAt: string;
 }
 
@@ -45,11 +43,14 @@ export default function CallHistory() {
     );
   };
 
-  const formatDateTime = (dateString: string) => {
+  const formatDateTime = (dateString: string, timezone?: string) => {
     const date = new Date(dateString);
+    const cityName = timezone?.split('/').pop()?.replace(/_/g, ' ') || '';
     return {
       date: date.toLocaleDateString(),
-      time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      time: timezone 
+        ? `${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${cityName})`
+        : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
   };
 
@@ -100,7 +101,7 @@ export default function CallHistory() {
           {callHistory && callHistory.length > 0 ? (
             <div className="space-y-4">
               {callHistory.map((call) => {
-                const { date, time } = formatDateTime(call.actualTime || call.scheduledTime);
+                const { date, time } = formatDateTime(call.callTime, call.timezone);
                 
                 return (
                   <Card key={call.id} className="border border-gray-200">
@@ -126,13 +127,12 @@ export default function CallHistory() {
                             </div>
                             <div className="flex items-center gap-1">
                               <User className="h-3 w-3" />
-                              <span className="capitalize">{call.voiceId}</span>
+                              <span className="capitalize">{call.voice}</span>
                             </div>
                           </div>
                           
                           <div className="mt-2 text-xs text-gray-500">
-                            Goal: <span className="capitalize">{call.goalType}</span> • 
-                            Struggle: <span className="capitalize">{call.struggleType}</span>
+                            Goal: • Struggle:
                             {call.duration && (
                               <> • Duration: {call.duration}s</>
                             )}
