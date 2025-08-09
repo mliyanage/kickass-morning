@@ -44,7 +44,6 @@ export default function CallHistory() {
   };
 
   const formatDateTime = (dateString: string, timezone?: string) => {
-    console.log('CallHistory formatting:', dateString, 'timezone:', timezone);
     const storedTime = new Date(dateString);
     
     if (timezone) {

@@ -100,14 +100,14 @@ All client requests go through unified query client (`client/src/lib/queryClient
 
 ## Recent Changes
 
-**August 9, 2025**: Fixed critical timezone handling bug in call history display:
-- **Database Enhancement**: Added timezone column to call_history table to store schedule timezone context
-- **Accurate Time Recording**: Call times now recorded using scheduled time in user's timezone, not server execution time
-- **Proper Timezone Display**: Call history shows correct scheduled times with timezone context (e.g., "11:15 PM (Los Angeles)")
-- **Type System Updates**: Added timezone field to CallHistory and CallRecord TypeScript interfaces
-- **Production Database Migration**: Used direct SQL to safely add timezone column without data loss
-- **Date-fns-tz Integration**: Implemented proper timezone conversion using fromZonedTime and toZonedTime functions
-- **Bug Resolution**: Fixed issue where 22:50 Los Angeles time was incorrectly displaying as next day's morning time
+**August 9, 2025**: Completely resolved critical timezone display bug in call history:
+- **Root Cause**: PostgreSQL stored times were being interpreted as UTC by JavaScript, causing incorrect timezone conversions
+- **Solution**: Implemented UTC component extraction method - extracts year, month, date, hours, minutes from UTC timestamp and reconstructs as local time
+- **Database Enhancement**: Added timezone column to call_history table for proper context storage
+- **Frontend Fix**: Updated both dashboard (CallHistoryItem) and call history page to use correct timezone interpretation
+- **Result**: Scheduled calls now display correct times (e.g., 11:15 PM Los Angeles shows as "Aug 9, 2025, 11:15 PM (Los Angeles)" instead of wrong date/time)
+- **Type System**: Added timezone field to CallHistory and CallRecord TypeScript interfaces
+- **Production Safe**: Used direct SQL to add timezone column without data loss
 
 **August 8, 2025**: Cleaned up dashboard UX for more professional appearance:
 - **Removed Icons**: Removed excessive emoji icons from section titles and preference tiles

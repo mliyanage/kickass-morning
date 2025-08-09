@@ -39,27 +39,18 @@ export default function CallHistoryItem({ call }: CallHistoryItemProps) {
 
   // Format date with timezone support
   const formatDate = (dateString: string, timezone?: string) => {
-    console.log('Formatting date:', dateString, 'with timezone:', timezone);
-    
     if (timezone) {
-      // For scheduled calls, we need to correctly interpret the stored time
-      // The stored time represents when the call was scheduled to occur
-      // We should display it in the context of the user's timezone
-      
+      // For scheduled calls, extract UTC components and reconstruct as local time
+      // This prevents JavaScript from applying automatic timezone conversions
       const storedTime = new Date(dateString);
-      console.log('Stored time parsed as:', storedTime);
-      
-      // Extract the time components and reconstruct them as a local time
-      // This prevents timezone conversion issues
       const year = storedTime.getUTCFullYear();
       const month = storedTime.getUTCMonth();
       const date = storedTime.getUTCDate();
       const hours = storedTime.getUTCHours();
       const minutes = storedTime.getUTCMinutes();
       
-      // Create a local date object representing the scheduled time
+      // Create a local date object representing the actual scheduled time
       const scheduledTime = new Date(year, month, date, hours, minutes);
-      console.log('Reconstructed scheduled time:', scheduledTime);
       
       const formatted = scheduledTime.toLocaleDateString('en-US', { 
         month: 'short', 
@@ -71,7 +62,6 @@ export default function CallHistoryItem({ call }: CallHistoryItemProps) {
       });
       
       const cityName = timezone.split('/').pop()?.replace(/_/g, ' ') || '';
-      console.log('Final formatted result:', `${formatted} (${cityName})`);
       return `${formatted} (${cityName})`;
     } else {
       // For calls without timezone, display in local time
