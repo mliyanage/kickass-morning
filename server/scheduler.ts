@@ -144,20 +144,23 @@ async function processScheduledCalls() {
 
         // Create a history record after updating the schedule
         
-        // Create a date object for today's scheduled time in the user's timezone
+        // Record the actual scheduled time in the user's local timezone
         const [hours, minutes] = schedule.wakeupTime.split(':').map(Number);
+        
+        // Since this is a scheduled call, we want to show the intended wake-up time
+        // Create a date object representing the scheduled time in the user's timezone
         const today = new Date();
+        const scheduledTimeLocal = new Date();
+        scheduledTimeLocal.setFullYear(today.getFullYear(), today.getMonth(), today.getDate());
+        scheduledTimeLocal.setHours(hours, minutes, 0, 0);
         
-        // Create a date in the user's timezone for the scheduled time
-        const scheduledTimeInTz = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes, 0, 0);
-        
-        // Convert the scheduled time from user's timezone to UTC for storage
-        const scheduledCallTimeUTC = fromZonedTime(scheduledTimeInTz, schedule.timezone);
+        // Store the scheduled time as-is (this will be interpreted as the local scheduled time)
+        const scheduledCallTime = scheduledTimeLocal;
         
         const callHistory = await storage.createCallHistory({
           userId: user.id,
           scheduleId: schedule.id,
-          callTime: scheduledCallTimeUTC, // Store as UTC but represents the scheduled time
+          callTime: scheduledCallTime, // Store the scheduled time
           timezone: schedule.timezone, // Store the schedule's timezone
           voice: voiceId, // Use the voice from personalization
           status: call.status as CallStatus,

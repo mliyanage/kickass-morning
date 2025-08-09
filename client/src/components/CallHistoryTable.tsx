@@ -62,9 +62,11 @@ export function CallHistoryTable({ calls, onPlayRecording }: CallHistoryTablePro
               <TableCell className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-neutral-900">
                 {call.timezone 
                   ? (() => {
-                      // Convert UTC time back to the original timezone for display
-                      const zonedTime = toZonedTime(new Date(call.callTime), call.timezone);
-                      return `${format(zonedTime, 'MMM d, yyyy, h:mm a')} (${call.timezone.split('/').pop()?.replace(/_/g, ' ')})`;
+                      // The stored time represents the scheduled time in the user's timezone
+                      // Display it directly with timezone context
+                      const callTime = new Date(call.callTime);
+                      const cityName = call.timezone.split('/').pop()?.replace(/_/g, ' ') || '';
+                      return `${format(callTime, 'MMM d, yyyy, h:mm a')} (${cityName})`;
                     })()
                   : format(new Date(call.callTime), 'MMM d, yyyy, h:mm a')}
               </TableCell>
