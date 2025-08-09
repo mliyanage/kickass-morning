@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Play } from 'lucide-react';
 import { format } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 
 interface CallRecord {
   id: number;
@@ -60,7 +61,11 @@ export function CallHistoryTable({ calls, onPlayRecording }: CallHistoryTablePro
             <TableRow key={call.id}>
               <TableCell className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-neutral-900">
                 {call.timezone 
-                  ? `${format(new Date(call.callTime), 'MMM d, yyyy, h:mm a')} (${call.timezone.split('/').pop()?.replace(/_/g, ' ')})`
+                  ? (() => {
+                      // Convert UTC time back to the original timezone for display
+                      const zonedTime = toZonedTime(new Date(call.callTime), call.timezone);
+                      return `${format(zonedTime, 'MMM d, yyyy, h:mm a')} (${call.timezone.split('/').pop()?.replace(/_/g, ' ')})`;
+                    })()
                   : format(new Date(call.callTime), 'MMM d, yyyy, h:mm a')}
               </TableCell>
               <TableCell className="whitespace-nowrap px-3 py-4 text-sm text-neutral-500">{call.voice}</TableCell>

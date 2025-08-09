@@ -1,4 +1,5 @@
 import schedule from "node-schedule";
+import { fromZonedTime } from "date-fns-tz";
 import { storage } from "./storage";
 import { CallStatus } from "@shared/schema";
 import { makeCall } from "./twilio";
@@ -142,16 +143,21 @@ async function processScheduledCalls() {
         }
 
         // Create a history record after updating the schedule
-        // Create a proper timestamp representing the scheduled call time in the schedule's timezone
+        
+        // Create a date object for today's scheduled time in the user's timezone
         const [hours, minutes] = schedule.wakeupTime.split(':').map(Number);
-        const now = new Date();
-        const scheduledCallTime = new Date(now);
-        scheduledCallTime.setHours(hours, minutes, 0, 0);
+        const today = new Date();
+        
+        // Create a date in the user's timezone for the scheduled time
+        const scheduledTimeInTz = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes, 0, 0);
+        
+        // Convert the scheduled time from user's timezone to UTC for storage
+        const scheduledCallTimeUTC = fromZonedTime(scheduledTimeInTz, schedule.timezone);
         
         const callHistory = await storage.createCallHistory({
           userId: user.id,
           scheduleId: schedule.id,
-          callTime: scheduledCallTime, // Use the scheduled time instead of current UTC time
+          callTime: scheduledCallTimeUTC, // Store as UTC but represents the scheduled time
           timezone: schedule.timezone, // Store the schedule's timezone
           voice: voiceId, // Use the voice from personalization
           status: call.status as CallStatus,
