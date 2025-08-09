@@ -39,22 +39,47 @@ export default function CallHistoryItem({ call }: CallHistoryItemProps) {
 
   // Format date with timezone support
   const formatDate = (dateString: string, timezone?: string) => {
-    const date = new Date(dateString);
-    const formatted = date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
+    console.log('Formatting date:', dateString, 'with timezone:', timezone);
     
     if (timezone) {
+      // For scheduled calls with timezone, we need to interpret the stored time correctly
+      // The stored time represents the scheduled time, but it's stored as if it were UTC
+      // We need to convert it to show the actual scheduled time in the user's timezone
+      
+      // Parse the stored time (which is stored as the local scheduled time)
+      const storedTime = new Date(dateString);
+      console.log('Stored time parsed as:', storedTime);
+      
+      // The stored time like "2025-08-08T23:42:00.000Z" should be interpreted as 
+      // "23:42 in the user's timezone", not 23:42 UTC
+      const scheduledTime = new Date(storedTime);
+      
+      const formatted = scheduledTime.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'UTC' // Treat stored time as the actual scheduled time
+      });
+      
       const cityName = timezone.split('/').pop()?.replace(/_/g, ' ') || '';
+      console.log('Final formatted result:', `${formatted} (${cityName})`);
       return `${formatted} (${cityName})`;
+    } else {
+      // For calls without timezone, display in local time
+      const date = new Date(dateString);
+      const formatted = date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      return formatted;
     }
-    
-    return formatted;
   };
 
   // Format duration
