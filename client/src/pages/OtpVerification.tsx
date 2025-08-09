@@ -58,10 +58,26 @@ export default function OtpVerification() {
       // Also invalidate the query cache to force UI refresh
       queryClient.invalidateQueries({ queryKey: ['/api/auth/check'] });
       
-      // Navigate to the return URL
-      setTimeout(() => {
-        setLocation(returnUrl);
-      }, 500);
+      // Check if user has completed personalization
+      try {
+        const userResponse = await apiRequest("GET", "/api/auth/check");
+        if (userResponse?.user && !userResponse.user.isPersonalized) {
+          // If not personalized, redirect to personalization instead of dashboard
+          setTimeout(() => {
+            setLocation("/personalization");
+          }, 500);
+        } else {
+          // Navigate to the return URL if personalization is complete
+          setTimeout(() => {
+            setLocation(returnUrl);
+          }, 500);
+        }
+      } catch (error) {
+        // If we can't check personalization status, default to dashboard
+        setTimeout(() => {
+          setLocation(returnUrl);
+        }, 500);
+      }
     },
     onError: (error: any) => {
       const errorMessage = error?.message || '';

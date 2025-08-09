@@ -639,6 +639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(
     "/api/schedule",
     isAuthenticated,
+    isPhoneVerified,
     isPersonalized,
     async (req: Request, res: Response) => {
       // Check if we're updating an existing schedule
