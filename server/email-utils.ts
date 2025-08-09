@@ -158,7 +158,7 @@ Founder, Kickass Morning`;
       
       <p>It's still early days, and I'd really love your feedback.<br>
       Please use it for a few days and let me know how it goes — good or bad, I want to hear it.<br>
-      You can just reply to this email or write to me at <a href="mailto:gangoda@kickassmorning.com">gangoda@kickassmorning.com</a>.</p>
+      You can just reply to this email or write to me at <a href="mailto:gangoda@kickassmorning.com">manjula@kickassmorning.com</a>.</p>
       
       <h3 style="color: #5E35B1;">Here are a few quick tips to get the most out of it:</h3>
       
@@ -188,7 +188,7 @@ Founder, Kickass Morning`;
       <p>Thanks again. You've officially got someone to call you out of bed.<br>
       Let's crush the morning together.</p>
       
-      <p style="margin-top: 30px;">– Gangoda<br>
+      <p style="margin-top: 30px;">– Manjula Liyanage<br>
       <em>Founder, Kickass Morning</em></p>
     </div>
   `;
