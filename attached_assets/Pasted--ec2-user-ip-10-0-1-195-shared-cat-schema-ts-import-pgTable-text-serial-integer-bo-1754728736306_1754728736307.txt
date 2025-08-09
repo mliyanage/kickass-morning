@@ -1,0 +1,125 @@
+[ec2-user@ip-10-0-1-195 shared]$ cat schema.ts
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  unique,
+} from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+// Define enum types for goals and struggles
+export enum GoalType {
+  EXERCISE = "exercise",
+  PRODUCTIVITY = "productivity",
+  STUDY = "study",
+  MEDITATION = "meditation",
+  CREATIVE = "creative",
+  OTHER = "other",
+}
+
+export enum StruggleType {
+  TIRED = "tired",
+  LACK_OF_MOTIVATION = "lack_of_motivation",
+  SNOOZE = "snooze",
+  STAY_UP_LATE = "stay_up_late",
+  OTHER = "other",
+}
+
+export enum CallStatus {
+  PENDING = "pending",
+  ANSWERED = "answered",
+  FAILED = "failed",
+  RINGING = "ringing",
+  COMPLETED = "completed",
+  IN_PROGRESS = "in-progress",
+  QUEUED = "queued",
+  INITIATED = "initiated",
+}
+
+// Users table
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  phone: text("phone"),
+  phoneVerified: boolean("phone_verified").default(false),
+  isPersonalized: boolean("is_personalized").default(false),
+  welcomeEmailSent: boolean("welcome_email_sent").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// User personalization preferences
+export const personalizations = pgTable(
+  "personalizations",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    goal: text("goal").notNull(), // Single goal in database
+    otherGoal: text("other_goal"),
+    goalDescription: text("goal_description"),
+    struggle: text("struggle").notNull(), // Single struggle in database
+    otherStruggle: text("other_struggle"),
+    voice: text("voice").notNull(),
+    customVoice: text("custom_voice"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => {
+    return {
+      userIdUnique: unique("personalizations_user_id_unique").on(table.userId),
+    };
+  },
+);
+
+// Voice options
+export const voices = pgTable("voices", {
+  id: serial("id").primaryKey(),
+  voiceId: text("voice_id").notNull().unique(),
+  name: text("name").notNull(),
+  category: text("category").notNull(),
+  imageUrl: text("image_url").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Schedule for wakeup calls - DST-proof with local time storage
+export const schedules = pgTable("schedules", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  wakeupTime: text("wakeup_time").notNull(), // HH:MM format in user's local time
+  timezone: text("timezone").notNull(), // IANA timezone identifier
+  weekdays: text("weekdays").notNull(), // comma-separated days: "mon,tue,wed"  
+  isRecurring: boolean("is_recurring").notNull().default(true),
+  isActive: boolean("is_active").notNull().default(true),
+  lastCalled: timestamp("last_called"),
+  lastCallSid: text("last_call_sid"),
+  lastCallStatus: text("last_call_status"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Call history
+export const callHistory = pgTable("call_history", {
+  id: serial("id").primaryKey(),
+  scheduleId: integer("schedule_id").references(() => schedules.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  callTime: timestamp("call_time").notNull(),
+  timezone: text("timezone"), // IANA timezone of the scheduled call
+  voice: text("voice").notNull(),
+  status: text("status").notNull(),
+  callSid: text("call_sid"), // Twilio call SID for tracking
+  duration: integer("duration"),
+  recordingUrl: text("recording_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
