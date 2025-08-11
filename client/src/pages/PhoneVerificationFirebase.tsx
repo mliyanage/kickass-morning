@@ -182,8 +182,10 @@ export default function PhoneVerificationFirebase() {
       }
       
       // More aggressive cache invalidation to force fresh data
+      console.log('[Firebase] Starting cache invalidation...');
       await queryClient.resetQueries({ queryKey: ['/api/auth/check'] });
       await queryClient.refetchQueries({ queryKey: ['/api/auth/check'] });
+      console.log('[Firebase] Cache invalidation completed');
       
       // Wait a moment to ensure backend has processed the verification
       await new Promise(resolve => setTimeout(resolve, 300));

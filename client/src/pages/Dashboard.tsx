@@ -342,6 +342,19 @@ export default function Dashboard() {
               </div>
               <div className="flex-shrink-0 flex gap-2">
                 <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    console.log('[Dashboard] Manual cache refresh triggered');
+                    console.log('[Dashboard] Before refresh - userData:', userData?.user);
+                    await queryClient.resetQueries({ queryKey: ["/api/auth/check"] });
+                    await queryClient.refetchQueries({ queryKey: ["/api/auth/check"] });
+                    console.log('[Dashboard] Manual cache refresh completed');
+                  }}
+                >
+                  🔄 Debug
+                </Button>
+                <Button
                   size="lg"
                   className="w-full md:w-auto"
                   onClick={handleSampleCall}
