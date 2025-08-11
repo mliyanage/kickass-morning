@@ -139,13 +139,20 @@ export default function PhoneVerificationFirebase() {
       });
     },
     onSuccess: async () => {
-      // Comprehensive cache invalidation to ensure all user data is fresh
-      await queryClient.invalidateQueries({ queryKey: ['/api/auth/check'] });
-      await queryClient.invalidateQueries({ queryKey: ['/api/user/personalization'] });
-      await queryClient.invalidateQueries({ queryKey: ['/api/schedule'] });
+      console.log('[Firebase] Verification successful, starting cache invalidation...');
       
-      // Force refetch user data to ensure dashboard updates immediately
-      await queryClient.refetchQueries({ queryKey: ['/api/auth/check'] });
+      // Clear all cache and force fresh data fetch
+      queryClient.clear(); // Nuclear option - clear everything
+      
+      // Wait a moment for backend to process
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Force fresh fetch of critical data
+      await queryClient.prefetchQuery({ 
+        queryKey: ['/api/auth/check'],
+        staleTime: 0,
+        gcTime: 0 
+      });
       
       toast({
         title: "Phone verified successfully!",
