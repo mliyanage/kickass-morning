@@ -8,13 +8,28 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+// Lazy initialization - only initialize when needed
+let app: any = null;
+let auth: any = null;
+
+const initializeFirebase = () => {
+  if (!app) {
+    console.log('[Firebase] Initializing Firebase SDK...');
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+  }
+  return { app, auth };
+};
+
+export const getFirebaseAuth = () => {
+  const { auth } = initializeFirebase();
+  return auth;
+};
 
 // Initialize recaptcha verifier
 export const initializeRecaptcha = (containerId: string): RecaptchaVerifier => {
-  return new RecaptchaVerifier(auth, containerId, {
+  const firebaseAuth = getFirebaseAuth();
+  return new RecaptchaVerifier(firebaseAuth, containerId, {
     size: 'normal',
     callback: () => {
       console.log('reCAPTCHA solved');
@@ -28,7 +43,8 @@ export const initializeRecaptcha = (containerId: string): RecaptchaVerifier => {
 // Send SMS verification code
 export const sendVerificationCode = async (phoneNumber: string, recaptchaVerifier: RecaptchaVerifier) => {
   try {
-    const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+    const firebaseAuth = getFirebaseAuth();
+    const confirmationResult = await signInWithPhoneNumber(firebaseAuth, phoneNumber, recaptchaVerifier);
     return confirmationResult;
   } catch (error) {
     console.error('Error sending SMS:', error);
@@ -49,11 +65,12 @@ export const verifyCode = async (confirmationResult: any, code: string) => {
 
 // Get Firebase ID token for backend verification
 export const getFirebaseToken = async (): Promise<string | null> => {
-  const currentUser = auth.currentUser;
+  const firebaseAuth = getFirebaseAuth();
+  const currentUser = firebaseAuth.currentUser;
   if (currentUser) {
     return await currentUser.getIdToken();
   }
   return null;
 };
 
-export default app;
+export default null; // No default export of app since it's lazily initialized
