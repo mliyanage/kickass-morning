@@ -84,7 +84,6 @@ export default function Dashboard() {
     error: schedulesError,
   } = useQuery<Schedule[]>({
     queryKey: ["/api/schedule"],
-    gcTime: 0,
   });
 
   // Get call history
@@ -94,7 +93,6 @@ export default function Dashboard() {
     error: historyError,
   } = useQuery<CallHistory[]>({
     queryKey: ["/api/call/history"],
-    gcTime: 0,
   });
 
   // Sample call mutation
