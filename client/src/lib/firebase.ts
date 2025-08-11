@@ -26,18 +26,26 @@ export const getFirebaseAuth = () => {
   return auth;
 };
 
-// Initialize recaptcha verifier
+// Initialize recaptcha verifier with better error handling
 export const initializeRecaptcha = (containerId: string): RecaptchaVerifier => {
-  const firebaseAuth = getFirebaseAuth();
-  return new RecaptchaVerifier(firebaseAuth, containerId, {
-    size: 'normal',
-    callback: () => {
-      console.log('reCAPTCHA solved');
-    },
-    'expired-callback': () => {
-      console.log('reCAPTCHA expired');
-    }
-  });
+  try {
+    const firebaseAuth = getFirebaseAuth();
+    return new RecaptchaVerifier(firebaseAuth, containerId, {
+      size: 'normal',
+      callback: () => {
+        console.log('reCAPTCHA solved');
+      },
+      'expired-callback': () => {
+        console.log('reCAPTCHA expired');
+      },
+      'error-callback': (error: any) => {
+        console.error('reCAPTCHA error:', error);
+      }
+    });
+  } catch (error) {
+    console.error('Failed to initialize reCAPTCHA:', error);
+    throw error;
+  }
 };
 
 // Send SMS verification code

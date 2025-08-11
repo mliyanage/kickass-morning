@@ -13,6 +13,7 @@ import ScheduleCall from "@/pages/ScheduleCall";
 import Dashboard from "@/pages/Dashboard";
 import CallHistory from "@/pages/CallHistory";
 import Help from "@/pages/Help";
+import { useEffect } from "react";
 function Router() {
   
   return (
@@ -35,6 +36,24 @@ function Router() {
 }
 
 function App() {
+  // Handle Firebase reCAPTCHA timeout errors to prevent runtime error overlay
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      // Check if it's a Firebase reCAPTCHA timeout error
+      if (event.reason?.message?.includes('Timeout') || 
+          event.reason?.toString?.().includes('recaptcha') ||
+          event.reason?.toString?.().includes('timeout')) {
+        console.warn('Suppressed Firebase reCAPTCHA timeout error:', event.reason);
+        event.preventDefault(); // Prevent runtime error overlay
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
 
   return (
     <>

@@ -48,7 +48,7 @@ export default function PhoneVerificationFirebase() {
     }
   }, []);
 
-  // Initialize reCAPTCHA
+  // Initialize reCAPTCHA with error handling
   useEffect(() => {
     if (step === "phone" && !recaptchaVerifier) {
       try {
@@ -56,11 +56,17 @@ export default function PhoneVerificationFirebase() {
         setRecaptchaVerifier(verifier);
       } catch (error) {
         console.error("Failed to initialize reCAPTCHA:", error);
+        // Show user-friendly error instead of runtime error
+        toast({
+          variant: "destructive",
+          title: "Verification setup failed",
+          description: "Please refresh the page and try again.",
+        });
       }
     }
   }, [step, recaptchaVerifier]);
 
-  // Send SMS mutation
+  // Send SMS mutation with timeout handling
   const sendSmsMutation = useMutation({
     mutationFn: async ({ phone }: { phone: string }) => {
       if (!recaptchaVerifier) {
@@ -70,8 +76,16 @@ export default function PhoneVerificationFirebase() {
       const fullPhone = `${countryCode}${phone.replace(/\D/g, "")}`;
       console.log("Sending SMS to:", fullPhone);
       
-      const confirmation = await sendVerificationCode(fullPhone, recaptchaVerifier);
-      return { confirmation, fullPhone };
+      try {
+        const confirmation = await sendVerificationCode(fullPhone, recaptchaVerifier);
+        return { confirmation, fullPhone };
+      } catch (error: any) {
+        // Handle specific Firebase/reCAPTCHA timeout errors gracefully
+        if (error.message?.includes('timeout') || error.message?.includes('Timeout')) {
+          throw new Error("Verification service is taking longer than expected. Please try again.");
+        }
+        throw error;
+      }
     },
     onSuccess: ({ confirmation, fullPhone }) => {
       setConfirmationResult(confirmation);
