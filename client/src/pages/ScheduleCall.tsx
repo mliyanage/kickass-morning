@@ -262,7 +262,21 @@ export default function ScheduleCall() {
       });
       setLocation("/dashboard");
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      // Check if error is due to missing personalization
+      if (error.status === 403 && (error.personalizationRequired || error.message?.includes('personalization'))) {
+        toast({
+          title: "Complete your setup first",
+          description: "Please set up your preferences before creating a schedule.",
+        });
+        // Redirect to personalization page after short delay
+        setTimeout(() => {
+          setLocation("/personalization");
+        }, 1500);
+        return;
+      }
+      
+      // Generic error handling for other cases
       toast({
         variant: "destructive",
         title: "Failed to save schedule",

@@ -18,24 +18,16 @@ export async function apiRequest(
   if (!res.ok) {
     try {
       const errorData = await res.json();
-      if (res.status === 401) {
-        throw new Error(errorData.message || "Authentication required. Please log in again.");
-      }
-      throw new Error(errorData.message || `Request failed with status ${res.status}`);
+      const error = new Error(errorData.message || `Request failed with status ${res.status}`);
+      (error as any).status = res.status;
+      (error as any).personalizationRequired = errorData.personalizationRequired;
+      (error as any).requiresAuth = errorData.requiresAuth;
+      throw error;
     } catch (jsonError) {
       // If JSON parsing fails, use status-based error messages
-      switch (res.status) {
-        case 401:
-          throw new Error("Authentication required. Please log in again.");
-        case 403:
-          throw new Error("Access denied");
-        case 404:
-          throw new Error("Resource not found");
-        case 500:
-          throw new Error("Server error. Please try again later");
-        default:
-          throw new Error(`Request failed with status ${res.status}`);
-      }
+      const error = new Error(`Request failed with status ${res.status}`);
+      (error as any).status = res.status;
+      throw error;
     }
   }
   
