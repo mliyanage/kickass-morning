@@ -62,6 +62,7 @@ export default function Dashboard() {
 
   // Debug logging to track userData state
   console.log('[Dashboard] userData:', userData);
+  console.log('[Dashboard] phoneVerified check:', userData?.user?.phoneVerified);
 
   // Get user schedules
   const {
@@ -313,30 +314,43 @@ export default function Dashboard() {
 
             <div className="flex flex-col md:flex-row md:items-center gap-4">
               <div className="flex-1">
-                {userData?.user?.phoneVerified ? (
-                  <div className="flex items-center text-sm text-green-700 mb-4">
-                    <Phone className="h-4 w-4 mr-2" />
-                    <span className="font-medium">
-                      Ready to call: {userData.user.phone} ✓
-                    </span>
-                  </div>
-                ) : (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                    <div className="flex items-center">
-                      <div className="text-yellow-600 mr-3">🔒</div>
-                      <div>
-                        <p className="text-sm font-medium text-yellow-800">
-                          Your phone isn't verified yet.
-                        </p>
-                        <p className="text-sm text-yellow-700">
-                          → Verify now to unlock your first wake-up preview.
-                        </p>
+                {(() => {
+                  console.log('[Dashboard] Rendering phone status:', userData?.user?.phoneVerified, userData?.user);
+                  return userData?.user?.phoneVerified ? (
+                    <div className="flex items-center text-sm text-green-700 mb-4">
+                      <Phone className="h-4 w-4 mr-2" />
+                      <span className="font-medium">
+                        Ready to call: {userData.user.phone} ✓
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-center">
+                        <div className="text-yellow-600 mr-3">🔒</div>
+                        <div>
+                          <p className="text-sm font-medium text-yellow-800">
+                            Your phone isn't verified yet.
+                          </p>
+                          <p className="text-sm text-yellow-700">
+                            → Verify now to unlock your first wake-up preview.
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    console.log('[Dashboard] Manual cache refresh triggered');
+                    queryClient.invalidateQueries({ queryKey: ["/api/auth/check"] });
+                  }}
+                >
+                  Refresh Status
+                </Button>
                 <Button
                   size="lg"
                   className="w-full md:w-auto"
