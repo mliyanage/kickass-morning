@@ -821,7 +821,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserSchedules(userId: number): Promise<Schedule[]> {
-    return db.select().from(schedules).where(eq(schedules.userId, userId));
+    return db.select().from(schedules).where(
+      and(eq(schedules.userId, userId), eq(schedules.isActive, true))
+    );
   }
 
   async updateScheduleStatus(
