@@ -36,15 +36,36 @@ function Router() {
 }
 
 function App() {
-  // Handle Firebase reCAPTCHA timeout errors to prevent runtime error overlay
+  // Handle Firebase reCAPTCHA timeout errors and other transient errors
   useEffect(() => {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      // Check if it's a Firebase reCAPTCHA timeout error
-      if (event.reason?.message?.includes('Timeout') || 
-          event.reason?.toString?.().includes('recaptcha') ||
-          event.reason?.toString?.().includes('timeout')) {
-        console.warn('Suppressed Firebase reCAPTCHA timeout error:', event.reason);
+      const reason = event.reason;
+      const reasonString = reason?.toString?.() || '';
+      const reasonMessage = reason?.message || '';
+      
+      // Check for various timeout and transient errors
+      const isTransientError = 
+        reasonMessage.toLowerCase().includes('timeout') ||
+        reasonString.toLowerCase().includes('timeout') ||
+        reasonString.toLowerCase().includes('recaptcha') ||
+        reasonString.toLowerCase().includes('network error') ||
+        reasonString.toLowerCase().includes('fetch') ||
+        reasonMessage.includes('Failed to fetch') ||
+        // Firebase specific timeout errors
+        reasonMessage.includes('auth/timeout') ||
+        reasonMessage.includes('auth/network-request-failed');
+      
+      if (isTransientError) {
+        console.warn('Suppressed transient network/timeout error:', reason);
         event.preventDefault(); // Prevent runtime error overlay
+        return;
+      }
+      
+      // Also suppress AbortController cancellation errors which are normal
+      if (reasonMessage.includes('AbortError') || reasonMessage.includes('cancelled')) {
+        console.warn('Suppressed request cancellation:', reason);
+        event.preventDefault();
+        return;
       }
     };
 

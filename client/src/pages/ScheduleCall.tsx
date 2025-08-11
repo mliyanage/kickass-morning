@@ -20,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import AppLayout from "@/components/layouts/AppLayout";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 // Analytics removed temporarily to fix runtime errors
 import { getGroupedTimezones, getUserTimezone, type TimezoneOption } from "@/lib/timezones";
 
@@ -354,11 +355,13 @@ export default function ScheduleCall() {
   // Show loading state while checking phone verification or loading schedule data
   if (isLoading || isUserDataLoading || (scheduleIdToEdit && isLoadingSchedule)) {
     return (
-      <AppLayout>
-        <div className="text-center py-16">
-          <p>{scheduleIdToEdit ? "Loading schedule data..." : "Loading..."}</p>
-        </div>
-      </AppLayout>
+      <ErrorBoundary>
+        <AppLayout>
+          <div className="text-center py-16">
+            <p>{scheduleIdToEdit ? "Loading schedule data..." : "Loading..."}</p>
+          </div>
+        </AppLayout>
+      </ErrorBoundary>
     );
   }
 
@@ -368,8 +371,9 @@ export default function ScheduleCall() {
 
   // Only render the schedule form if user is verified
   return (
-    <AppLayout>
-      <div className="shadow sm:rounded-md sm:overflow-hidden">
+    <ErrorBoundary>
+      <AppLayout>
+        <div className="shadow sm:rounded-md sm:overflow-hidden">
         <div className="bg-white py-6 px-4 sm:p-6">
           <h2 className="text-lg leading-6 font-medium text-gray-900 mb-4">
             {editingScheduleId ? "Edit Wakeup Call Schedule" : "Schedule Your Wakeup Call"}
@@ -493,5 +497,6 @@ export default function ScheduleCall() {
         </div>
       </div>
     </AppLayout>
+    </ErrorBoundary>
   );
 }
