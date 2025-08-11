@@ -99,14 +99,50 @@ export function findCountryByCode(
   return getCountryOptions().find((country) => country.code === callingCode);
 }
 
-// Get a specific list of countries by calling codes
+// Get a specific list of countries with hardcoded data for reliability
 export function getSpecificCountries(): CountryOption[] {
-  const specificCountryCodes = ["+1", "+64", "+61", "+65", "+91"];
-  const allCountries = getCountryOptions();
-
-  const specificCountries = specificCountryCodes
-    .map((code) => allCountries.find((country) => country.code === code))
-    .filter(Boolean) as CountryOption[];
-
-  return specificCountries;
+  return [
+    {
+      code: "+1",
+      name: "United States/Canada (+1)",
+      flag: "🇺🇸",
+      callingCode: "+1"
+    },
+    {
+      code: "+61",
+      name: "Australia (+61)",
+      flag: "🇦🇺",
+      callingCode: "+61"
+    },
+    {
+      code: "+64",
+      name: "New Zealand (+64)",
+      flag: "🇳🇿",
+      callingCode: "+64"
+    },
+    {
+      code: "+91",
+      name: "India (+91)",
+      flag: "🇮🇳",
+      callingCode: "+91"
+    },
+    {
+      code: "+33",
+      name: "France (+33)",
+      flag: "🇫🇷",
+      callingCode: "+33"
+    },
+    {
+      code: "+49",
+      name: "Germany (+49)",
+      flag: "🇩🇪",
+      callingCode: "+49"
+    },
+    {
+      code: "+65",
+      name: "Singapore (+65)",
+      flag: "🇸🇬",
+      callingCode: "+65"
+    }
+  ];
 }
