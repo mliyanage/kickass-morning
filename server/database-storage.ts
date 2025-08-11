@@ -821,9 +821,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserSchedules(userId: number): Promise<Schedule[]> {
-    return db.select().from(schedules).where(
+    console.log(`Fetching schedules for user: ${userId}`);
+    
+    // First, try without the isActive filter to see if that's the issue
+    const allUserSchedules = await db.select().from(schedules).where(eq(schedules.userId, userId));
+    console.log(`All schedules for user ${userId}:`, allUserSchedules);
+    
+    // Now with the isActive filter
+    const result = await db.select().from(schedules).where(
       and(eq(schedules.userId, userId), eq(schedules.isActive, true))
     );
+    console.log(`Active schedules for user ${userId}:`, result);
+    console.log(`Found schedules in database:`, result);
+    console.log(`Returning formatted schedules to client:`, result);
+    return result;
   }
 
   async updateScheduleStatus(
