@@ -1,0 +1,35 @@
+Creating schedule: {wakeupTime: '06:30', timezone: 'Australia/Sydney', weekdays: Array(5), isRecurring: true, date: undefined, …}
+ScheduleCall.tsx:53 URL parameter 'id': null
+queryClient.ts:10  POST https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/api/schedule 403 (Forbidden)
+apiRequest @ queryClient.ts:10
+mutationFn @ ScheduleCall.tsx:256
+fn @ @tanstack_react-query.js?v=9325f15a:1189
+run @ @tanstack_react-query.js?v=9325f15a:494
+start @ @tanstack_react-query.js?v=9325f15a:536
+execute @ @tanstack_react-query.js?v=9325f15a:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=9325f15a:2630
+(anonymous) @ @tanstack_react-query.js?v=9325f15a:3295
+handleSubmit @ ScheduleCall.tsx:356
+callCallback2 @ chunk-RPCDYKBN.js?v=9325f15a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=9325f15a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=9325f15a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=9325f15a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=9325f15a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=9325f15a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=9325f15a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=9325f15a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=9325f15a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=9325f15a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=9325f15a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=9325f15a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=9325f15a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=9325f15a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=9325f15a:5449Understand this error
+ScheduleCall.tsx:266 [ScheduleCall] Error object: Error: Request failed with status 403
+    at apiRequest (queryClient.ts:28:21)
+    at async Object.mutationFn (ScheduleCall.tsx:256:14)
+ScheduleCall.tsx:267 [ScheduleCall] Error status: 403
+ScheduleCall.tsx:268 [ScheduleCall] Error message: Request failed with status 403
+ScheduleCall.tsx:269 [ScheduleCall] Personalization required: undefined
+ScheduleCall.tsx:53 URL parameter 'id': null

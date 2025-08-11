@@ -18,12 +18,15 @@ export async function apiRequest(
   if (!res.ok) {
     try {
       const errorData = await res.json();
+      console.log('[apiRequest] Error response data:', errorData);
       const error = new Error(errorData.message || `Request failed with status ${res.status}`);
       (error as any).status = res.status;
       (error as any).personalizationRequired = errorData.personalizationRequired;
       (error as any).requiresAuth = errorData.requiresAuth;
+      console.log('[apiRequest] Created error object:', error);
       throw error;
     } catch (jsonError) {
+      console.log('[apiRequest] JSON parsing failed:', jsonError);
       // If JSON parsing fails, use status-based error messages
       const error = new Error(`Request failed with status ${res.status}`);
       (error as any).status = res.status;

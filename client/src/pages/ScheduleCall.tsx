@@ -269,11 +269,9 @@ export default function ScheduleCall() {
       console.log('[ScheduleCall] Personalization required:', error.personalizationRequired);
       
       // Check if error is due to missing personalization (multiple checks for robustness)
-      if (error.status === 403 && 
-          (error.personalizationRequired || 
-           error.message?.toLowerCase().includes('personalization') ||
-           error.message?.toLowerCase().includes('complete') ||
-           error.message?.toLowerCase().includes('setup'))) {
+      if (error.status === 403) {
+        // For now, assume all 403 errors on schedule creation are personalization-related
+        // since the server uses isPersonalized middleware
         toast({
           title: "Complete your setup first",
           description: "Please set up your preferences before creating a schedule.",
