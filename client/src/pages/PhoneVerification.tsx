@@ -157,25 +157,15 @@ export default function PhoneVerification() {
                     </p>
                     <Select value={countryCode} onValueChange={setCountryCode}>
                       <SelectTrigger id="country-code" className="w-full">
-                        <SelectValue placeholder="Select country code">
-                          {countryCode && countryOptions.length > 0 && (() => {
-                            const selectedCountry = countryOptions.find(country => country.code === countryCode);
-                            return selectedCountry ? (
-                              <span className="flex items-center gap-2">
-                                <span>{selectedCountry.flag}</span>
-                                {selectedCountry.name}
-                              </span>
-                            ) : countryCode;
-                          })()}
-                        </SelectValue>
+                        <SelectValue placeholder="Select country code" />
                       </SelectTrigger>
                       <SelectContent>
                         {countryOptions.map((country) => (
                           <SelectItem key={country.code} value={country.code}>
-                            <span className="flex items-center gap-2">
+                            <div className="flex items-center gap-2">
                               <span>{country.flag}</span>
-                              {country.name}
-                            </span>
+                              <span>{country.name}</span>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
