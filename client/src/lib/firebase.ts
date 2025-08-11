@@ -44,8 +44,12 @@ export const initializeRecaptcha = (containerId: string): RecaptchaVerifier => {
 export const sendVerificationCode = async (phoneNumber: string, recaptchaVerifier: RecaptchaVerifier) => {
   try {
     const firebaseAuth = getFirebaseAuth();
-    const confirmationResult = await signInWithPhoneNumber(firebaseAuth, phoneNumber, recaptchaVerifier);
-    return confirmationResult;
+    // Add timeout to prevent hanging promises
+    const smsPromise = signInWithPhoneNumber(firebaseAuth, phoneNumber, recaptchaVerifier);
+    const timeoutPromise = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error('SMS send timeout')), 30000)
+    );
+    return await Promise.race([smsPromise, timeoutPromise]);
   } catch (error) {
     console.error('Error sending SMS:', error);
     throw error;
@@ -55,8 +59,12 @@ export const sendVerificationCode = async (phoneNumber: string, recaptchaVerifie
 // Verify SMS code
 export const verifyCode = async (confirmationResult: any, code: string) => {
   try {
-    const result = await confirmationResult.confirm(code);
-    return result;
+    // Add timeout to prevent hanging promises
+    const verifyPromise = confirmationResult.confirm(code);
+    const timeoutPromise = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error('Code verification timeout')), 15000)
+    );
+    return await Promise.race([verifyPromise, timeoutPromise]);
   } catch (error) {
     console.error('Error verifying code:', error);
     throw error;
@@ -65,12 +73,22 @@ export const verifyCode = async (confirmationResult: any, code: string) => {
 
 // Get Firebase ID token for backend verification
 export const getFirebaseToken = async (): Promise<string | null> => {
-  const firebaseAuth = getFirebaseAuth();
-  const currentUser = firebaseAuth.currentUser;
-  if (currentUser) {
-    return await currentUser.getIdToken();
+  try {
+    const firebaseAuth = getFirebaseAuth();
+    const currentUser = firebaseAuth.currentUser;
+    if (currentUser) {
+      // Add timeout to prevent hanging promises
+      const tokenPromise = currentUser.getIdToken();
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Token request timeout')), 10000)
+      );
+      return await Promise.race([tokenPromise, timeoutPromise]);
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting Firebase token:', error);
+    throw error;
   }
-  return null;
 };
 
 export default null; // No default export of app since it's lazily initialized

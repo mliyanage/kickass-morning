@@ -78,7 +78,6 @@ const ToastClose = React.forwardRef<
       "absolute right-1 top-1 rounded-md p-1.5 text-foreground/70 opacity-100 transition-all hover:text-foreground hover:bg-secondary/80 focus:opacity-100 focus:outline-none focus:ring-2 active:scale-95 touch-manipulation min-h-[40px] min-w-[40px] flex items-center justify-center sm:right-2 sm:top-2 sm:p-2 sm:min-h-[44px] sm:min-w-[44px] group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:hover:bg-red-900/20 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
       className
     )}
-    toast-close=""
     aria-label="Close notification"
     {...props}
   >

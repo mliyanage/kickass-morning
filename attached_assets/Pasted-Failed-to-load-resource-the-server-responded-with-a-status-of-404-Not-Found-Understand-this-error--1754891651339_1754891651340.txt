@@ -1,0 +1,32 @@
+Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+firebase.ts:17 [Firebase] Initializing Firebase SDK...
+chunk-RPCDYKBN.js?v=9325f15a:521 Warning: React does not recognize the `autoDismiss` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `autodismiss` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+    at li
+    at https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RLTE5R7I.js?v=9325f15a:41:13
+    at https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UACHJROW.js?v=9325f15a:52:11
+    at https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UACHJROW.js?v=9325f15a:33:11
+    at https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RLTE5R7I.js?v=9325f15a:41:13
+    at https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-3K6JKRGY.js?v=9325f15a:59:7
+    at https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UACHJROW.js?v=9325f15a:52:11
+    at https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UACHJROW.js?v=9325f15a:33:11
+    at https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-MRB2OOEX.js?v=9325f15a:109:15
+    at Provider (https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-TWV356S7.js?v=9325f15a:22:15)
+    at https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-toast.js?v=9325f15a:323:7
+    at Presence (https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GX4DP7NC.js?v=9325f15a:24:11)
+    at https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-toast.js?v=9325f15a:271:13
+    at _c3 (https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/src/components/ui/toast.tsx:62:41)
+    at Provider (https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-TWV356S7.js?v=9325f15a:22:15)
+    at Provider (https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-MRB2OOEX.js?v=9325f15a:28:15)
+    at CollectionProvider (https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-MRB2OOEX.js?v=9325f15a:89:13)
+    at ToastProvider (https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-toast.js?v=9325f15a:51:5)
+    at Toaster (https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/src/components/ui/toaster.tsx:29:22)
+    at App
+    at QueryClientProvider (https://6b00a244-0c0a-4270-8cd6-579245215ee2-00-32783he2wcj2l.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=9325f15a:2805:3)
+printWarning @ chunk-RPCDYKBN.js?v=9325f15a:521Understand this error
+PhoneVerificationFirebase.tsx:71 Sending SMS to: +610431937699
+firebase_auth.js?v=9325f15a:6500 Failed to initialize reCAPTCHA Enterprise config. Triggering the reCAPTCHA v2 verification.
+firebase.ts:35 reCAPTCHA solved
+api/user/personalization:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+PhoneVerificationFirebase.tsx:156 No personalization found, redirecting to personalization
+api/user/personalization:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+personalization:1 Uncaught (in promise) TimeoutUnderstand this error

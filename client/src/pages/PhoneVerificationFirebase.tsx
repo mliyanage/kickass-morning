@@ -138,28 +138,17 @@ export default function PhoneVerificationFirebase() {
       localStorage.removeItem("otpVerificationReturnUrl");
       localStorage.removeItem("phoneVerificationReturnUrl");
 
-      // Determine navigation based on return URL and personalization status
+      // Determine navigation based on return URL
       const finalReturnUrl = localStorage.getItem("otpVerificationReturnUrl") || returnUrl;
       
-      // If we're going to dashboard, check if personalization is needed first
+      // Always go to personalization after phone verification for new users
+      // The personalization page will handle checking existing data and redirecting if needed
       if (finalReturnUrl === "/dashboard") {
-        try {
-          // Check if user has completed personalization
-          const personalizationResponse = await apiRequest("GET", "/api/user/personalization");
-          if (!personalizationResponse) {
-            // No personalization data found, redirect to personalization first
-            setLocation("/personalization");
-            return;
-          }
-        } catch (error) {
-          // If personalization endpoint returns 404 or error, user hasn't completed it
-          console.log("No personalization found, redirecting to personalization");
-          setLocation("/personalization");
-          return;
-        }
+        setLocation("/personalization");
+        return;
       }
 
-      // Navigate to intended destination
+      // Navigate to intended destination for other URLs
       setLocation(finalReturnUrl);
     },
     onError: (error: any) => {
