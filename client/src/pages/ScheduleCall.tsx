@@ -297,7 +297,9 @@ export default function ScheduleCall() {
       if (error.status === 400) {
         console.log('[ScheduleCall] Processing 400 error...');
         
-        if (error.maxSchedulesReached || error.message?.includes('Maximum') || error.message?.includes('limit')) {
+        // Check for max schedules first (specific property check)
+        if (error.maxSchedulesReached === true) {
+          console.log('[ScheduleCall] Max schedules reached detected');
           toast({
             variant: "destructive",
             title: "Schedule limit reached",
@@ -306,7 +308,30 @@ export default function ScheduleCall() {
           return;
         }
         
-        if (error.duplicateSchedule || error.message?.includes('already exists') || error.message?.includes('same time')) {
+        // Check for duplicate schedule (specific property check)  
+        if (error.duplicateSchedule === true) {
+          console.log('[ScheduleCall] Duplicate schedule detected');
+          toast({
+            variant: "destructive",
+            title: "Schedule already exists", 
+            description: "You already have a schedule with the same time and settings.",
+          });
+          return;
+        }
+        
+        // Fallback: Check message patterns
+        if (error.message?.includes('Maximum') || error.message?.includes('limit')) {
+          console.log('[ScheduleCall] Max schedules via message pattern');
+          toast({
+            variant: "destructive",
+            title: "Schedule limit reached",
+            description: "You can only have up to 3 schedules. Please delete an existing one first.",
+          });
+          return;
+        }
+        
+        if (error.message?.includes('already exists') || error.message?.includes('same time')) {
+          console.log('[ScheduleCall] Duplicate schedule via message pattern');
           toast({
             variant: "destructive",
             title: "Schedule already exists",
@@ -317,6 +342,7 @@ export default function ScheduleCall() {
         
         // Show the actual server error message if available
         if (error.message) {
+          console.log('[ScheduleCall] Showing generic 400 error with message:', error.message);
           toast({
             variant: "destructive",
             title: "Cannot create schedule",
