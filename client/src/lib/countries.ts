@@ -82,7 +82,7 @@ export function findCountryByCode(
 
 // Get a specific list of countries by calling codes
 export function getSpecificCountries(): CountryOption[] {
-  const specificCountryCodes = ["+64", "+61", "+65", "+91", "+1"];
+  const specificCountryCodes = ["+1", "+64", "+61", "+65", "+91"];
   const allCountries = getCountryOptions();
 
   const specificCountries = specificCountryCodes
