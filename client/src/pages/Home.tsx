@@ -3,28 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useLocation } from "wouter";
 import AppLayout from "@/components/layouts/AppLayout";
 import { useEffect } from "react";
-import { trackCampaignClick, trackEngagement } from "../../lib/analytics";
+// Analytics removed temporarily to fix runtime errors
 
 export default function Home() {
   const [, setLocation] = useLocation();
 
-  // Track campaign visits from URL parameters
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const utm_source = urlParams.get('utm_source');
-    const utm_campaign = urlParams.get('utm_campaign');
-    const fbclid = urlParams.get('fbclid'); // Facebook Click ID
-    
-    // Track campaign traffic
-    if (utm_source === 'facebook' || utm_source === 'meta' || fbclid) {
-      trackCampaignClick('meta_ad', utm_campaign || 'facebook_traffic');
-    } else if (utm_source) {
-      trackCampaignClick('affiliate', utm_campaign || utm_source);
-    }
-    
-    // Track app opened engagement
-    trackEngagement('app_opened');
-  }, []);
+  // Analytics temporarily disabled
 
   return (
     <AppLayout>

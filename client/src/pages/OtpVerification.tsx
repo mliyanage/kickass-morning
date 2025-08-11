@@ -12,7 +12,7 @@ import {
   InputOTPSlot 
 } from "@/components/ui/input-otp";
 import AppLayout from "@/components/layouts/AppLayout";
-import { trackConversion } from "../../lib/analytics";
+// Analytics removed temporarily to fix runtime errors
 
 export default function OtpVerification() {
   const { toast } = useToast();
@@ -39,9 +39,6 @@ export default function OtpVerification() {
       return await apiRequest("POST", "/api/auth/verify-otp", data);
     },
     onSuccess: async () => {
-      // Track phone verification conversion for marketing analytics
-      trackConversion('phone_verified');
-      
       toast({
         title: "Phone verified successfully",
         description: "You're all set. Time to schedule your first kickass morning!",

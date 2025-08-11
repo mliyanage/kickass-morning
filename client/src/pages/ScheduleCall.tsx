@@ -20,7 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import AppLayout from "@/components/layouts/AppLayout";
-import { trackConversion, trackEngagement } from "../../lib/analytics";
+// Analytics removed temporarily to fix runtime errors
 import { getGroupedTimezones, getUserTimezone, type TimezoneOption } from "@/lib/timezones";
 
 // Get timezone options from date-fns-tz
@@ -256,13 +256,6 @@ export default function ScheduleCall() {
       return await apiRequest("POST", endpoint, data);
     },
     onSuccess: () => {
-      // Track schedule creation for marketing analytics
-      if (!editingScheduleId) {
-        // Only track new schedules, not edits
-        trackConversion('first_schedule');
-        trackEngagement('schedule_created');
-      }
-      
       toast({
         title: "Schedule saved",
         description: "Your wakeup call has been scheduled successfully.",

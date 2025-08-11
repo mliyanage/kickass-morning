@@ -125,11 +125,9 @@ export default function PhoneVerificationFirebase() {
       });
     },
     onSuccess: async () => {
-      // Track conversion
-      await trackConversion("phone_verified");
-      
-      // Refresh auth state and invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/check'] });
+      // Force refresh auth state - invalidate and refetch immediately
+      await queryClient.invalidateQueries({ queryKey: ['/api/auth/check'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/auth/check'] });
       
       toast({
         title: "Phone verified successfully!",

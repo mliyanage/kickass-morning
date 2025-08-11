@@ -9,7 +9,7 @@ import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import AppLayout from "@/components/layouts/AppLayout";
-import { trackConversion } from "../../lib/analytics";
+// Analytics removed temporarily to fix runtime errors
 
 export default function Signup() {
   const { toast } = useToast();
@@ -57,9 +57,6 @@ export default function Signup() {
     },
     onSuccess: (response: any) => {
       console.log("Account created successfully, redirecting to dashboard", response);
-      
-      // Track signup conversion for marketing analytics
-      trackConversion('signup');
       
       toast({
         title: "Account created successfully",

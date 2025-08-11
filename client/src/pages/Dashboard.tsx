@@ -56,8 +56,10 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
 
   // Get user data for phone verification check
-  const { data: userData } = useQuery<UserData>({
+  const { data: userData, refetch: refetchUserData } = useQuery<UserData>({
     queryKey: ["/api/auth/check"],
+    staleTime: 0, // Always treat as stale to ensure fresh data
+    gcTime: 0, // Don't cache the data
   });
 
   // Get user schedules

@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { trackConversion } from "../../lib/analytics";
+// Analytics removed temporarily to fix runtime errors
 import { getSpecificCountries } from "@/lib/countries";
 
 export default function PhoneVerification() {

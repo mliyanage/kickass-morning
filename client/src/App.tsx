@@ -13,13 +13,7 @@ import ScheduleCall from "@/pages/ScheduleCall";
 import Dashboard from "@/pages/Dashboard";
 import CallHistory from "@/pages/CallHistory";
 import Help from "@/pages/Help";
-import { useEffect } from "react";
-import { initGA } from "../lib/analytics";
-import { useAnalytics } from "../hooks/use-analytics";
-
 function Router() {
-  // Track page views when routes change
-  useAnalytics();
   
   return (
     <Switch>
@@ -41,15 +35,6 @@ function Router() {
 }
 
 function App() {
-  // Initialize Google Analytics when app loads
-  useEffect(() => {
-    // Verify required environment variable is present
-    if (!import.meta.env.VITE_GA_MEASUREMENT_ID) {
-      console.warn('Missing required Google Analytics key: VITE_GA_MEASUREMENT_ID');
-    } else {
-      initGA();
-    }
-  }, []);
 
   return (
     <>
