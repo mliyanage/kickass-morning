@@ -152,22 +152,26 @@ export default function PhoneVerificationFirebase() {
         description: "Your phone number has been verified. Welcome to KickAss Morning!",
       });
 
-      // Clear stored data
+      // Get return URL BEFORE clearing localStorage
+      const finalReturnUrl = localStorage.getItem("otpVerificationReturnUrl") || returnUrl;
+      
+      // Clear stored data after getting return URL
       localStorage.removeItem("verificationPhone");
       localStorage.removeItem("otpVerificationReturnUrl");
       localStorage.removeItem("phoneVerificationReturnUrl");
 
-      // Determine navigation based on return URL
-      const finalReturnUrl = localStorage.getItem("otpVerificationReturnUrl") || returnUrl;
+      console.log('[Firebase] Navigation: finalReturnUrl =', finalReturnUrl, 'returnUrl =', returnUrl);
       
       // Always go to personalization after phone verification for new users
       // The personalization page will handle checking existing data and redirecting if needed
       if (finalReturnUrl === "/dashboard") {
+        console.log('[Firebase] Navigating to personalization for new user');
         setLocation("/personalization");
         return;
       }
 
       // Navigate to intended destination for other URLs
+      console.log('[Firebase] Navigating to:', finalReturnUrl);
       setLocation(finalReturnUrl);
     },
     onError: (error: any) => {
