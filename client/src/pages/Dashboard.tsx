@@ -344,9 +344,10 @@ export default function Dashboard() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
+                  onClick={async () => {
                     console.log('[Dashboard] Manual cache refresh triggered');
-                    queryClient.invalidateQueries({ queryKey: ["/api/auth/check"] });
+                    await queryClient.resetQueries({ queryKey: ["/api/auth/check"] });
+                    await queryClient.refetchQueries({ queryKey: ["/api/auth/check"] });
                   }}
                 >
                   Refresh Status

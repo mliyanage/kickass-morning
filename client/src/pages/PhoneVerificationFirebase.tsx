@@ -154,8 +154,12 @@ export default function PhoneVerificationFirebase() {
         await (window as any).refreshAuthState();
       }
       
-      // Also invalidate the query cache to force UI refresh (same as Twilio flow)
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/check'] });
+      // More aggressive cache invalidation to force fresh data
+      await queryClient.resetQueries({ queryKey: ['/api/auth/check'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/auth/check'] });
+      
+      // Wait a moment to ensure backend has processed the verification
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // Check if user has completed personalization (EXACT same logic as Twilio)
       try {
