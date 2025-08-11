@@ -60,14 +60,14 @@ function App() {
         reasonMessage.includes('auth/network-request-failed');
       
       if (isTransientError) {
-        console.warn('Suppressed transient network/timeout error:', reason);
+
         event.preventDefault(); // Prevent runtime error overlay
         return;
       }
       
       // Also suppress AbortController cancellation errors which are normal
       if (reasonMessage.includes('AbortError') || reasonMessage.includes('cancelled')) {
-        console.warn('Suppressed request cancellation:', reason);
+
         event.preventDefault();
         return;
       }

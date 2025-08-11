@@ -9,6 +9,7 @@ import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import AppLayout from "@/components/layouts/AppLayout";
+import { Checkbox } from "@/components/ui/checkbox";
 // Analytics removed temporarily to fix runtime errors
 
 export default function Signup() {
@@ -18,6 +19,7 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   // Request email OTP for registration
   const requestOtpMutation = useMutation({
@@ -56,7 +58,7 @@ export default function Signup() {
       return await apiRequest("POST", "/api/auth/verify-email-otp", { email, otp, name });
     },
     onSuccess: (response: any) => {
-      console.log("Account created successfully, redirecting to dashboard", response);
+
       
       toast({
         title: "Account created successfully",
@@ -79,11 +81,27 @@ export default function Signup() {
 
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Name required",
+        description: "Please enter your full name.",
+      });
+      return;
+    }
     if (!email) {
       toast({
         variant: "destructive",
         title: "Email required",
         description: "Please enter your email address.",
+      });
+      return;
+    }
+    if (!acceptTerms) {
+      toast({
+        variant: "destructive",
+        title: "Terms acceptance required",
+        description: "You must accept the Terms & Conditions and Privacy Policy to create an account.",
       });
       return;
     }
@@ -145,10 +163,30 @@ export default function Signup() {
                 />
               </div>
 
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="acceptTerms"
+                  checked={acceptTerms}
+                  onCheckedChange={(checked) => setAcceptTerms(checked === true)}
+                />
+                <div className="space-y-1 leading-none">
+                  <label htmlFor="acceptTerms" className="text-sm font-normal cursor-pointer">
+                    I agree to the{' '}
+                    <a href="/terms" target="_blank" className="text-blue-600 hover:underline">
+                      Terms & Conditions
+                    </a>
+                    {' '}and{' '}
+                    <a href="/privacy" target="_blank" className="text-blue-600 hover:underline">
+                      Privacy Policy
+                    </a>
+                  </label>
+                </div>
+              </div>
+
               <Button 
                 type="submit" 
                 className="w-full"
-                disabled={requestOtpMutation.isPending}
+                disabled={requestOtpMutation.isPending || !acceptTerms}
               >
                 {requestOtpMutation.isPending ? "Sending code..." : "Continue with email"}
               </Button>
