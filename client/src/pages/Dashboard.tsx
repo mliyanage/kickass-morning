@@ -55,6 +55,19 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
+  // Auto-refresh cache on component mount (handles Firebase verification navigation)
+  useEffect(() => {
+    const refreshCache = async () => {
+      console.log('[Dashboard] Auto-refreshing cache on mount...');
+      await queryClient.resetQueries({ queryKey: ["/api/auth/check"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/auth/check"] });
+      console.log('[Dashboard] Auto cache refresh completed');
+    };
+    
+    // Refresh cache when component mounts to ensure fresh data
+    refreshCache();
+  }, [queryClient]);
+
   // Get user data for phone verification check (restored original caching)
   const { data: userData } = useQuery<UserData>({
     queryKey: ["/api/auth/check"],
@@ -341,19 +354,7 @@ export default function Dashboard() {
                 })()}
               </div>
               <div className="flex-shrink-0 flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    console.log('[Dashboard] Manual cache refresh triggered');
-                    console.log('[Dashboard] Before refresh - userData:', userData?.user);
-                    await queryClient.resetQueries({ queryKey: ["/api/auth/check"] });
-                    await queryClient.refetchQueries({ queryKey: ["/api/auth/check"] });
-                    console.log('[Dashboard] Manual cache refresh completed');
-                  }}
-                >
-                  🔄 Debug
-                </Button>
+
                 <Button
                   size="lg"
                   className="w-full md:w-auto"
