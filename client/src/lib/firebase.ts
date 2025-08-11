@@ -31,23 +31,44 @@ export const initializeRecaptcha = (containerId: string): RecaptchaVerifier => {
     const firebaseAuth = getFirebaseAuth();
     const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
     
-    if (!siteKey) {
-      throw new Error('reCAPTCHA site key not configured');
+    // Debug logging for production troubleshooting
+    if (import.meta.env.PROD) {
+      console.log('Firebase reCAPTCHA initialization:', {
+        hasSiteKey: !!siteKey,
+        siteKeyLength: siteKey?.length,
+        containerId,
+        authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+        projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID
+      });
     }
+    
+    if (!siteKey) {
+      throw new Error('reCAPTCHA site key not configured. Check VITE_RECAPTCHA_SITE_KEY environment variable.');
+    }
+
+    // Ensure the DOM element exists
+    const container = document.getElementById(containerId);
+    if (!container) {
+      throw new Error(`reCAPTCHA container element '${containerId}' not found in DOM`);
+    }
+
+    // Clear any existing reCAPTCHA in the container
+    container.innerHTML = '';
     
     return new RecaptchaVerifier(firebaseAuth, containerId, {
       size: 'normal',
       callback: () => {
-        // reCAPTCHA verification successful
+        console.log('reCAPTCHA verification successful');
       },
       'expired-callback': () => {
-        // reCAPTCHA expired - user needs to solve it again
+        console.log('reCAPTCHA expired - user needs to solve it again');
       },
       'error-callback': (error: any) => {
-        // Handle reCAPTCHA error
+        console.error('reCAPTCHA error:', error);
       }
     });
   } catch (error) {
+    console.error('Failed to initialize reCAPTCHA:', error);
     throw error;
   }
 };

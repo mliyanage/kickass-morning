@@ -51,17 +51,22 @@ export default function PhoneVerificationFirebase() {
   // Initialize reCAPTCHA with error handling
   useEffect(() => {
     if (step === "phone" && !recaptchaVerifier) {
-      try {
-        const verifier = initializeRecaptcha("recaptcha-container");
-        setRecaptchaVerifier(verifier);
-      } catch (error) {
-        // Show user-friendly error instead of runtime error
-        toast({
-          variant: "destructive",
-          title: "Verification setup failed",
-          description: "Please refresh the page and try again.",
-        });
-      }
+      // Add a small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        try {
+          const verifier = initializeRecaptcha("recaptcha-container");
+          setRecaptchaVerifier(verifier);
+        } catch (error) {
+          // Show user-friendly error instead of runtime error
+          toast({
+            variant: "destructive",
+            title: "Verification setup failed", 
+            description: error instanceof Error ? error.message : "Please refresh the page and try again.",
+          });
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
     }
   }, [step, recaptchaVerifier]);
 
