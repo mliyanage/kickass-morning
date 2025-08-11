@@ -29,13 +29,8 @@ export default function PhoneVerification() {
   // Get country options from the world-countries library
   const countryOptions = getSpecificCountries();
 
-  // Debug logging
-  console.log("Country options:", countryOptions);
-  console.log("Current country code:", countryCode);
-
-  // Handle country change with logging
+  // Handle country change
   const handleCountryChange = (newCode: string) => {
-    console.log("Country changing from", countryCode, "to", newCode);
     setCountryCode(newCode);
   };
 
