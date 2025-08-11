@@ -32,15 +32,7 @@ export const initializeRecaptcha = (containerId: string): RecaptchaVerifier => {
     const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
     
     // Debug logging for production troubleshooting
-    if (import.meta.env.PROD) {
-      console.log('Firebase reCAPTCHA initialization:', {
-        hasSiteKey: !!siteKey,
-        siteKeyLength: siteKey?.length,
-        containerId,
-        authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-        projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID
-      });
-    }
+    // Production logging removed for security
     
     if (!siteKey) {
       throw new Error('reCAPTCHA site key not configured. Check VITE_RECAPTCHA_SITE_KEY environment variable.');

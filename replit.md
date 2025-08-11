@@ -17,7 +17,9 @@ Preferred communication style: Simple, everyday language.
 - **✅ FIXED: Schedule Display Issue** - Fixed getUserSchedules query to properly filter for active schedules, resolving dashboard showing empty schedule lists.
 - **✅ ENHANCED: Duplicate Schedule Prevention** - Added server-side validation preventing duplicate schedules and enforcing 3-schedule limit per user.
 - **✅ RESOLVED: Cache Invalidation** - Fixed dashboard not refreshing after schedule creation by properly invalidating React Query cache.
-- **✅ RESOLVED: Personalization Error Handling** - Fixed 403 errors when users try to create schedules without completing personalization. Now shows user-friendly "Complete your setup first" message and auto-redirects to /personalization page.
+- **✅ RESOLVED: Personalization Error Handling** - Fixed 403errors when users try to create schedules without completing personalization. Now shows user-friendly "Complete your setup first" message and auto-redirects to /personalization page.
+- **✅ RESOLVED: Firebase Production Deployment** - Fixed critical issue where Firebase environment variables (VITE_*) weren't embedded in production builds. Root cause: Client-side variables need build-time embedding, not runtime loading like server variables. Solution: Use `set -a; source ../.env; set +a; npm run build` for EC2 deployments.
+- **✅ SECURITY: Removed Debug Logs** - Removed console.log statements that were exposing sensitive user data and Firebase configuration in browser console for production builds.
 
 ## System Architecture
 

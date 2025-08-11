@@ -1,7 +1,24 @@
-# Firebase reCAPTCHA Production Troubleshooting Guide
+# EC2 Deployment Guide - Firebase Environment Variables
 
-## Current Issue
-Getting "reCAPTCHA not initialized" error in production on AWS EC2.
+## RESOLVED: Firebase Environment Variables Issue ✅
+
+**Problem**: Firebase variables (VITE_*) are client-side and must be embedded during build, not loaded at runtime.
+
+**Root Cause**: Server variables (MAILJET, TWILIO) work at runtime, but VITE_ variables need build-time embedding.
+
+## Production Deployment Process
+
+### Correct Build Command for EC2:
+```bash
+cd /opt/kickass-morning/app
+set -a; source ../.env; set +a; npm run build
+pm2 restart kickass-morning
+```
+
+This process:
+1. Exports all .env variables to shell environment
+2. Builds frontend with VITE_ variables embedded
+3. Restarts the PM2 process
 
 ## Correct Environment Variables for Production
 Add these exact values to `/opt/kickass-morning/.env`:
@@ -79,11 +96,22 @@ npm list firebase
 npm list @firebase/auth
 ```
 
-### Restart Application:
+### CRITICAL: Correct Build Process for Production:
 ```bash
-sudo pm2 restart kickass-morning
-sudo pm2 logs kickass-morning --lines 50
+# Navigate to app directory
+cd /opt/kickass-morning/app
+
+# Load environment variables and build with VITE_ variables embedded
+set -a; source ../.env; set +a; npm run build
+
+# Restart PM2 process
+pm2 restart kickass-morning
+
+# Verify deployment
+pm2 logs kickass-morning --lines 20
 ```
+
+**Why This Fixes It**: The `set -a; source ../.env; set +a` command exports all environment variables to the shell before building, allowing Vite to embed the VITE_ variables into the frontend bundle.
 
 ## Production-Specific reCAPTCHA Setup
 

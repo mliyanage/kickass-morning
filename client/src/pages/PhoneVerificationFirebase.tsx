@@ -78,7 +78,6 @@ export default function PhoneVerificationFirebase() {
       }
 
       const fullPhone = `${countryCode}${phone.replace(/\D/g, "")}`;
-      console.log("Sending SMS to:", fullPhone);
       
       try {
         const confirmation = await sendVerificationCode(fullPhone, recaptchaVerifier);
@@ -105,8 +104,6 @@ export default function PhoneVerificationFirebase() {
       });
     },
     onError: (error: any) => {
-      console.error("SMS error:", error);
-      
       // Extract Firebase error code and provide user-friendly messages
       let title = "Failed to send code";
       let description = "Please check your phone number and try again.";
@@ -186,10 +183,8 @@ export default function PhoneVerificationFirebase() {
       }
       
       // More aggressive cache invalidation to force fresh data
-      console.log('[Firebase] Starting cache invalidation...');
       await queryClient.resetQueries({ queryKey: ['/api/auth/check'] });
       await queryClient.refetchQueries({ queryKey: ['/api/auth/check'] });
-      console.log('[Firebase] Cache invalidation completed');
       
       // Wait a moment to ensure backend has processed the verification
       await new Promise(resolve => setTimeout(resolve, 300));
@@ -216,8 +211,6 @@ export default function PhoneVerificationFirebase() {
       }
     },
     onError: (error: any) => {
-
-      
       // Extract Firebase error code and provide user-friendly messages
       let title = "Verification failed";
       let description = "Please check your code and try again.";

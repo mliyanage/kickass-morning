@@ -323,9 +323,7 @@ export default function Dashboard() {
 
             <div className="flex flex-col md:flex-row md:items-center gap-4">
               <div className="flex-1">
-                {(() => {
-                  console.log('[Dashboard] Rendering phone status:', userData?.user?.phoneVerified, userData?.user);
-                  return userData?.user?.phoneVerified ? (
+                {userData?.user?.phoneVerified ? (
                     <div className="flex items-center text-sm text-green-700 mb-4">
                       <Phone className="h-4 w-4 mr-2" />
                       <span className="font-medium">
@@ -346,8 +344,7 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </div>
-                  );
-                })()}
+                  )}
               </div>
               <div className="flex-shrink-0 flex gap-2">
 
