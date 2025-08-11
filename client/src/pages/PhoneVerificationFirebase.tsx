@@ -139,8 +139,13 @@ export default function PhoneVerificationFirebase() {
       });
     },
     onSuccess: async () => {
-      // Refresh auth state and invalidate queries (same as Twilio flow)
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/check'] });
+      // Comprehensive cache invalidation to ensure all user data is fresh
+      await queryClient.invalidateQueries({ queryKey: ['/api/auth/check'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/user/personalization'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/schedule'] });
+      
+      // Force refetch user data to ensure dashboard updates immediately
+      await queryClient.refetchQueries({ queryKey: ['/api/auth/check'] });
       
       toast({
         title: "Phone verified successfully!",
