@@ -55,11 +55,9 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
-  // Get user data for phone verification check with aggressive refresh
+  // Get user data for phone verification check (restored original caching)
   const { data: userData } = useQuery<UserData>({
     queryKey: ["/api/auth/check"],
-    gcTime: 0, // Don't cache
-    staleTime: 0, // Always consider stale
   });
 
   // Get user schedules

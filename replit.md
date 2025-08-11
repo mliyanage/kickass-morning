@@ -100,6 +100,13 @@ All client requests go through unified query client (`client/src/lib/queryClient
 
 ## Recent Changes
 
+**August 11, 2025**: Fixed Firebase phone verification navigation and cache refresh issues:
+- **Root Cause**: Firebase verification wasn't navigating correctly and dashboard cache wasn't refreshing after verification
+- **Navigation Fix**: Fixed localStorage clearing order - was clearing before reading return URL, causing null navigation
+- **Cache Solution**: Adopted exact same cache invalidation pattern as working Twilio OTP verification
+- **Key Pattern**: Direct `apiRequest("GET", "/api/auth/check")` call + 500ms delay before navigation
+- **Result**: Firebase verification now navigates correctly and dashboard shows updated phone verification status
+
 **August 11, 2025**: Fixed Firebase reCAPTCHA timeout runtime errors by configuring Google reCAPTCHA site keys:
 - **Root Cause**: Firebase phone authentication requires Google reCAPTCHA site keys configuration to prevent timeout errors
 - **Solution**: Added `VITE_RECAPTCHA_SITE_KEY` environment variable and proper reCAPTCHA initialization

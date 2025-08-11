@@ -139,47 +139,44 @@ export default function PhoneVerificationFirebase() {
       });
     },
     onSuccess: async () => {
-      console.log('[Firebase] Verification successful, starting cache invalidation...');
-      
-      // Clear all cache and force fresh data fetch
-      queryClient.clear(); // Nuclear option - clear everything
-      
-      // Wait a moment for backend to process
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Force fresh fetch of critical data
-      await queryClient.prefetchQuery({ 
-        queryKey: ['/api/auth/check'],
-        staleTime: 0,
-        gcTime: 0 
-      });
-      
       toast({
         title: "Phone verified successfully!",
-        description: "Your phone number has been verified. Welcome to KickAss Morning!",
+        description: "You're all set. Time to schedule your first kickass morning!",
       });
-
-      // Get return URL BEFORE clearing localStorage
-      const finalReturnUrl = localStorage.getItem("otpVerificationReturnUrl") || returnUrl;
       
-      // Clear stored data after getting return URL
+      // Clear stored data
       localStorage.removeItem("verificationPhone");
       localStorage.removeItem("otpVerificationReturnUrl");
       localStorage.removeItem("phoneVerificationReturnUrl");
-
-      console.log('[Firebase] Navigation: finalReturnUrl =', finalReturnUrl, 'returnUrl =', returnUrl);
       
-      // Always go to personalization after phone verification for new users
-      // The personalization page will handle checking existing data and redirecting if needed
-      if (finalReturnUrl === "/dashboard") {
-        console.log('[Firebase] Navigating to personalization for new user');
-        setLocation("/personalization");
-        return;
+      // Refresh auth state without page reload (same as Twilio flow)
+      if ((window as any).refreshAuthState) {
+        await (window as any).refreshAuthState();
       }
-
-      // Navigate to intended destination for other URLs
-      console.log('[Firebase] Navigating to:', finalReturnUrl);
-      setLocation(finalReturnUrl);
+      
+      // Also invalidate the query cache to force UI refresh (same as Twilio flow)
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/check'] });
+      
+      // Check if user has completed personalization (EXACT same logic as Twilio)
+      try {
+        const userResponse = await apiRequest("GET", "/api/auth/check");
+        if (userResponse?.user && !userResponse.user.isPersonalized) {
+          // If not personalized, redirect to personalization first
+          setTimeout(() => {
+            setLocation("/personalization");
+          }, 500);
+        } else {
+          // If personalization is already done, redirect to dashboard
+          setTimeout(() => {
+            setLocation("/dashboard");
+          }, 500);
+        }
+      } catch (error) {
+        // If we can't check personalization status, default to dashboard
+        setTimeout(() => {
+          setLocation("/dashboard");
+        }, 500);
+      }
     },
     onError: (error: any) => {
       console.error("Verification error:", error);
