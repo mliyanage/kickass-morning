@@ -133,7 +133,7 @@ export default function Personalization() {
 
   // Fetch existing personalization data
   const { data: personalizationData, isLoading } =
-    useQuery<PersonalizationData>({
+    useQuery<PersonalizationData | null>({
       queryKey: ["/api/user/personalization"],
       retry: false,
       staleTime: 0, // Always consider data stale
@@ -154,7 +154,7 @@ export default function Personalization() {
 
   // Set initial values from fetched data
   useEffect(() => {
-    if (personalizationData) {
+    if (personalizationData && personalizationData !== null) {
       setHasExistingData(true);
       
       // Handle goals array (backward compatibility)
@@ -183,6 +183,10 @@ export default function Personalization() {
       setOtherStruggle(personalizationData.otherStruggle || "");
       setVoice(personalizationData.voice || "");
       setStep(0); // Start with summary view when there's existing data
+    } else if (personalizationData === null) {
+      // New user - start fresh with step 1
+      setHasExistingData(false);
+      setStep(1);
     }
   }, [personalizationData]);
 
