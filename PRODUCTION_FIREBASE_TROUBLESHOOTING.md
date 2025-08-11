@@ -47,10 +47,30 @@ VITE_FIREBASE_MEASUREMENT_ID=G-BD383M4NDV
 
 ## Debug Commands
 
+### Fix File Permissions Issue:
+```bash
+# Current issue: ec2-user runs PM2 but kickass user owns .env file
+cd /opt/kickass-morning
+
+# Option 1: Change .env ownership to ec2-user
+sudo chown ec2-user:ec2-user .env
+
+# Option 2: Add ec2-user to kickass group and make .env readable
+sudo usermod -a -G kickass ec2-user
+sudo chmod 640 .env
+
+# Option 3: Move .env to app directory where ec2-user has access
+sudo cp .env app/.env
+sudo chown ec2-user:ec2-user app/.env
+```
+
 ### Check Environment Variables on EC2:
 ```bash
 cd /opt/kickass-morning
 cat .env | grep VITE_
+
+# Verify ec2-user can read the file
+sudo -u ec2-user cat .env | grep VITE_
 ```
 
 ### Check if Firebase packages are installed:
