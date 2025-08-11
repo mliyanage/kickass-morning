@@ -277,17 +277,16 @@ export default function ScheduleCall() {
     onError: (error: any) => {
       console.log('[ScheduleCall] Full error object:', error);
       console.log('[ScheduleCall] Error message:', error.message);
-      console.log('[ScheduleCall] Personalization required flag:', error.personalizationRequired);
+      console.log('[ScheduleCall] Error status:', error.status);
+      console.log('[ScheduleCall] Error duplicateSchedule:', error.duplicateSchedule);
+      console.log('[ScheduleCall] Error maxSchedulesReached:', error.maxSchedulesReached);
       
       // Check if error is due to missing personalization - be more aggressive in detection
       if (error.status === 403) {
-        // For 403 errors on schedule creation, assume it's personalization-related
-        // since that's the primary 403 case for this endpoint
         toast({
           title: "Complete your setup first",
           description: "Please set up your preferences before creating a schedule.",
         });
-        // Redirect to personalization page after short delay
         setTimeout(() => {
           setLocation("/personalization");
         }, 1500);
@@ -296,20 +295,32 @@ export default function ScheduleCall() {
       
       // Check for specific validation errors
       if (error.status === 400) {
-        if (error.maxSchedulesReached || error.message?.includes('Maximum')) {
+        console.log('[ScheduleCall] Processing 400 error...');
+        
+        if (error.maxSchedulesReached || error.message?.includes('Maximum') || error.message?.includes('limit')) {
           toast({
             variant: "destructive",
-            title: "Too many schedules",
+            title: "Schedule limit reached",
             description: "You can only have up to 3 schedules. Please delete an existing one first.",
           });
           return;
         }
         
-        if (error.duplicateSchedule || error.message?.includes('already exists')) {
+        if (error.duplicateSchedule || error.message?.includes('already exists') || error.message?.includes('same time')) {
           toast({
             variant: "destructive",
-            title: "Duplicate schedule",
-            description: "A schedule with the same time and settings already exists.",
+            title: "Schedule already exists",
+            description: "You already have a schedule with the same time and settings.",
+          });
+          return;
+        }
+        
+        // Show the actual server error message if available
+        if (error.message) {
+          toast({
+            variant: "destructive",
+            title: "Cannot create schedule",
+            description: error.message,
           });
           return;
         }
