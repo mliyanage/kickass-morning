@@ -106,6 +106,14 @@ export default function ScheduleCall() {
     refetchOnWindowFocus: false
   });
 
+  // Fetch existing schedules to show count and validate limits
+  const { data: existingSchedules } = useQuery<Schedule[]>({
+    queryKey: ['/api/schedule'],
+    enabled: !!userData?.authenticated,
+    retry: false,
+    refetchOnWindowFocus: false
+  });
+
   // Fetch schedule data for editing
   const scheduleIdToEdit = getScheduleIdFromUrl();
   
@@ -265,9 +273,7 @@ export default function ScheduleCall() {
     },
     onError: (error: any) => {
       // Check if error is due to missing personalization
-      if (error.status === 403) {
-        // 403 errors on schedule creation indicate missing personalization
-        // since the server uses isPersonalized middleware
+      if (error.status === 403 && (error.personalizationRequired || error.message?.includes('personalization'))) {
         toast({
           title: "Complete your setup first",
           description: "Please set up your preferences before creating a schedule.",
@@ -277,6 +283,27 @@ export default function ScheduleCall() {
           setLocation("/personalization");
         }, 1500);
         return;
+      }
+      
+      // Check for specific validation errors
+      if (error.status === 400) {
+        if (error.maxSchedulesReached || error.message?.includes('Maximum')) {
+          toast({
+            variant: "destructive",
+            title: "Too many schedules",
+            description: "You can only have up to 3 schedules. Please delete an existing one first.",
+          });
+          return;
+        }
+        
+        if (error.duplicateSchedule || error.message?.includes('already exists')) {
+          toast({
+            variant: "destructive",
+            title: "Duplicate schedule",
+            description: "A schedule with the same time and settings already exists.",
+          });
+          return;
+        }
       }
       
       // Generic error handling for other cases
@@ -378,6 +405,23 @@ export default function ScheduleCall() {
           <h2 className="text-lg leading-6 font-medium text-gray-900 mb-4">
             {editingScheduleId ? "Edit Wakeup Call Schedule" : "Schedule Your Wakeup Call"}
           </h2>
+          
+          {/* Schedule limit notice */}
+          {!editingScheduleId && existingSchedules && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <div className="text-sm text-blue-800">
+                <strong>Schedule Limits:</strong> You can have up to 3 schedules. 
+                {existingSchedules.length > 0 && (
+                  <span> Currently using {existingSchedules.length}/3.</span>
+                )}
+                {existingSchedules.length >= 3 && (
+                  <span className="block mt-1 text-amber-700 font-medium">
+                    Limit reached. Please delete an existing schedule to create a new one.
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
           <Card className="overflow-hidden">
             <CardContent className="p-6">
               <form onSubmit={handleSubmit} className="space-y-6">

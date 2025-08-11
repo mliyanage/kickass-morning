@@ -798,9 +798,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
           req.session.userId!,
         );
         if (!personalization) {
-          return res
-            .status(400)
-            .json({ message: "Please complete personalization first." });
+          return res.status(403).json({ 
+            message: "Please complete personalization first.",
+            personalizationRequired: true
+          });
+        }
+
+        // Check schedule limits and duplicates
+        const existingSchedules = await storage.getUserSchedules(req.session.userId!);
+        
+        // Limit: Maximum 3 schedules per user
+        if (existingSchedules.length >= 3) {
+          return res.status(400).json({
+            message: "Maximum 3 schedules allowed per user. Please delete an existing schedule first.",
+            maxSchedulesReached: true
+          });
+        }
+
+        // Check for duplicate schedules (same time, timezone, and weekdays for recurring schedules)
+        const formattedWeekdays = Array.isArray(validatedData.weekdays)
+          ? validatedData.weekdays.join(",")
+          : validatedData.weekdays;
+        
+        const duplicateSchedule = existingSchedules.find(existing => {
+          if (validatedData.isRecurring && existing.isRecurring) {
+            // For recurring schedules, check time, timezone, and weekdays
+            return existing.wakeupTime === validatedData.wakeupTime &&
+                   existing.timezone === validatedData.timezone &&
+                   existing.weekdays === formattedWeekdays &&
+                   existing.isActive;
+          } else if (!validatedData.isRecurring && !existing.isRecurring && validatedData.date) {
+            // For one-time schedules, check date, time, and timezone
+            // Note: one-time schedules are not implemented in current schema
+            return existing.wakeupTime === validatedData.wakeupTime &&
+                   existing.timezone === validatedData.timezone &&
+                   existing.isActive;
+          }
+          return false;
+        });
+
+        if (duplicateSchedule) {
+          return res.status(400).json({
+            message: "A schedule with the same time and settings already exists.",
+            duplicateSchedule: true
+          });
         }
 
         // Create schedule
