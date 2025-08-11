@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useState, useEffect, useCallback } from "react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ScheduleData, Schedule, GoalType, StruggleType } from "@/types";
 import { 
@@ -265,6 +265,9 @@ export default function ScheduleCall() {
       return await apiRequest("POST", endpoint, data);
     },
     onSuccess: () => {
+      // Invalidate schedule cache so dashboard refreshes
+      queryClient.invalidateQueries({ queryKey: ['/api/schedule'] });
+      
       toast({
         title: "Schedule saved",
         description: "Your wakeup call has been scheduled successfully.",
