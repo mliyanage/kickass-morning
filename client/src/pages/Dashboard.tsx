@@ -55,12 +55,14 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
-  // Auto-refresh cache on component mount (handles Firebase verification navigation)
+  // Auto-refresh cache on component mount (handles Firebase verification navigation and schedule creation)
   useEffect(() => {
     const refreshCache = async () => {
       console.log('[Dashboard] Auto-refreshing cache on mount...');
       await queryClient.resetQueries({ queryKey: ["/api/auth/check"] });
       await queryClient.refetchQueries({ queryKey: ["/api/auth/check"] });
+      // Also refresh schedules to show any newly created ones
+      await queryClient.invalidateQueries({ queryKey: ["/api/schedule"] });
       console.log('[Dashboard] Auto cache refresh completed');
     };
     
