@@ -14,7 +14,6 @@ let auth: any = null;
 
 const initializeFirebase = () => {
   if (!app) {
-    console.log('[Firebase] Initializing Firebase SDK...');
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
   }
@@ -36,22 +35,19 @@ export const initializeRecaptcha = (containerId: string): RecaptchaVerifier => {
       throw new Error('reCAPTCHA site key not configured');
     }
     
-    console.log('[Firebase] Initializing reCAPTCHA with site key...');
-    
     return new RecaptchaVerifier(firebaseAuth, containerId, {
       size: 'normal',
       callback: () => {
-        console.log('[Firebase] reCAPTCHA verification successful');
+        // reCAPTCHA verification successful
       },
       'expired-callback': () => {
-        console.warn('[Firebase] reCAPTCHA expired - user needs to solve it again');
+        // reCAPTCHA expired - user needs to solve it again
       },
       'error-callback': (error: any) => {
-        console.error('[Firebase] reCAPTCHA error:', error);
+        // Handle reCAPTCHA error
       }
     });
   } catch (error) {
-    console.error('[Firebase] Failed to initialize reCAPTCHA:', error);
     throw error;
   }
 };
@@ -67,7 +63,6 @@ export const sendVerificationCode = async (phoneNumber: string, recaptchaVerifie
     );
     return await Promise.race([smsPromise, timeoutPromise]);
   } catch (error) {
-    console.error('Error sending SMS:', error);
     throw error;
   }
 };
@@ -82,7 +77,6 @@ export const verifyCode = async (confirmationResult: any, code: string) => {
     );
     return await Promise.race([verifyPromise, timeoutPromise]);
   } catch (error) {
-    console.error('Error verifying code:', error);
     throw error;
   }
 };
@@ -102,7 +96,6 @@ export const getFirebaseToken = async (): Promise<string | null> => {
     }
     return null;
   } catch (error) {
-    console.error('Error getting Firebase token:', error);
     throw error;
   }
 };
@@ -117,7 +110,6 @@ if (typeof window !== 'undefined') {
           message.includes('recaptcha') || 
           message.includes('network error') ||
           message.includes('cancelled')) {
-        console.warn('[Firebase] Suppressed error overlay:', event.reason);
         event.preventDefault(); // Suppress the error overlay
       }
     }

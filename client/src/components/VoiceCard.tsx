@@ -89,7 +89,6 @@ export default function VoiceCard({
               setAudioUrl(response.audioUrl);
             })
             .catch(error => {
-              console.error("Error playing audio:", error);
               toast({
                 variant: "destructive",
                 title: "Failed to play audio",

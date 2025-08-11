@@ -8,7 +8,6 @@ export async function requestPhoneVerification(phoneNumber: string): Promise<{ s
     const response = await apiRequest('POST', '/api/verify/phone', { phoneNumber });
     return { success: true, message: 'Verification code sent successfully' };
   } catch (error) {
-    console.error('Error requesting phone verification:', error);
     return { success: false, message: 'Failed to send verification code' };
   }
 }
@@ -28,7 +27,6 @@ export async function requestSampleCall(): Promise<{ success: boolean; message: 
     const response = await apiRequest('POST', '/api/sample-call', {});
     return { success: true, message: 'Sample call requested successfully' };
   } catch (error) {
-    console.error('Error requesting sample call:', error);
     return { success: false, message: 'Failed to request sample call' };
   }
 }

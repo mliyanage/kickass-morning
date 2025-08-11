@@ -55,7 +55,6 @@ export default function PhoneVerificationFirebase() {
         const verifier = initializeRecaptcha("recaptcha-container");
         setRecaptchaVerifier(verifier);
       } catch (error) {
-        console.error("Failed to initialize reCAPTCHA:", error);
         // Show user-friendly error instead of runtime error
         toast({
           variant: "destructive",
@@ -212,7 +211,7 @@ export default function PhoneVerificationFirebase() {
       }
     },
     onError: (error: any) => {
-      console.error("Verification error:", error);
+
       
       // Extract Firebase error code and provide user-friendly messages
       let title = "Verification failed";

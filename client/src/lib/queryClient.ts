@@ -19,10 +19,8 @@ export async function apiRequest(
     let errorData;
     try {
       errorData = await res.json();
-      console.log('[apiRequest] Error response data:', errorData);
     } catch (jsonError) {
       // If JSON parsing fails, use status-based error messages
-      console.log('[apiRequest] JSON parsing failed:', jsonError);
       const error = new Error(`Request failed with status ${res.status}`);
       (error as any).status = res.status;
       throw error;
@@ -35,12 +33,6 @@ export async function apiRequest(
     (error as any).requiresAuth = errorData.requiresAuth;
     (error as any).maxSchedulesReached = errorData.maxSchedulesReached;
     (error as any).duplicateSchedule = errorData.duplicateSchedule;
-    console.log('[apiRequest] Created error object:', {
-      message: error.message,
-      status: (error as any).status,
-      maxSchedulesReached: (error as any).maxSchedulesReached,
-      duplicateSchedule: (error as any).duplicateSchedule
-    });
     throw error;
   }
   

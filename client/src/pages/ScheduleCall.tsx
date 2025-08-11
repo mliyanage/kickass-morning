@@ -51,41 +51,25 @@ export default function ScheduleCall() {
   const getScheduleIdFromUrl = useCallback(() => {
     const url = new URL(window.location.href);
     const id = url.searchParams.get('id');
-    console.log("URL parameter 'id':", id);
     const parsedId = id ? parseInt(id, 10) : null;
     return parsedId;
   }, []);
   
-  // Schedule state with custom setters that log changes
-  const [wakeupTime, _setWakeupTime] = useState("06:30");
-  const setWakeupTime = (value: string) => {
-    console.log("Setting wakeup time state to:", value);
-    _setWakeupTime(value);
-  };
-  
-  const [timezone, _setTimezone] = useState(getUserTimezone());
-  const setTimezone = (value: string) => {
-    console.log("Setting timezone state to:", value);
-    _setTimezone(value);
-  };
+  // Schedule state
+  const [wakeupTime, setWakeupTime] = useState("06:30");
+  const [timezone, setTimezone] = useState(getUserTimezone());
   
   // For new schedules, initialize with workdays (Mon-Fri)
   // For edit mode, this will be overwritten when schedule data loads
-  const [selectedDays, _setSelectedDays] = useState<string[]>(() => {
+  const [selectedDays, setSelectedDays] = useState<string[]>(() => {
     const scheduleId = getScheduleIdFromUrl();
     if (!scheduleId) {
       // Default selection for new schedules only
-      console.log("Initializing with default weekdays for new schedule");
       return ["mon", "tue", "wed", "thu", "fri"];  
     }
-    console.log("Initializing with empty weekdays for edit mode");
     return []; // Empty for edit mode, will be populated from data
   });
   
-  const setSelectedDays = (value: string[]) => {
-    console.log("Setting selectedDays state to:", value);
-    _setSelectedDays(value);
-  };
   const [isRecurring, setIsRecurring] = useState(true);
   const [date, setDate] = useState("");
   const [callRetry, setCallRetry] = useState(true);
@@ -94,10 +78,7 @@ export default function ScheduleCall() {
   // Initialize timezone groups
   const timezoneGroups = getTimezoneOptions();
   
-  // For debugging
-  useEffect(() => {
-    console.log("selectedDays changed:", selectedDays);
-  }, [selectedDays]);
+
 
   // Fetch user data to check phone verification status
   const { data: userData, isLoading: isUserDataLoading } = useQuery<{ authenticated: boolean, user: { phoneVerified: boolean } }>({
@@ -123,26 +104,14 @@ export default function ScheduleCall() {
     queryFn: async () => {
       if (!scheduleIdToEdit) return null;
       
-      console.log("Fetching schedule with ID:", scheduleIdToEdit);
-      
       try {
         // Use the apiRequest helper which handles errors and json parsing consistently
         const allSchedules = await apiRequest('GET', '/api/schedule');
-        console.log("All schedules:", allSchedules);
         
         // Find the specific schedule
-        console.log("Looking for schedule with ID:", scheduleIdToEdit, "Type:", typeof scheduleIdToEdit);
-        console.log("Schedule IDs in response:", allSchedules.map((s: Schedule) => s.id));
-        
         const schedule = allSchedules.find((s: Schedule) => Number(s.id) === Number(scheduleIdToEdit)) || null;
         
-        console.log("Found schedule for editing:", schedule);
         if (schedule) {
-          console.log("Schedule data:", JSON.stringify(schedule));
-          console.log("Wakeup time from API:", schedule.wakeupTime);
-          console.log("Timezone from API:", schedule.timezone);
-          console.log("Weekdays from API:", schedule.weekdays, "Type:", typeof schedule.weekdays);
-          
           // Create a direct object to return to ensure no reference issues
           return {
             ...schedule,
@@ -151,11 +120,9 @@ export default function ScheduleCall() {
             weekdays: Array.isArray(schedule.weekdays) ? [...schedule.weekdays] : []
           };
         } else {
-          console.error("Schedule not found for ID:", scheduleIdToEdit);
           return null;
         }
       } catch (error) {
-        console.error("Error fetching schedule:", error);
         throw error;
       }
     },
@@ -170,7 +137,6 @@ export default function ScheduleCall() {
   // Set initial editing state - needed to ensure the form knows it's in edit mode immediately
   useEffect(() => {
     if (scheduleIdToEdit) {
-      console.log("Setting initial editing ID state:", scheduleIdToEdit);
       setEditingScheduleId(scheduleIdToEdit);
     }
   }, [scheduleIdToEdit]);
@@ -178,24 +144,24 @@ export default function ScheduleCall() {
   // Set form data from the schedule we're editing
   useEffect(() => {
     if (scheduleToEdit) {
-      console.log("Editing schedule with ID:", scheduleToEdit.id, "Full data:", scheduleToEdit);
+
       
       // First, update the simple fields
       setEditingScheduleId(scheduleToEdit.id);
       
       // Force-set the time to the correct value from the database
       if (scheduleToEdit.wakeupTime) {
-        console.log("Setting wakeup time to:", scheduleToEdit.wakeupTime);
+
         // Explicitly create a properly formatted time string (HH:MM)
         const [hours, minutes] = scheduleToEdit.wakeupTime.split(':');
         const formattedTime = `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
-        console.log("Formatted time for input:", formattedTime);
+
         setWakeupTime(formattedTime);
       }
       
       // Force-set the timezone
       if (scheduleToEdit.timezone) {
-        console.log("Setting timezone to:", scheduleToEdit.timezone);
+
         setTimezone(scheduleToEdit.timezone);
       }
       
@@ -210,12 +176,12 @@ export default function ScheduleCall() {
       // Now handle the weekdays separately
       let weekdaysArray: string[] = [];
       
-      console.log("Processing weekdays data:", scheduleToEdit.weekdays);
+
       
       // Handle different formats of weekdays - could be array or string
       if (Array.isArray(scheduleToEdit.weekdays)) {
         weekdaysArray = [...scheduleToEdit.weekdays];
-        console.log("Weekdays is already an array:", weekdaysArray);
+
       } else if (typeof scheduleToEdit.weekdays === 'string') {
         // Split by comma if it's a comma-separated string
         if (scheduleToEdit.weekdays.includes(',')) {
@@ -224,17 +190,17 @@ export default function ScheduleCall() {
           // Otherwise it's a single day
           weekdaysArray = [scheduleToEdit.weekdays];
         }
-        console.log("Converted weekdays string to array:", weekdaysArray);
+
       }
       
       // Make sure we can recognize all the days - trim any whitespace
       weekdaysArray = weekdaysArray.map(day => day.trim());
       
-      console.log("Final weekdays array before setting state:", weekdaysArray);
+
       
       // Set the weekdays all at once instead of clearing first - this avoids the hooks issue
       if (weekdaysArray.length > 0) {
-        console.log("Setting weekdays for edited schedule:", weekdaysArray);
+
         setSelectedDays(weekdaysArray);
       }
     }
@@ -275,13 +241,7 @@ export default function ScheduleCall() {
       setLocation("/dashboard");
     },
     onError: (error: any) => {
-      console.log('[ScheduleCall] Full error object:', error);
-      console.log('[ScheduleCall] Error message:', error.message);
-      console.log('[ScheduleCall] Error status:', error.status);
-      console.log('[ScheduleCall] Error duplicateSchedule:', error.duplicateSchedule);
-      console.log('[ScheduleCall] Error maxSchedulesReached:', error.maxSchedulesReached);
-      
-      // Check if error is due to missing personalization - be more aggressive in detection
+      // Check if error is due to missing personalization
       if (error.status === 403) {
         toast({
           title: "Complete your setup first",
@@ -295,11 +255,8 @@ export default function ScheduleCall() {
       
       // Check for specific validation errors
       if (error.status === 400) {
-        console.log('[ScheduleCall] Processing 400 error...');
-        
         // Check for max schedules first (specific property check)
         if (error.maxSchedulesReached === true) {
-          console.log('[ScheduleCall] Max schedules reached detected');
           toast({
             variant: "destructive",
             title: "Schedule limit reached",
@@ -310,7 +267,6 @@ export default function ScheduleCall() {
         
         // Check for duplicate schedule (specific property check)  
         if (error.duplicateSchedule === true) {
-          console.log('[ScheduleCall] Duplicate schedule detected');
           toast({
             variant: "destructive",
             title: "Schedule already exists", 
@@ -321,7 +277,6 @@ export default function ScheduleCall() {
         
         // Fallback: Check message patterns
         if (error.message?.includes('Maximum') || error.message?.includes('limit')) {
-          console.log('[ScheduleCall] Max schedules via message pattern');
           toast({
             variant: "destructive",
             title: "Schedule limit reached",
@@ -331,7 +286,6 @@ export default function ScheduleCall() {
         }
         
         if (error.message?.includes('already exists') || error.message?.includes('same time')) {
-          console.log('[ScheduleCall] Duplicate schedule via message pattern');
           toast({
             variant: "destructive",
             title: "Schedule already exists",
@@ -342,7 +296,6 @@ export default function ScheduleCall() {
         
         // Show the actual server error message if available
         if (error.message) {
-          console.log('[ScheduleCall] Showing generic 400 error with message:', error.message);
           toast({
             variant: "destructive",
             title: "Cannot create schedule",
@@ -419,7 +372,6 @@ export default function ScheduleCall() {
       advanceNotice
     };
     
-    console.log(`${editingScheduleId ? "Updating" : "Creating"} schedule:`, scheduleData);
     scheduleMutation.mutate(scheduleData);
   };
 

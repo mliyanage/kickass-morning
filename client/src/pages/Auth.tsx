@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Google, Facebook, Apple } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
 
 // Login form schema
 const loginSchema = z.object({
@@ -76,7 +76,6 @@ export default function Auth() {
       // Redirect to phone verification if needed, otherwise dashboard
       navigate('/verify-phone');
     } catch (error) {
-      console.error('Login error:', error);
       toast({
         title: "Login failed",
         description: "Invalid email or password",
@@ -106,7 +105,6 @@ export default function Auth() {
       // Redirect to phone verification
       navigate('/verify-phone');
     } catch (error) {
-      console.error('Registration error:', error);
       toast({
         title: "Registration failed",
         description: "Please check your information and try again",
@@ -220,21 +218,21 @@ export default function Auth() {
                   variant="outline"
                   onClick={() => handleSocialLogin('Google')}
                 >
-                  <Google className="h-5 w-5" />
+                  <Mail className="h-5 w-5" />
                 </Button>
                 <Button 
                   type="button" 
                   variant="outline"
                   onClick={() => handleSocialLogin('Facebook')}
                 >
-                  <Facebook className="h-5 w-5" />
+                  <Mail className="h-5 w-5" />
                 </Button>
                 <Button 
                   type="button" 
                   variant="outline"
                   onClick={() => handleSocialLogin('Apple')}
                 >
-                  <Apple className="h-5 w-5" />
+                  <Lock className="h-5 w-5" />
                 </Button>
               </div>
             </form>

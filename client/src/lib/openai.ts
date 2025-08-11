@@ -14,7 +14,6 @@ export async function generateSampleVoice(voiceId: string, text: string): Promis
     // Mock audio URL - in a real implementation, this would be a blob URL or audio file
     return 'https://example.com/sample-voice.mp3';
   } catch (error) {
-    console.error('Error generating sample voice:', error);
     throw new Error('Failed to generate sample voice');
   }
 }

@@ -50,7 +50,7 @@ export default function Login() {
     onSuccess: async (response: any) => {
       // Our apiRequest function now parses JSON and throws errors for non-200 status codes
       // so if we're here, the login was successful
-      console.log("Login successful, redirecting based on user status", response);
+
       
       try {
         const userData = response.user;
@@ -68,11 +68,11 @@ export default function Login() {
         sessionStorage.setItem('auth_successful', 'true');
         
         // Force a page reload to ensure clean authentication state
-        console.log("Login successful, reloading to dashboard");
+
         window.location.href = "/dashboard";
       } catch (error) {
         // Fallback: try to refresh auth and redirect
-        console.error("Error processing login response:", error);
+
         toast({
           title: "Login successful",
           description: "Loading dashboard...",
