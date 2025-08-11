@@ -120,9 +120,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Determine if we should use PostgreSQL session store (test and production)
   const env = detectEnvironment();
-  const usePostgreSQLSessions = env === 'production' || env === 'test';
+  // Use PostgreSQL sessions for all environments for consistency
+  const usePostgreSQLSessions = true;
   
-  console.log(`[${new Date().toISOString()}] Session store: ${usePostgreSQLSessions ? 'PostgreSQL' : 'Memory'} (Environment: ${env})`);
+  console.log(`[${new Date().toISOString()}] Session store: PostgreSQL (Environment: ${env})`);
   
   // Setup express-session middleware with appropriate store
   app.use(
@@ -131,7 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pool: pool,
         tableName: 'session',
         createTableIfMissing: true
-      }) : undefined, // Use default MemoryStore for development only
+      }) : undefined, // PostgreSQL sessions used for all environments
       secret: process.env.SESSION_SECRET || "wakeup-buddy-secret",
       resave: false,
       saveUninitialized: false, // Changed to false for better security

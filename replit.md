@@ -13,9 +13,11 @@ Preferred communication style: Simple, everyday language.
 - Production stability is critical - avoid any risky modifications
 
 ## Recent Changes (August 2025)
+- **✅ UNIFIED STORAGE ARCHITECTURE** - Switched all environments to use PostgreSQL database storage for consistency. Removed fragile in-memory storage that caused authentication and data persistence issues.
+- **✅ FIXED: Schedule Display Issue** - Fixed getUserSchedules query to properly filter for active schedules, resolving dashboard showing empty schedule lists.
+- **✅ ENHANCED: Duplicate Schedule Prevention** - Added server-side validation preventing duplicate schedules and enforcing 3-schedule limit per user.
+- **✅ RESOLVED: Cache Invalidation** - Fixed dashboard not refreshing after schedule creation by properly invalidating React Query cache.
 - **✅ RESOLVED: Personalization Error Handling** - Fixed 403 errors when users try to create schedules without completing personalization. Now shows user-friendly "Complete your setup first" message and auto-redirects to /personalization page.
-- **✅ RESOLVED: React Query Cache Issues** - Implemented automatic cache refresh on Dashboard component mount, eliminating need for manual page refresh after Firebase phone verification.
-- **✅ ENHANCED: Firebase Error Handling** - Added comprehensive user-friendly error messages for invalid phone numbers, expired codes, timeout scenarios, and reCAPTCHA issues.
 
 ## System Architecture
 
