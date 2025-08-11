@@ -16,22 +16,10 @@ export async function apiRequest(
 
   // Handle all error status codes in one place to avoid double body reading
   if (!res.ok) {
+    let errorData;
     try {
-      const errorData = await res.json();
+      errorData = await res.json();
       console.log('[apiRequest] Error response data:', errorData);
-      const error = new Error(errorData.message || `Request failed with status ${res.status}`);
-      (error as any).status = res.status;
-      (error as any).personalizationRequired = errorData.personalizationRequired;
-      (error as any).requiresAuth = errorData.requiresAuth;
-      (error as any).maxSchedulesReached = errorData.maxSchedulesReached;
-      (error as any).duplicateSchedule = errorData.duplicateSchedule;
-      console.log('[apiRequest] Created error object:', {
-        message: error.message,
-        status: (error as any).status,
-        maxSchedulesReached: (error as any).maxSchedulesReached,
-        duplicateSchedule: (error as any).duplicateSchedule
-      });
-      throw error;
     } catch (jsonError) {
       // If JSON parsing fails, use status-based error messages
       console.log('[apiRequest] JSON parsing failed:', jsonError);
@@ -39,6 +27,21 @@ export async function apiRequest(
       (error as any).status = res.status;
       throw error;
     }
+    
+    // JSON parsing succeeded, create error with parsed data
+    const error = new Error(errorData.message || `Request failed with status ${res.status}`);
+    (error as any).status = res.status;
+    (error as any).personalizationRequired = errorData.personalizationRequired;
+    (error as any).requiresAuth = errorData.requiresAuth;
+    (error as any).maxSchedulesReached = errorData.maxSchedulesReached;
+    (error as any).duplicateSchedule = errorData.duplicateSchedule;
+    console.log('[apiRequest] Created error object:', {
+      message: error.message,
+      status: (error as any).status,
+      maxSchedulesReached: (error as any).maxSchedulesReached,
+      duplicateSchedule: (error as any).duplicateSchedule
+    });
+    throw error;
   }
   
   // Parse and return JSON for successful responses
