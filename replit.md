@@ -107,6 +107,8 @@ All client requests go through unified query client (`client/src/lib/queryClient
 - **Navigation Update**: All dashboard and schedule redirects now use Firebase by default
 - **Production Ready**: Solves A2P 10DLC compliance issues while maintaining Twilio as fallback option
 - **User Experience**: Same professional layout and navigation flows, invisible technology transition
+- **Cache Consistency**: Both Firebase and Twilio flows use identical cache invalidation patterns since database updates are the same
+- **Runtime Stability**: Temporarily removed all analytics function calls to eliminate runtime errors until analytics system is properly restored
 
 ## Recent Changes
 
