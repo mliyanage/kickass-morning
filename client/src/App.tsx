@@ -26,8 +26,8 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
-      <Route path="/phone-verification" component={PhoneVerification} />
-      <Route path="/phone-verification-firebase" component={PhoneVerificationFirebase} />
+      <Route path="/phone-verification-twilio" component={PhoneVerification} />
+      <Route path="/phone-verification" component={PhoneVerificationFirebase} />
       <Route path="/firebase-test" component={FirebaseTest} />
       <Route path="/otp-verification" component={OtpVerification} />
       <Route path="/personalization" component={Personalization} />

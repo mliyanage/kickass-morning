@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
-import AppLayout from "@/components/layouts/AppLayout";
+
 import {
   Select,
   SelectContent,
@@ -212,10 +212,10 @@ export default function PhoneVerificationFirebase() {
   };
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8">
+    <div className="max-w-2xl mx-auto">
+      <div className="bg-gradient-to-r from-blue-50 via-primary-50 to-purple-50 py-8 px-4 sm:p-8 rounded-lg shadow-sm">
+        <Card className="bg-white border-0 shadow-sm">
+          <CardContent className="pt-8 pb-8">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 {step === "phone" ? "Verify Your Phone" : "Enter Verification Code"}
@@ -359,6 +359,6 @@ export default function PhoneVerificationFirebase() {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
+    </div>
   );
 }

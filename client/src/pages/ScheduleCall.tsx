@@ -240,7 +240,7 @@ export default function ScheduleCall() {
           localStorage.setItem("phoneVerificationReturnUrl", "/schedule-call");
           
           // Redirect to phone verification
-          setLocation("/phone-verification-firebase");
+          setLocation("/phone-verification");
         } else {
           // Phone is verified, proceed with rendering
           setIsLoading(false);
