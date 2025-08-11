@@ -12,6 +12,11 @@ Preferred communication style: Simple, everyday language.
 - Always plan changes first, show user what will be done, and wait for approval
 - Production stability is critical - avoid any risky modifications
 
+## Recent Changes (August 2025)
+- **✅ RESOLVED: Personalization Error Handling** - Fixed 403 errors when users try to create schedules without completing personalization. Now shows user-friendly "Complete your setup first" message and auto-redirects to /personalization page.
+- **✅ RESOLVED: React Query Cache Issues** - Implemented automatic cache refresh on Dashboard component mount, eliminating need for manual page refresh after Firebase phone verification.
+- **✅ ENHANCED: Firebase Error Handling** - Added comprehensive user-friendly error messages for invalid phone numbers, expired codes, timeout scenarios, and reCAPTCHA issues.
+
 ## System Architecture
 
 ### End-to-End Architecture Overview

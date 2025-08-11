@@ -263,14 +263,9 @@ export default function ScheduleCall() {
       setLocation("/dashboard");
     },
     onError: (error: any) => {
-      console.log('[ScheduleCall] Error object:', error);
-      console.log('[ScheduleCall] Error status:', error.status);
-      console.log('[ScheduleCall] Error message:', error.message);
-      console.log('[ScheduleCall] Personalization required:', error.personalizationRequired);
-      
-      // Check if error is due to missing personalization (multiple checks for robustness)
+      // Check if error is due to missing personalization
       if (error.status === 403) {
-        // For now, assume all 403 errors on schedule creation are personalization-related
+        // 403 errors on schedule creation indicate missing personalization
         // since the server uses isPersonalized middleware
         toast({
           title: "Complete your setup first",
