@@ -24,8 +24,13 @@ export function getCountryOptions(): CountryOption[] {
   const countryOptions = (countries as Country[])
     .filter((country: Country) => country.idd.root && country.idd.suffixes)
     .map((country: Country) => {
-      // Handle calling codes - some countries have multiple suffixes
-      const callingCode = country.idd.root + (country.idd.suffixes[0] || "");
+      // Handle calling codes - for +1 countries, use just +1 (not area codes)
+      let callingCode = country.idd.root;
+      
+      // For most countries, append the first suffix, but for +1 countries use just +1
+      if (country.idd.root !== "+1") {
+        callingCode = country.idd.root + (country.idd.suffixes[0] || "");
+      }
 
       return {
         code: callingCode,
@@ -35,9 +40,23 @@ export function getCountryOptions(): CountryOption[] {
       };
     })
     .filter((country: CountryOption) => country.code) // Remove any entries without calling codes
-    .sort((a: CountryOption, b: CountryOption) => a.name.localeCompare(b.name));
+    
+  // Remove duplicates (multiple +1 countries will be merged)
+  const uniqueCountries = new Map();
+  countryOptions.forEach(country => {
+    const existing = uniqueCountries.get(country.code);
+    if (!existing) {
+      uniqueCountries.set(country.code, country);
+    } else {
+      // For +1, prefer US over other countries for display
+      if (country.code === "+1" && country.name.includes("United States")) {
+        uniqueCountries.set(country.code, country);
+      }
+    }
+  });
 
-  return countryOptions;
+  return Array.from(uniqueCountries.values())
+    .sort((a: CountryOption, b: CountryOption) => a.name.localeCompare(b.name));
 }
 
 // Get popular countries first for better UX
