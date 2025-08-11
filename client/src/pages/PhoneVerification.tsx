@@ -33,19 +33,6 @@ export default function PhoneVerification() {
   console.log("Country options:", countryOptions);
   console.log("Current country code:", countryCode);
 
-  // Ensure the default country code matches an available option
-  useEffect(() => {
-    if (countryOptions.length > 0) {
-      const defaultCountry = countryOptions.find(country => country.code === "+1");
-      if (defaultCountry) {
-        setCountryCode(defaultCountry.code);
-      } else {
-        // Fallback to first available country if +1 is not found
-        setCountryCode(countryOptions[0].code);
-      }
-    }
-  }, [countryOptions]);
-
   // Handle country change with logging
   const handleCountryChange = (newCode: string) => {
     console.log("Country changing from", countryCode, "to", newCode);
