@@ -3,17 +3,23 @@
 ## Current Issue
 Getting "reCAPTCHA not initialized" error in production on AWS EC2.
 
-## Environment Variables Required
-Add these to `/opt/kickass-morning/.env`:
+## Correct Environment Variables for Production
+Add these exact values to `/opt/kickass-morning/.env`:
 
 ```bash
-# Firebase Configuration
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com  
-VITE_FIREBASE_PROJECT_ID=your_project_id
+# Firebase Configuration (VERIFIED CORRECT)
+VITE_FIREBASE_API_KEY=AIzaSyA79ZNMpiDovUUd0KYOjyXg_jTm6735NCs
+VITE_FIREBASE_AUTH_DOMAIN=kickass-2673d.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=kickass-2673d
 
-# reCAPTCHA Configuration
-VITE_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
+# reCAPTCHA Configuration (VERIFIED CORRECT)
+VITE_RECAPTCHA_SITE_KEY=6Lexp6ErAAAAAFyKw3DM3z1Zuk8KuxGo1WeW3Yt-
+
+# Optional Firebase Config (not required but good to have)
+VITE_FIREBASE_STORAGE_BUCKET=kickass-2673d.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=963509487606
+VITE_FIREBASE_APP_ID=1:963509487606:web:e7352f74d2679cbe09a9d7
+VITE_FIREBASE_MEASUREMENT_ID=G-BD383M4NDV
 ```
 
 ## Steps to Get Correct reCAPTCHA Site Key
