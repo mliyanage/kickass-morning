@@ -60,6 +60,9 @@ export default function Dashboard() {
     queryKey: ["/api/auth/check"],
   });
 
+  // Debug logging to track userData state
+  console.log('[Dashboard] userData:', userData);
+
   // Get user schedules
   const {
     data: schedules = [],
