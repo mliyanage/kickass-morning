@@ -133,28 +133,17 @@ export default function Personalization() {
 
   // Fetch existing personalization data
   const { data: personalizationData, isLoading } =
-    useQuery<PersonalizationData | null>({
+    useQuery<PersonalizationData>({
       queryKey: ["/api/user/personalization"],
       retry: false,
       staleTime: 0, // Always consider data stale
       refetchOnMount: true, // Refetch when component mounts
-      refetchOnWindowFocus: false,
-      // Handle 404 gracefully for new users
-      queryFn: async () => {
-        try {
-          return await apiRequest("GET", "/api/user/personalization");
-        } catch (error: any) {
-          if (error.message?.includes("Resource not found") || error.message?.includes("404")) {
-            return null; // Return null for new users without personalization data
-          }
-          throw error; // Re-throw other errors
-        }
-      }
+      refetchOnWindowFocus: false
     });
 
   // Set initial values from fetched data
   useEffect(() => {
-    if (personalizationData && personalizationData !== null) {
+    if (personalizationData) {
       setHasExistingData(true);
       
       // Handle goals array (backward compatibility)
@@ -183,10 +172,6 @@ export default function Personalization() {
       setOtherStruggle(personalizationData.otherStruggle || "");
       setVoice(personalizationData.voice || "");
       setStep(0); // Start with summary view when there's existing data
-    } else if (personalizationData === null) {
-      // New user - start fresh with step 1
-      setHasExistingData(false);
-      setStep(1);
     }
   }, [personalizationData]);
 
