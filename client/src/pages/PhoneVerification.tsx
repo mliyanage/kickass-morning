@@ -11,7 +11,7 @@ import { PhoneVerificationRequest } from "@/types";
 import AppLayout from "@/components/layouts/AppLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trackConversion } from "../../lib/analytics";
-import { getPopularCountries } from "@/lib/countries";
+import { getSpecificCountries } from "@/lib/countries";  
 
 export default function PhoneVerification() {
   const { toast } = useToast();
@@ -21,7 +21,7 @@ export default function PhoneVerification() {
   const [returnUrl, setReturnUrl] = useState("/dashboard");
   
   // Get country options from the world-countries library
-  const countryOptions = getPopularCountries();
+  const countryOptions = getSpecificCountries();
 
   // Check where the user was trying to go
   useEffect(() => {

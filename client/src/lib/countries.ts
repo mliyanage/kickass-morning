@@ -1,4 +1,4 @@
-import countries from 'world-countries';
+import countries from "world-countries";
 
 export interface CountryOption {
   code: string;
@@ -25,8 +25,8 @@ export function getCountryOptions(): CountryOption[] {
     .filter((country: Country) => country.idd.root && country.idd.suffixes)
     .map((country: Country) => {
       // Handle calling codes - some countries have multiple suffixes
-      const callingCode = country.idd.root + (country.idd.suffixes[0] || '');
-      
+      const callingCode = country.idd.root + (country.idd.suffixes[0] || "");
+
       return {
         code: callingCode,
         name: `${country.name.common} (${callingCode})`,
@@ -42,19 +42,52 @@ export function getCountryOptions(): CountryOption[] {
 
 // Get popular countries first for better UX
 export function getPopularCountries(): CountryOption[] {
-  const popularCountryCodes = ['+1', '+44', '+91', '+61', '+33', '+49', '+81', '+86', '+52', '+55', '+234', '+27', '+82', '+65', '+971', '+7'];
+  const popularCountryCodes = [
+    "+1",
+    "+44",
+    "+91",
+    "+61",
+    "+33",
+    "+49",
+    "+81",
+    "+86",
+    "+52",
+    "+55",
+    "+234",
+    "+27",
+    "+82",
+    "+65",
+    "+971",
+    "+7",
+  ];
   const allCountries = getCountryOptions();
-  
+
   const popular = popularCountryCodes
-    .map(code => allCountries.find(country => country.code === code))
+    .map((code) => allCountries.find((country) => country.code === code))
     .filter(Boolean) as CountryOption[];
-  
-  const others = allCountries.filter(country => !popularCountryCodes.includes(country.code));
-  
+
+  const others = allCountries.filter(
+    (country) => !popularCountryCodes.includes(country.code),
+  );
+
   return [...popular, ...others];
 }
 
 // Find country by calling code
-export function findCountryByCode(callingCode: string): CountryOption | undefined {
-  return getCountryOptions().find(country => country.code === callingCode);
+export function findCountryByCode(
+  callingCode: string,
+): CountryOption | undefined {
+  return getCountryOptions().find((country) => country.code === callingCode);
+}
+
+// Get a specific list of countries by calling codes
+export function getSpecificCountries(): CountryOption[] {
+  const specificCountryCodes = ["+64", "+61", "+65", "+91", "+1"];
+  const allCountries = getCountryOptions();
+
+  const specificCountries = specificCountryCodes
+    .map((code) => allCountries.find((country) => country.code === code))
+    .filter(Boolean) as CountryOption[];
+
+  return specificCountries;
 }
