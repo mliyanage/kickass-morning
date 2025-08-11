@@ -29,6 +29,9 @@ const registerSchema = z.object({
   username: z.string().min(3, { message: 'Username must be at least 3 characters' }),
   email: z.string().email({ message: 'Please enter a valid email address' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+  acceptTerms: z.boolean().refine((val) => val === true, {
+    message: 'You must accept the Terms & Conditions and Privacy Policy',
+  }),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -56,6 +59,7 @@ export default function Auth() {
       username: '',
       email: '',
       password: '',
+      acceptTerms: false,
     },
   });
 
@@ -308,6 +312,42 @@ export default function Auth() {
                       />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={registerForm.control}
+                name="acceptTerms"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="text-sm font-normal">
+                        I agree to the{' '}
+                        <a 
+                          href="/terms" 
+                          target="_blank" 
+                          className="text-blue-600 hover:underline"
+                        >
+                          Terms & Conditions
+                        </a>
+                        {' '}and{' '}
+                        <a 
+                          href="/privacy" 
+                          target="_blank" 
+                          className="text-blue-600 hover:underline"
+                        >
+                          Privacy Policy
+                        </a>
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
                   </FormItem>
                 )}
               />
