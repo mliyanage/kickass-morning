@@ -121,7 +121,7 @@ export default function Dashboard() {
           description: "Please verify your phone number to receive calls.",
         });
         localStorage.setItem("phoneVerificationReturnUrl", "/dashboard");
-        setLocation("/phone-verification");
+        setLocation("/phone-verification-firebase");
         return;
       }
 
@@ -375,7 +375,7 @@ export default function Dashboard() {
                     "phoneVerificationReturnUrl",
                     "/schedule-call",
                   );
-                  setLocation("/phone-verification");
+                  setLocation("/phone-verification-firebase");
                 } else {
                   setLocation("/schedule-call");
                 }
@@ -467,7 +467,7 @@ export default function Dashboard() {
                       "phoneVerificationReturnUrl",
                       "/schedule-call",
                     );
-                    setLocation("/phone-verification");
+                    setLocation("/phone-verification-firebase");
                   } else {
                     setLocation("/schedule-call");
                   }

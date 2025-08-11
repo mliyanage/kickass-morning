@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import AppLayout from "@/components/layouts/AppLayout";
 import {
@@ -128,6 +128,9 @@ export default function PhoneVerificationFirebase() {
       // Track conversion
       await trackConversion("phone_verified");
       
+      // Refresh auth state and invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/check'] });
+      
       toast({
         title: "Phone verified successfully!",
         description: "Your phone number has been verified. Welcome to KickAss Morning!",
@@ -138,8 +141,29 @@ export default function PhoneVerificationFirebase() {
       localStorage.removeItem("otpVerificationReturnUrl");
       localStorage.removeItem("phoneVerificationReturnUrl");
 
-      // Navigate to return URL or dashboard
-      setLocation(returnUrl);
+      // Determine navigation based on return URL and personalization status
+      const finalReturnUrl = localStorage.getItem("otpVerificationReturnUrl") || returnUrl;
+      
+      // If we're going to dashboard, check if personalization is needed first
+      if (finalReturnUrl === "/dashboard") {
+        try {
+          // Check if user has completed personalization
+          const personalizationResponse = await apiRequest("GET", "/api/user/personalization");
+          if (!personalizationResponse) {
+            // No personalization data found, redirect to personalization first
+            setLocation("/personalization");
+            return;
+          }
+        } catch (error) {
+          // If personalization endpoint returns 404 or error, user hasn't completed it
+          console.log("No personalization found, redirecting to personalization");
+          setLocation("/personalization");
+          return;
+        }
+      }
+
+      // Navigate to intended destination
+      setLocation(finalReturnUrl);
     },
     onError: (error: any) => {
       console.error("Verification error:", error);

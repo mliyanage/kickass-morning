@@ -90,6 +90,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                                        currentPath === '/schedule-call' || 
                                        currentPath === '/call-history' || 
                                        currentPath === '/phone-verification' || 
+                                       currentPath === '/phone-verification-firebase' || 
                                        currentPath === '/otp-verification';
     
     // Skip auth check if we're on strictly authenticated pages and already authenticated
