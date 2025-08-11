@@ -263,8 +263,17 @@ export default function ScheduleCall() {
       setLocation("/dashboard");
     },
     onError: (error: any) => {
-      // Check if error is due to missing personalization
-      if (error.status === 403 && (error.personalizationRequired || error.message?.includes('personalization'))) {
+      console.log('[ScheduleCall] Error object:', error);
+      console.log('[ScheduleCall] Error status:', error.status);
+      console.log('[ScheduleCall] Error message:', error.message);
+      console.log('[ScheduleCall] Personalization required:', error.personalizationRequired);
+      
+      // Check if error is due to missing personalization (multiple checks for robustness)
+      if (error.status === 403 && 
+          (error.personalizationRequired || 
+           error.message?.toLowerCase().includes('personalization') ||
+           error.message?.toLowerCase().includes('complete') ||
+           error.message?.toLowerCase().includes('setup'))) {
         toast({
           title: "Complete your setup first",
           description: "Please set up your preferences before creating a schedule.",
