@@ -65,7 +65,7 @@ export default function TermsConditions() {
 
                 <div className="mt-12 p-6 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-600 text-center">
-                    If you have questions about these Terms, please contact us at support@kickassmorning.com
+                    If you have questions about these Terms, please contact us at manjula@kickassmorning.com
                   </p>
                 </div>
               </div>

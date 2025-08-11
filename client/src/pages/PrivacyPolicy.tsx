@@ -61,7 +61,7 @@ export default function PrivacyPolicy() {
                   <li>A copy of the personal data we hold about you.</li>
                 </ul>
                 <p className="mb-4">
-                  Contact us at support@kickassmorning.com for any privacy-related requests.
+                  Contact us at manjula@kickassmorning.com for any privacy-related requests.
                 </p>
 
                 <h2 className="text-2xl font-semibold mt-8 mb-4">7. Changes to This Policy</h2>
@@ -72,7 +72,7 @@ export default function PrivacyPolicy() {
 
                 <h2 className="text-2xl font-semibold mt-8 mb-4">8. Contact</h2>
                 <p className="mb-4">
-                  If you have questions about this Privacy Policy, email us at: support@kickassmorning.com
+                  If you have questions about this Privacy Policy, email us at: manjula@kickassmorning.com
                 </p>
 
                 <div className="mt-12 p-6 bg-gray-50 rounded-lg">

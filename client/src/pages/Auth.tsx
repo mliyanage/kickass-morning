@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Mail, Lock } from 'lucide-react';
+import { Link } from 'wouter';
 
 // Login form schema
 const loginSchema = z.object({
@@ -330,21 +331,23 @@ export default function Auth() {
                     <div className="space-y-1 leading-none">
                       <FormLabel className="text-sm font-normal">
                         I agree to the{' '}
-                        <a 
-                          href="/terms" 
-                          target="_blank" 
-                          className="text-blue-600 hover:underline"
-                        >
-                          Terms & Conditions
-                        </a>
+                        <Link href="/terms">
+                          <a 
+                            target="_blank" 
+                            className="text-blue-600 hover:underline"
+                          >
+                            Terms & Conditions
+                          </a>
+                        </Link>
                         {' '}and{' '}
-                        <a 
-                          href="/privacy" 
-                          target="_blank" 
-                          className="text-blue-600 hover:underline"
-                        >
-                          Privacy Policy
-                        </a>
+                        <Link href="/privacy">
+                          <a 
+                            target="_blank" 
+                            className="text-blue-600 hover:underline"
+                          >
+                            Privacy Policy
+                          </a>
+                        </Link>
                       </FormLabel>
                       <FormMessage />
                     </div>
