@@ -5,6 +5,8 @@ import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import PhoneVerification from "@/pages/PhoneVerification";
+import PhoneVerificationFirebase from "@/pages/PhoneVerificationFirebase";
+import FirebaseTest from "@/pages/FirebaseTest";
 import OtpVerification from "@/pages/OtpVerification";
 import Personalization from "@/pages/Personalization";
 import ScheduleCall from "@/pages/ScheduleCall";
@@ -25,6 +27,8 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route path="/phone-verification" component={PhoneVerification} />
+      <Route path="/phone-verification-firebase" component={PhoneVerificationFirebase} />
+      <Route path="/firebase-test" component={FirebaseTest} />
       <Route path="/otp-verification" component={OtpVerification} />
       <Route path="/personalization" component={Personalization} />
       <Route path="/schedule-call" component={ScheduleCall} />
