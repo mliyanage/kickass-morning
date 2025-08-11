@@ -102,10 +102,37 @@ export default function PhoneVerificationFirebase() {
     },
     onError: (error: any) => {
       console.error("SMS error:", error);
+      
+      // Extract Firebase error code and provide user-friendly messages
+      let title = "Failed to send code";
+      let description = "Please check your phone number and try again.";
+      
+      if (error?.code || error?.message) {
+        const errorCode = error.code || "";
+        const errorMessage = error.message || "";
+        
+        if (errorCode === 'auth/invalid-phone-number' || errorMessage.includes('INVALID_PHONE_NUMBER')) {
+          title = "Invalid phone number";
+          description = "Please check your phone number format. Make sure to include the country code and use a valid mobile number.";
+        } else if (errorMessage.includes('TOO_SHORT')) {
+          title = "Phone number too short";
+          description = "Please enter a complete phone number with the correct number of digits for your country.";
+        } else if (errorCode === 'auth/too-many-requests') {
+          title = "Too many attempts";
+          description = "You've made too many requests. Please wait a few minutes before trying again.";
+        } else if (errorCode === 'auth/quota-exceeded') {
+          title = "Service temporarily unavailable";
+          description = "Our SMS service is temporarily busy. Please try again in a few minutes.";
+        } else if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+          title = "Connection timeout";
+          description = "The verification service is taking longer than expected. Please try again.";
+        }
+      }
+      
       toast({
         variant: "destructive",
-        title: "Failed to send code",
-        description: error.message || "Please check your phone number and try again.",
+        title,
+        description,
       });
       
       // Reset reCAPTCHA on error
@@ -184,10 +211,34 @@ export default function PhoneVerificationFirebase() {
     },
     onError: (error: any) => {
       console.error("Verification error:", error);
+      
+      // Extract Firebase error code and provide user-friendly messages
+      let title = "Verification failed";
+      let description = "Please check your code and try again.";
+      
+      if (error?.code || error?.message) {
+        const errorCode = error.code || "";
+        const errorMessage = error.message || "";
+        
+        if (errorCode === 'auth/invalid-verification-code') {
+          title = "Invalid verification code";
+          description = "The code you entered is incorrect. Please check and try again, or request a new code.";
+        } else if (errorCode === 'auth/expired-action-code') {
+          title = "Code expired";
+          description = "Your verification code has expired. Please request a new one.";
+        } else if (errorCode === 'auth/too-many-requests') {
+          title = "Too many attempts";
+          description = "You've made too many verification attempts. Please wait a few minutes before trying again.";
+        } else if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+          title = "Connection timeout";
+          description = "The verification is taking longer than expected. Please try again.";
+        }
+      }
+      
       toast({
         variant: "destructive",
-        title: "Verification failed",
-        description: error.message || "Please check your code and try again.",
+        title,
+        description,
       });
     },
   });

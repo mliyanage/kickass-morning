@@ -107,4 +107,21 @@ export const getFirebaseToken = async (): Promise<string | null> => {
   }
 };
 
+// Add global error handler to suppress reCAPTCHA timeout overlays
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && event.reason.message) {
+      const message = event.reason.message.toLowerCase();
+      // Suppress various reCAPTCHA and Firebase timeout-related errors
+      if (message.includes('timeout') || 
+          message.includes('recaptcha') || 
+          message.includes('network error') ||
+          message.includes('cancelled')) {
+        console.warn('[Firebase] Suppressed error overlay:', event.reason);
+        event.preventDefault(); // Suppress the error overlay
+      }
+    }
+  });
+}
+
 export default null; // No default export of app since it's lazily initialized
