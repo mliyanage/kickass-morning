@@ -798,10 +798,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           req.session.userId!,
         );
         if (!personalization) {
-          return res.status(403).json({ 
+          const errorResponse = { 
             message: "Please complete personalization first.",
             personalizationRequired: true
-          });
+          };
+          console.log('[Schedule Creation] Personalization required, sending 403 response:', errorResponse);
+          return res.status(403).json(errorResponse);
         }
 
         // Check schedule limits and duplicates
