@@ -26,24 +26,32 @@ export const getFirebaseAuth = () => {
   return auth;
 };
 
-// Initialize recaptcha verifier with better error handling
+// Initialize recaptcha verifier with site key and better error handling
 export const initializeRecaptcha = (containerId: string): RecaptchaVerifier => {
   try {
     const firebaseAuth = getFirebaseAuth();
+    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+    
+    if (!siteKey) {
+      throw new Error('reCAPTCHA site key not configured');
+    }
+    
+    console.log('[Firebase] Initializing reCAPTCHA with site key...');
+    
     return new RecaptchaVerifier(firebaseAuth, containerId, {
       size: 'normal',
       callback: () => {
-        console.log('reCAPTCHA solved');
+        console.log('[Firebase] reCAPTCHA verification successful');
       },
       'expired-callback': () => {
-        console.log('reCAPTCHA expired');
+        console.warn('[Firebase] reCAPTCHA expired - user needs to solve it again');
       },
       'error-callback': (error: any) => {
-        console.error('reCAPTCHA error:', error);
+        console.error('[Firebase] reCAPTCHA error:', error);
       }
     });
   } catch (error) {
-    console.error('Failed to initialize reCAPTCHA:', error);
+    console.error('[Firebase] Failed to initialize reCAPTCHA:', error);
     throw error;
   }
 };

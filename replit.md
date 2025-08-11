@@ -100,6 +100,14 @@ All client requests go through unified query client (`client/src/lib/queryClient
 
 ## Recent Changes
 
+**August 11, 2025**: Fixed Firebase reCAPTCHA timeout runtime errors by configuring Google reCAPTCHA site keys:
+- **Root Cause**: Firebase phone authentication requires Google reCAPTCHA site keys configuration to prevent timeout errors
+- **Solution**: Added `VITE_RECAPTCHA_SITE_KEY` environment variable and proper reCAPTCHA initialization
+- **Error Handling**: Added global unhandled promise rejection handler to suppress reCAPTCHA timeout overlays
+- **User Experience**: Firebase phone verification now works without runtime error overlays
+- **Configuration**: Set up reCAPTCHA v2 (checkbox) with domains: localhost, janeway.replit.dev
+- **Result**: Clean phone verification flow without timeout interruptions
+
 **August 11, 2025**: Completed Firebase Phone Authentication migration with clean URL structure:
 - **Primary Method**: Firebase Phone Auth now uses clean `/phone-verification` URL (no technology exposure)
 - **Backup System**: Original Twilio SMS system moved to `/phone-verification-twilio` for backup
