@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { trackConversion } from "../../lib/analytics";
+// Analytics temporarily removed to fix runtime errors
 import { getSpecificCountries } from "@/lib/countries";
 import { initializeRecaptcha, sendVerificationCode, verifyCode, getFirebaseToken } from "@/lib/firebase";
 import type { ConfirmationResult } from "firebase/auth";

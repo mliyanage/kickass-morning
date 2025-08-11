@@ -138,7 +138,18 @@ export default function Personalization() {
       retry: false,
       staleTime: 0, // Always consider data stale
       refetchOnMount: true, // Refetch when component mounts
-      refetchOnWindowFocus: false
+      refetchOnWindowFocus: false,
+      // Handle 404 gracefully for new users
+      queryFn: async () => {
+        try {
+          return await apiRequest("GET", "/api/user/personalization");
+        } catch (error: any) {
+          if (error.message?.includes("Resource not found") || error.message?.includes("404")) {
+            return null; // Return null for new users without personalization data
+          }
+          throw error; // Re-throw other errors
+        }
+      }
     });
 
   // Set initial values from fetched data
