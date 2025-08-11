@@ -1,33 +1,37 @@
-# PM2 Environment Variables Fix for Production
+# Firebase Client-Side Environment Variables Fix
 
 ## Problem
-PM2 process is not loading environment variables from .env file, causing Firebase to fail with "invalid-api-key" error.
+Firebase variables (VITE_*) are client-side and must be embedded during build, not loaded at runtime like server variables.
 
-## Solution 1: Update PM2 Ecosystem Config
+**Working**: Server variables (MAILJET, TWILIO) - loaded at runtime ✅
+**Not Working**: Client variables (VITE_FIREBASE_*) - need build-time embedding ❌
 
-Create/update `/opt/kickass-morning/ecosystem.config.js`:
+## Solution: Rebuild with Environment Variables Available
 
-```javascript
-module.exports = {
-  apps: [{
-    name: 'kickass-morning',
-    script: './app/dist/index.js',
-    cwd: '/opt/kickass-morning',
-    env_file: '/opt/kickass-morning/.env',
-    env: {
-      NODE_ENV: 'production',
-      PORT: 3000
-    },
-    instances: 1,
-    exec_mode: 'fork',
-    watch: false,
-    max_memory_restart: '1G',
-    error_file: '/opt/kickass-morning/logs/error.log',
-    out_file: '/opt/kickass-morning/logs/out.log',
-    log_file: '/opt/kickass-morning/logs/combined.log',
-    time: true
-  }]
-};
+The issue is that `VITE_*` variables must be available during the build process, not just runtime.
+
+**Step 1: Export environment variables before build**
+
+```bash
+cd /opt/kickass-morning/app
+
+# Export VITE variables to shell environment
+export VITE_FIREBASE_API_KEY=AIzaSyA79ZNMpiDovUUd0KYOjyXg_jTm6735NCs
+export VITE_FIREBASE_AUTH_DOMAIN=kickass-2673d.firebaseapp.com
+export VITE_FIREBASE_PROJECT_ID=kickass-2673d
+export VITE_RECAPTCHA_SITE_KEY=6Lexp6ErAAAAAFyKw3DM3z1Zuk8KuxGo1WeW3Yt-
+
+# Now rebuild the frontend with these variables
+npm run build
+```
+
+**Step 2: Alternative - Load .env before build**
+
+```bash
+cd /opt/kickass-morning/app
+
+# Load all variables from .env and build
+set -a; source ../.env; set +a; npm run build
 ```
 
 ## Solution 2: Manual Environment Loading
