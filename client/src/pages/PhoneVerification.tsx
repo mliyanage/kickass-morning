@@ -29,6 +29,10 @@ export default function PhoneVerification() {
   // Get country options from the world-countries library
   const countryOptions = getSpecificCountries();
 
+  // Debug logging
+  console.log("Country options:", countryOptions);
+  console.log("Current country code:", countryCode);
+
   // Ensure the default country code matches an available option
   useEffect(() => {
     if (countryOptions.length > 0) {
@@ -41,6 +45,12 @@ export default function PhoneVerification() {
       }
     }
   }, [countryOptions]);
+
+  // Handle country change with logging
+  const handleCountryChange = (newCode: string) => {
+    console.log("Country changing from", countryCode, "to", newCode);
+    setCountryCode(newCode);
+  };
 
   // Check where the user was trying to go
   useEffect(() => {
@@ -155,7 +165,7 @@ export default function PhoneVerification() {
                     <p className="text-sm text-gray-600 mb-2">
                       Select your country to auto-fill your code
                     </p>
-                    <Select value={countryCode} onValueChange={setCountryCode}>
+                    <Select value={countryCode} onValueChange={handleCountryChange}>
                       <SelectTrigger id="country-code" className="w-full">
                         <SelectValue placeholder="Select country code" />
                       </SelectTrigger>
