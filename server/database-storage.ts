@@ -906,12 +906,10 @@ export class DatabaseStorage implements IStorage {
                 ${schedules.lastCallStatus} = 'completed' 
                 AND DATE(${schedules.lastCalled} AT TIME ZONE 'UTC' AT TIME ZONE ${schedules.timezone}) < DATE(NOW() AT TIME ZONE ${schedules.timezone})
               )
-              OR (${schedules.lastCallStatus} = 'failed' AND ${schedules.lastCalled} > NOW() - INTERVAL '10 minutes')
+              OR ((${schedules.lastCallStatus} = 'failed' OR ${schedules.lastCallStatus} = 'busy') AND ${schedules.lastCalled} > NOW() - INTERVAL '10 minutes')
             )`,
           ),
         );
-      
-
 
       // Filter schedules using DST-aware timezone conversion
       const pendingSchedules = allActiveSchedules.filter((row) => {
@@ -951,7 +949,9 @@ export class DatabaseStorage implements IStorage {
   ): boolean {
     try {
       // Check if this schedule should run today based on local weekdays and timezone
-      if (!shouldScheduleRunToday(localWeekdays, localTime, timezone, currentTime)) {
+      if (
+        !shouldScheduleRunToday(localWeekdays, localTime, timezone, currentTime)
+      ) {
         return false;
       }
 
