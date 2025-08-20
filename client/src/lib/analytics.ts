@@ -1,46 +1,47 @@
-// Define the gtag function globally
+import posthog from 'posthog-js';
+
+// Define PostHog types
 declare global {
   interface Window {
-    dataLayer: any[];
-    gtag: (...args: any[]) => void;
+    posthog?: typeof posthog;
   }
 }
 
-// Initialize Google Analytics
-export const initGA = () => {
-  const measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
+// Initialize PostHog
+export const initPostHog = () => {
+  const apiKey = import.meta.env.VITE_POSTHOG_API_KEY;
+  const host = import.meta.env.VITE_POSTHOG_HOST;
 
-  if (!measurementId) {
-    console.warn('Missing required Google Analytics key: VITE_GA_MEASUREMENT_ID');
+  if (!apiKey || !host) {
+    console.warn('Missing required PostHog keys: VITE_POSTHOG_API_KEY and VITE_POSTHOG_HOST');
     return;
   }
 
-  // Add Google Analytics script to the head
-  const script1 = document.createElement('script');
-  script1.async = true;
-  script1.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
-  document.head.appendChild(script1);
+  posthog.init(apiKey, {
+    api_host: host,
+    // Enable session recordings and heatmaps
+    capture_pageview: true,
+    capture_pageleave: true,
+    // Better privacy controls
+    respect_dnt: true,
+    // Enable session recordings
+    disable_session_recording: false,
+    // Autocapture settings
+    autocapture: {
+      dom_event_allowlist: ['click', 'change', 'submit'],
+    },
+  });
 
-  // Initialize gtag
-  const script2 = document.createElement('script');
-  script2.textContent = `
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', '${measurementId}');
-  `;
-  document.head.appendChild(script2);
+  // Make PostHog available globally for debugging
+  window.posthog = posthog;
 };
 
-// Track page views - useful for single-page applications
+// Track page views - PostHog does this automatically, but we keep for consistency
 export const trackPageView = (url: string) => {
-  if (typeof window === 'undefined' || !window.gtag) return;
+  if (typeof window === 'undefined' || !posthog.__loaded) return;
   
-  const measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
-  if (!measurementId) return;
-  
-  window.gtag('config', measurementId, {
-    page_path: url
+  posthog.capture('$pageview', {
+    $current_url: window.location.origin + url,
   });
 };
 
@@ -51,29 +52,69 @@ export const trackEvent = (
   label?: string, 
   value?: number
 ) => {
-  if (typeof window === 'undefined' || !window.gtag) return;
+  if (typeof window === 'undefined' || !posthog.__loaded) return;
   
-  window.gtag('event', action, {
-    event_category: category,
-    event_label: label,
-    value: value,
+  posthog.capture(action, {
+    category,
+    label,
+    value,
+    // Add additional context
+    $current_url: window.location.href,
   });
 };
 
 // Conversion tracking functions for marketing campaigns
 export const trackConversion = (conversionType: 'signup' | 'phone_verified' | 'first_schedule' | 'first_call') => {
-  trackEvent('conversion', 'user_journey', conversionType);
+  if (typeof window === 'undefined' || !posthog.__loaded) return;
+  
+  posthog.capture('conversion', {
+    conversion_type: conversionType,
+    category: 'user_journey',
+    // Set user properties for better segmentation
+    $set: {
+      [`has_${conversionType}`]: true,
+      last_conversion: conversionType,
+      last_conversion_time: new Date().toISOString(),
+    }
+  });
 };
 
 // Marketing campaign tracking
 export const trackCampaignClick = (source: 'meta_ad' | 'affiliate' | 'organic', campaign?: string) => {
-  trackEvent('campaign_click', 'marketing', source, campaign ? undefined : 1);
+  if (typeof window === 'undefined' || !posthog.__loaded) return;
+  
+  posthog.capture('campaign_click', {
+    source,
+    campaign,
+    category: 'marketing',
+    // Track campaign attribution
+    $set: {
+      utm_source: source,
+      utm_campaign: campaign,
+      first_referrer: source,
+    }
+  });
+  
   if (campaign) {
-    trackEvent('campaign_specific', 'marketing', campaign);
+    posthog.capture('campaign_specific', {
+      campaign,
+      source,
+      category: 'marketing',
+    });
   }
 };
 
 // User engagement tracking
 export const trackEngagement = (action: 'schedule_created' | 'personalization_completed' | 'call_answered' | 'app_opened') => {
-  trackEvent('engagement', 'user_behavior', action);
+  if (typeof window === 'undefined' || !posthog.__loaded) return;
+  
+  posthog.capture('engagement', {
+    action,
+    category: 'user_behavior',
+    // Update user engagement properties
+    $set: {
+      [`last_${action}`]: new Date().toISOString(),
+      total_engagements: '$increment',
+    }
+  });
 };

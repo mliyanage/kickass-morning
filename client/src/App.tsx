@@ -16,7 +16,12 @@ import Help from "@/pages/Help";
 import TermsConditions from "@/pages/TermsConditions";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import { useEffect } from "react";
+import { initPostHog } from "./lib/analytics";
+import { useAnalytics } from "../hooks/use-analytics";
+
 function Router() {
+  // Track page views when routes change
+  useAnalytics();
   
   return (
     <Switch>
@@ -40,6 +45,16 @@ function Router() {
 }
 
 function App() {
+  // Initialize PostHog when app loads
+  useEffect(() => {
+    // Verify required environment variable is present
+    if (!import.meta.env.VITE_POSTHOG_API_KEY || !import.meta.env.VITE_POSTHOG_HOST) {
+      console.warn('Missing required PostHog keys: VITE_POSTHOG_API_KEY and VITE_POSTHOG_HOST');
+    } else {
+      initPostHog();
+    }
+  }, []);
+
   // Handle Firebase reCAPTCHA timeout errors and other transient errors
   useEffect(() => {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
