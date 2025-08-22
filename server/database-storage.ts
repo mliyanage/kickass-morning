@@ -632,8 +632,24 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  // Payment/Trial related methods
+  async getUserTrialStatus(userId: number): Promise<{ hasUsedFreeTrial: boolean, callCredits: number }> {
+    const [user] = await db
+      .select({ 
+        hasUsedFreeTrial: users.hasUsedFreeTrial,
+        callCredits: users.callCredits 
+      })
+      .from(users)
+      .where(eq(users.id, userId));
+
+    return {
+      hasUsedFreeTrial: user?.hasUsedFreeTrial || false,
+      callCredits: user?.callCredits || 0
+    };
+  }
+
   // Schedule related methods
-  async createSchedule(data: any): Promise<Schedule> {
+  async createSchedule(data: any): Promise<Schedule & { isFirstSchedule?: boolean, hasUsedFreeTrial?: boolean }> {
     try {
       // DST-proof: Store only local time and timezone, convert at runtime
       const weekdaysStr = Array.isArray(data.weekdays)
@@ -643,6 +659,22 @@ export class DatabaseStorage implements IStorage {
       console.log(
         `Creating DST-proof schedule: Local time ${data.wakeupTime} in ${data.timezone}, weekdays: ${weekdaysStr}`,
       );
+
+      // Check if this is the user's first schedule
+      const existingSchedules = await db
+        .select({ id: schedules.id })
+        .from(schedules)
+        .where(eq(schedules.userId, data.userId));
+
+      const isFirstSchedule = existingSchedules.length === 0;
+
+      // Get user's current trial status
+      const [user] = await db
+        .select({ hasUsedFreeTrial: users.hasUsedFreeTrial })
+        .from(users)
+        .where(eq(users.id, data.userId));
+
+      const hasUsedFreeTrial = user?.hasUsedFreeTrial || false;
 
       // Insert schedule with only local data - no UTC conversion at creation time
       const [schedule] = await db
@@ -657,8 +689,24 @@ export class DatabaseStorage implements IStorage {
         })
         .returning();
 
+      // If this is their first schedule and they haven't used the free trial, mark trial as used
+      if (isFirstSchedule && !hasUsedFreeTrial) {
+        await db
+          .update(users)
+          .set({ hasUsedFreeTrial: true })
+          .where(eq(users.id, data.userId));
+
+        console.log(`Marked user ${data.userId} as having used their free trial`);
+      }
+
       console.log("Created DST-proof schedule:", schedule);
-      return schedule;
+      
+      // Return schedule with trial info for frontend
+      return {
+        ...schedule,
+        isFirstSchedule,
+        hasUsedFreeTrial
+      };
     } catch (error) {
       console.error("Error creating schedule:", error);
       throw error;

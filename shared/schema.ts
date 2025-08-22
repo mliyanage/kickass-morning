@@ -48,6 +48,8 @@ export const users = pgTable("users", {
   phoneVerified: boolean("phone_verified").default(false),
   isPersonalized: boolean("is_personalized").default(false),
   welcomeEmailSent: boolean("welcome_email_sent").default(false),
+  hasUsedFreeTrial: boolean("has_used_free_trial").default(false),
+  callCredits: integer("call_credits").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -121,6 +123,20 @@ export const callHistory = pgTable("call_history", {
   duration: integer("duration"),
   recordingUrl: text("recording_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Payment tracking
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  amount: integer("amount").notNull(), // in cents ($9.99 = 999)
+  credits: integer("credits").notNull(), // number of calls purchased
+  status: text("status").notNull().default("pending"), // pending, completed, failed
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
 });
 
 // OTP verification codes

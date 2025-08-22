@@ -21,6 +21,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import AppLayout from "@/components/layouts/AppLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import PaymentUpsell from "@/components/PaymentUpsell";
 // Analytics removed temporarily to fix runtime errors
 import { getGroupedTimezones, getUserTimezone, type TimezoneOption } from "@/lib/timezones";
 
@@ -74,9 +75,26 @@ export default function ScheduleCall() {
   const [date, setDate] = useState("");
   const [callRetry, setCallRetry] = useState(true);
   const [advanceNotice, setAdvanceNotice] = useState(false);
+
+  // Payment upsell modal state
+  const [showPaymentUpsell, setShowPaymentUpsell] = useState(false);
   
   // Initialize timezone groups
   const timezoneGroups = getTimezoneOptions();
+
+  // Payment upsell handlers
+  const handlePaymentUpsellSelect = (bundle: "20_calls" | "50_calls") => {
+    // For now, just close modal and redirect to dashboard
+    // TODO: Implement payment processing
+    console.log(`Selected bundle: ${bundle}`);
+    setShowPaymentUpsell(false);
+    setLocation("/dashboard");
+  };
+
+  const handlePaymentUpsellSkip = () => {
+    setShowPaymentUpsell(false);
+    setLocation("/dashboard");
+  };
   
 
 
@@ -230,7 +248,7 @@ export default function ScheduleCall() {
       const endpoint = editingScheduleId ? `/api/schedule?id=${editingScheduleId}` : "/api/schedule";
       return await apiRequest("POST", endpoint, data);
     },
-    onSuccess: () => {
+    onSuccess: (scheduleData: any) => {
       // Invalidate schedule cache so dashboard refreshes
       queryClient.invalidateQueries({ queryKey: ['/api/schedule'] });
       
@@ -238,7 +256,15 @@ export default function ScheduleCall() {
         title: "Schedule saved",
         description: "Your wakeup call has been scheduled successfully.",
       });
-      setLocation("/dashboard");
+
+      // Check if we should show the payment upsell
+      if (scheduleData?.isFirstSchedule && !scheduleData?.hasUsedFreeTrial) {
+        // Show payment upsell for first-time users who haven't used their free trial
+        setShowPaymentUpsell(true);
+      } else {
+        // Go directly to dashboard for existing users or those who already used trial
+        setLocation("/dashboard");
+      }
     },
     onError: (error: any) => {
       // Check if error is due to missing personalization
@@ -538,6 +564,14 @@ export default function ScheduleCall() {
           </Card>
         </div>
       </div>
+
+      {/* Payment Upsell Modal */}
+      <PaymentUpsell
+        isOpen={showPaymentUpsell}
+        onClose={() => setShowPaymentUpsell(false)}
+        onSelectBundle={handlePaymentUpsellSelect}
+        onSkip={handlePaymentUpsellSkip}
+      />
     </AppLayout>
     </ErrorBoundary>
   );

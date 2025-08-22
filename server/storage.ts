@@ -53,8 +53,11 @@ export interface IStorage {
   savePersonalization(userId: number, data: PersonalizationData): Promise<any>;
   getPersonalization(userId: number): Promise<PersonalizationData | undefined>;
 
+  // Payment/Trial related
+  getUserTrialStatus(userId: number): Promise<{ hasUsedFreeTrial: boolean, callCredits: number }>;
+
   // Schedule related
-  createSchedule(data: any): Promise<Schedule>;
+  createSchedule(data: any): Promise<Schedule & { isFirstSchedule?: boolean, hasUsedFreeTrial?: boolean }>;
   getSchedule(id: number): Promise<Schedule | undefined>;
   getUserSchedules(userId: number): Promise<Schedule[]>;
   updateScheduleStatus(
@@ -457,8 +460,17 @@ export class MemStorage implements IStorage {
     return this.personalizations.get(userId);
   }
 
+  // Payment/Trial related methods
+  async getUserTrialStatus(userId: number): Promise<{ hasUsedFreeTrial: boolean, callCredits: number }> {
+    // For MemStorage, always return false for trial status (development only)
+    return {
+      hasUsedFreeTrial: false,
+      callCredits: 0
+    };
+  }
+
   // Schedule related methods
-  async createSchedule(data: any): Promise<Schedule> {
+  async createSchedule(data: any): Promise<Schedule & { isFirstSchedule?: boolean, hasUsedFreeTrial?: boolean }> {
     const id = this.currentScheduleId++;
     const now = new Date();
 
@@ -470,7 +482,15 @@ export class MemStorage implements IStorage {
     };
 
     this.schedules.set(id, schedule);
-    return schedule;
+    
+    // For MemStorage, simulate first schedule check
+    const isFirstSchedule = this.schedules.size === 1;
+    
+    return {
+      ...schedule,
+      isFirstSchedule,
+      hasUsedFreeTrial: false // Always false for MemStorage
+    };
   }
 
   async getSchedule(id: number): Promise<Schedule | undefined> {
