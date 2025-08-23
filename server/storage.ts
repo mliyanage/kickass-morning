@@ -154,6 +154,8 @@ export class MemStorage implements IStorage {
       phoneVerified: false,
       isPersonalized: false,
       welcomeEmailSent: false,
+      hasUsedFreeTrial: false,
+      callCredits: 0,
       createdAt: now,
       updatedAt: now,
     };
@@ -601,14 +603,8 @@ export class MemStorage implements IStorage {
         );
       }
 
-      // For one-time schedules, check if date and time match
-      if (!schedule.isRecurring && schedule.date) {
-        const scheduleDate = new Date(schedule.date);
-        return (
-          scheduleDate.toDateString() === now.toDateString() &&
-          schedule.wakeupTime === currentTimeStr
-        );
-      }
+      // Note: One-time schedules are not currently implemented in the schema
+      // This section would handle date-based schedules when implemented
 
       return false;
     });

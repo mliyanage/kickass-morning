@@ -801,7 +801,7 @@ export class DatabaseStorage implements IStorage {
           data.isRecurring !== undefined
             ? data.isRecurring
             : currentSchedule.isRecurring;
-        const date = data.date || currentSchedule.date;
+        const date = data.date; // Note: date field not yet implemented in schema
 
         if (!isRecurring && date) {
           try {

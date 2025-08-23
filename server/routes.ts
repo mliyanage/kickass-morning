@@ -890,6 +890,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           schedule: {
             id: schedule.id,
           },
+          isFirstSchedule: schedule.isFirstSchedule,
+          hasUsedFreeTrial: schedule.hasUsedFreeTrial,
         });
       } catch (error) {
         if (error instanceof z.ZodError) {
