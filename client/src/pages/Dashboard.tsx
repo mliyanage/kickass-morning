@@ -10,7 +10,7 @@ import CallHistoryItem from "@/components/CallHistoryItem";
 import { PersonalizationSection } from "@/components/PersonalizationSection";
 import PaymentUpsell from "@/components/PaymentUpsell";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Phone, Play } from "lucide-react";
+import { AlertCircle, Phone, Play, RefreshCw } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -360,8 +360,9 @@ export default function Dashboard() {
                   queryClient.invalidateQueries({ queryKey: ["/api/user/trial-status"] });
                   refetchCredits();
                 }}
+                title="Refresh credit balance"
               >
-                Refresh
+                <RefreshCw className="h-4 w-4" />
               </Button>
             </div>
           </div>
