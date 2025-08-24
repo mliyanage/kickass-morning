@@ -48,6 +48,55 @@ const currentEnv = detectEnvironment();
 console.log(`Starting application in ${currentEnv} environment`);
 
 const app = express();
+
+// Register Stripe webhook BEFORE JSON parsing middleware to preserve raw body
+app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  
+  if (!sig) {
+    console.error("No Stripe signature found");
+    return res.status(400).send('No signature');
+  }
+
+  try {
+    // Import Stripe here to avoid circular dependencies
+    const Stripe = (await import('stripe')).default;
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    
+    // Import storage here to avoid circular dependencies
+    const { storage } = await import('./storage');
+    
+    // In production, you should set STRIPE_WEBHOOK_SECRET
+    const event = stripe.webhooks.constructEvent(
+      req.body, 
+      sig, 
+      process.env.STRIPE_WEBHOOK_SECRET || 'we_test' // For test mode
+    );
+
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as any;
+      const { userId, bundleType, credits } = session.metadata!;
+      
+      console.log(`Payment completed for user ${userId}: ${bundleType} (${credits} credits)`);
+      
+      // Add credits to user's account
+      if (userId && credits) {
+        const user = await storage.getUser(parseInt(userId));
+        if (user) {
+          await storage.updateUserCredits(parseInt(userId), parseInt(credits));
+          console.log(`Added ${credits} credits to user ${userId}`);
+        }
+      }
+    }
+
+    res.json({ received: true });
+  } catch (error: any) {
+    console.error("Webhook error:", error.message);
+    res.status(400).send(`Webhook Error: ${error.message}`);
+  }
+});
+
+// Now add JSON parsing for all other routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

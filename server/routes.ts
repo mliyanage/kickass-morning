@@ -1376,45 +1376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Stripe webhook endpoint
-  app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    
-    if (!sig) {
-      console.error("No Stripe signature found");
-      return res.status(400).send('No signature');
-    }
-
-    try {
-      // In production, you should set STRIPE_WEBHOOK_SECRET
-      const event = stripe.webhooks.constructEvent(
-        req.body, 
-        sig, 
-        process.env.STRIPE_WEBHOOK_SECRET || 'we_test' // For test mode
-      );
-
-      if (event.type === 'checkout.session.completed') {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const { userId, bundleType, credits } = session.metadata!;
-        
-        console.log(`Payment completed for user ${userId}: ${bundleType} (${credits} credits)`);
-        
-        // Add credits to user's account
-        if (userId && credits) {
-          const user = await storage.getUser(parseInt(userId));
-          if (user) {
-            await storage.updateUserCredits(parseInt(userId), parseInt(credits));
-            console.log(`Added ${credits} credits to user ${userId}`);
-          }
-        }
-      }
-
-      res.json({ received: true });
-    } catch (error: any) {
-      console.error("Webhook error:", error.message);
-      res.status(400).send(`Webhook Error: ${error.message}`);
-    }
-  });
+  // Stripe webhook endpoint is now registered in index.ts before JSON parsing middleware
 
   // Get payment session details (for success page)
   app.get("/api/stripe/session/:sessionId", isAuthenticated, async (req: Request, res: Response) => {
