@@ -56,6 +56,7 @@ export interface IStorage {
   // Payment/Trial related
   getUserTrialStatus(userId: number): Promise<{ hasUsedFreeTrial: boolean, callCredits: number }>;
   updateUserCredits(userId: number, creditsToAdd: number): Promise<User | undefined>;
+  deductUserCredit(userId: number): Promise<{ success: boolean; newBalance: number }>;
 
   // Schedule related
   createSchedule(data: any): Promise<Schedule & { isFirstSchedule?: boolean, hasUsedFreeTrial?: boolean }>;
@@ -482,6 +483,23 @@ export class MemStorage implements IStorage {
 
     this.users.set(userId, user);
     return user;
+  }
+
+  async deductUserCredit(userId: number): Promise<{ success: boolean; newBalance: number }> {
+    const user = this.users.get(userId);
+    if (!user) return { success: false, newBalance: 0 };
+
+    const currentCredits = user.callCredits || 0;
+    if (currentCredits <= 0) {
+      return { success: false, newBalance: 0 };
+    }
+
+    // Deduct 1 credit
+    user.callCredits = currentCredits - 1;
+    user.updatedAt = new Date();
+    this.users.set(userId, user);
+
+    return { success: true, newBalance: user.callCredits };
   }
 
   // Schedule related methods

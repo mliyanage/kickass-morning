@@ -670,6 +670,41 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async deductUserCredit(userId: number): Promise<{ success: boolean; newBalance: number }> {
+    try {
+      console.log(`Attempting to deduct 1 credit from user ${userId}`);
+      
+      // First check current balance
+      const [currentUser] = await db
+        .select({ callCredits: users.callCredits })
+        .from(users)
+        .where(eq(users.id, userId));
+
+      if (!currentUser || (currentUser.callCredits || 0) <= 0) {
+        console.log(`User ${userId} has insufficient credits (${currentUser?.callCredits || 0})`);
+        return { success: false, newBalance: currentUser?.callCredits || 0 };
+      }
+
+      // Deduct 1 credit using atomic operation
+      const [updatedUser] = await db
+        .update(users)
+        .set({ 
+          callCredits: sql`${users.callCredits} - 1`,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      const newBalance = updatedUser?.callCredits || 0;
+      console.log(`Successfully deducted 1 credit from user ${userId}. New balance: ${newBalance}`);
+      return { success: true, newBalance };
+      
+    } catch (error) {
+      console.error(`Error deducting credit from user ${userId}:`, error);
+      return { success: false, newBalance: 0 };
+    }
+  }
+
   // Schedule related methods
   async createSchedule(data: any): Promise<Schedule & { isFirstSchedule?: boolean, hasUsedFreeTrial?: boolean }> {
     try {

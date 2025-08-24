@@ -95,6 +95,21 @@ async function processScheduledCalls() {
         const otherStruggleText = personalization.otherStruggle || "";
         const goalDescription = personalization.goalDescription || "";
 
+        // Check if user has sufficient credits before making the call
+        const trialStatus = await storage.getUserTrialStatus(user.id);
+        const hasCredits = trialStatus.callCredits > 0;
+        const hasUsedFreeTrial = trialStatus.hasUsedFreeTrial;
+
+        // Allow call if user hasn't used free trial OR has credits
+        if (!hasUsedFreeTrial) {
+          console.log(`User ${user.id} using free trial call - no credits required`);
+        } else if (!hasCredits) {
+          console.log(`User ${user.id} has no credits (${trialStatus.callCredits}) - skipping call for schedule ${schedule.id}`);
+          continue;
+        } else {
+          console.log(`User ${user.id} has ${trialStatus.callCredits} credits - proceeding with call`);
+        }
+
         // Use voice from personalization data with a fallback
         const voiceId = personalization.voice || "jocko"; // Default to "jocko" if no voice is set
         console.log(`Using voice from personalization: ${voiceId}`); // Log the voice being used
@@ -140,6 +155,20 @@ async function processScheduledCalls() {
             `Failed to update last called time for schedule ${schedule.id}:`,
             error,
           );
+        }
+
+        // Deduct credit after successful call (only for paid users)
+        if (hasUsedFreeTrial && call.status && ['queued', 'ringing', 'in-progress'].includes(call.status)) {
+          try {
+            const deductResult = await storage.deductUserCredit(user.id);
+            if (deductResult.success) {
+              console.log(`Successfully deducted 1 credit from user ${user.id}. New balance: ${deductResult.newBalance}`);
+            } else {
+              console.error(`Failed to deduct credit from user ${user.id}. Current balance: ${deductResult.newBalance}`);
+            }
+          } catch (error) {
+            console.error(`Error deducting credit from user ${user.id}:`, error);
+          }
         }
 
         // Create a history record after updating the schedule
