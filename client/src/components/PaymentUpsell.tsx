@@ -3,15 +3,41 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Phone, Star, CheckCircle2 } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface PaymentUpsellProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectBundle: (bundle: "20_calls" | "50_calls") => void;
+  onSelectBundle?: (bundle: "20_calls" | "50_calls") => void;
   onSkip: () => void;
 }
 
 export default function PaymentUpsell({ isOpen, onClose, onSelectBundle, onSkip }: PaymentUpsellProps) {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState<string | null>(null);
+
+  const handleBundleSelect = async (bundleType: "20_calls" | "50_calls") => {
+    setIsLoading(bundleType);
+    
+    try {
+      const response = await apiRequest("POST", "/api/stripe/create-checkout", {
+        bundleType,
+      });
+      
+      // Redirect to Stripe Checkout
+      window.location.href = response.checkoutUrl;
+    } catch (error: any) {
+      console.error("Payment error:", error);
+      toast({
+        variant: "destructive",
+        title: "Payment Error",
+        description: error.message || "Failed to create payment session. Please try again.",
+      });
+      setIsLoading(null);
+    }
+  };
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-lg">
@@ -38,7 +64,7 @@ export default function PaymentUpsell({ isOpen, onClose, onSelectBundle, onSkip 
             {/* 20 Calls Bundle */}
             <Card 
               className="cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all"
-              onClick={() => onSelectBundle("20_calls")}
+              onClick={() => handleBundleSelect("20_calls")}
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -54,6 +80,9 @@ export default function PaymentUpsell({ isOpen, onClose, onSelectBundle, onSkip 
                   <div className="text-right">
                     <div className="text-2xl font-bold">$9.99</div>
                     <div className="text-xs text-gray-500">$0.50 per call</div>
+                    {isLoading === "20_calls" && (
+                      <div className="text-xs text-primary">Processing...</div>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -62,7 +91,7 @@ export default function PaymentUpsell({ isOpen, onClose, onSelectBundle, onSkip 
             {/* 50 Calls Bundle - Popular */}
             <Card 
               className="cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all relative"
-              onClick={() => onSelectBundle("50_calls")}
+              onClick={() => handleBundleSelect("50_calls")}
             >
               <div className="absolute -top-2 -right-2">
                 <Badge className="bg-green-500 hover:bg-green-600">
@@ -85,6 +114,9 @@ export default function PaymentUpsell({ isOpen, onClose, onSelectBundle, onSkip 
                     <div className="text-2xl font-bold">$19.99</div>
                     <div className="text-xs text-gray-500">$0.40 per call</div>
                     <div className="text-xs text-green-600 font-medium">Save 20%</div>
+                    {isLoading === "50_calls" && (
+                      <div className="text-xs text-primary">Processing...</div>
+                    )}
                   </div>
                 </div>
               </CardContent>

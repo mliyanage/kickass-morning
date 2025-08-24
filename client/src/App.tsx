@@ -15,6 +15,7 @@ import CallHistory from "@/pages/CallHistory";
 import Help from "@/pages/Help";
 import TermsConditions from "@/pages/TermsConditions";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import PaymentSuccess from "@/pages/PaymentSuccess";
 import { useEffect } from "react";
 import { initPostHog } from "./lib/analytics";
 import { useAnalytics } from "../hooks/use-analytics";
@@ -39,6 +40,7 @@ function Router() {
       <Route path="/help" component={Help} />
       <Route path="/terms" component={TermsConditions} />
       <Route path="/privacy" component={PrivacyPolicy} />
+      <Route path="/payment/success" component={PaymentSuccess} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -83,12 +83,10 @@ export default function ScheduleCall() {
   const timezoneGroups = getTimezoneOptions();
 
   // Payment upsell handlers
+  // This function is no longer used since PaymentUpsell handles payment internally
   const handlePaymentUpsellSelect = (bundle: "20_calls" | "50_calls") => {
-    // For now, just close modal and redirect to dashboard
-    // TODO: Implement payment processing
-    console.log(`Selected bundle: ${bundle}`);
-    setShowPaymentUpsell(false);
-    setLocation("/dashboard");
+    // PaymentUpsell component now handles the payment flow
+    console.log(`Payment flow handled by PaymentUpsell component for ${bundle}`);
   };
 
   const handlePaymentUpsellSkip = () => {

@@ -55,6 +55,7 @@ export interface IStorage {
 
   // Payment/Trial related
   getUserTrialStatus(userId: number): Promise<{ hasUsedFreeTrial: boolean, callCredits: number }>;
+  updateUserCredits(userId: number, creditsToAdd: number): Promise<User | undefined>;
 
   // Schedule related
   createSchedule(data: any): Promise<Schedule & { isFirstSchedule?: boolean, hasUsedFreeTrial?: boolean }>;
@@ -469,6 +470,18 @@ export class MemStorage implements IStorage {
       hasUsedFreeTrial: false,
       callCredits: 0
     };
+  }
+
+  async updateUserCredits(userId: number, creditsToAdd: number): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+
+    // For MemStorage, simulate credit addition (development only)
+    user.callCredits = (user.callCredits || 0) + creditsToAdd;
+    user.updatedAt = new Date();
+
+    this.users.set(userId, user);
+    return user;
   }
 
   // Schedule related methods

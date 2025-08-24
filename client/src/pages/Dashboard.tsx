@@ -47,6 +47,7 @@ interface UserData {
     phone: string | null;
     phoneVerified: boolean;
     isPersonalized: boolean;
+    callCredits?: number;
   };
 }
 
@@ -71,6 +72,17 @@ export default function Dashboard() {
   // Get user data for phone verification check (restored original caching)
   const { data: userData } = useQuery<UserData>({
     queryKey: ["/api/auth/check"],
+  });
+
+  // Get user's credit information
+  const { data: userCredits } = useQuery<{ hasUsedFreeTrial: boolean, callCredits: number }>({
+    queryKey: ["/api/user/trial-status"],
+    queryFn: async () => {
+      // We'll get this data via the existing auth check for now, but we can create a separate endpoint
+      const response = await apiRequest("GET", "/api/user/trial-status");
+      return response;
+    },
+    enabled: !!userData?.authenticated,
   });
 
 
@@ -300,6 +312,44 @@ export default function Dashboard() {
 
       {/* Personalization Section */}
       <PersonalizationSection />
+
+      {/* Credits Display */}
+      {userCredits && (
+        <div className="shadow sm:rounded-md sm:overflow-hidden mb-6">
+          <div className="bg-gradient-to-r from-primary/5 to-primary/10 py-4 px-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <Phone className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Your Wake-up Credits
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Ready to power your mornings
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-primary">
+                  {userCredits.callCredits}
+                </div>
+                <div className="text-sm text-gray-500">calls remaining</div>
+                {userCredits.callCredits === 0 && (
+                  <Button 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => setLocation("/schedule-call")}
+                  >
+                    Buy More Credits
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hero/Call-to-Action Section */}
       <div className="shadow sm:rounded-md sm:overflow-hidden mb-6">

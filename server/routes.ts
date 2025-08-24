@@ -26,6 +26,13 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import { detectEnvironment } from './env-utils';
+import Stripe from "stripe";
+
+// Initialize Stripe
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Extend express-session's SessionData interface
 declare module "express-session" {
@@ -679,6 +686,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // Get user's trial status and credits
+  app.get(
+    "/api/user/trial-status",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const trialStatus = await storage.getUserTrialStatus(req.session.userId!);
+        res.status(200).json(trialStatus);
+      } catch (error) {
+        console.error("Get trial status error:", error);
+        res.status(500).json({
+          message: "An error occurred while fetching trial status.",
+        });
+      }
+    },
+  );
+
   // Schedule Routes
   app.post(
     "/api/schedule",
@@ -1297,6 +1321,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     },
   );
+
+  // Stripe payment routes
+  app.post("/api/stripe/create-checkout", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { bundleType } = req.body;
+      
+      if (!bundleType || !["20_calls", "50_calls"].includes(bundleType)) {
+        return res.status(400).json({ message: "Invalid bundle type" });
+      }
+
+      // Bundle configurations
+      const bundles = {
+        "20_calls": { price: 999, credits: 20, name: "20 Wake-up Calls" }, // $9.99 in cents
+        "50_calls": { price: 1999, credits: 50, name: "50 Wake-up Calls" }  // $19.99 in cents
+      };
+
+      const bundle = bundles[bundleType as keyof typeof bundles];
+
+      // Create Stripe Checkout Session
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: bundle.name,
+              description: `${bundle.credits} AI-powered wake-up calls to start your mornings strong!`,
+            },
+            unit_amount: bundle.price,
+          },
+          quantity: 1,
+        }],
+        success_url: `${req.headers.origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.headers.origin}/dashboard`,
+        metadata: {
+          userId: req.session.userId!.toString(),
+          bundleType,
+          credits: bundle.credits.toString(),
+        },
+      });
+
+      res.json({ 
+        checkoutUrl: session.url,
+        sessionId: session.id 
+      });
+    } catch (error: any) {
+      console.error("Stripe checkout error:", error);
+      res.status(500).json({ 
+        message: "Error creating checkout session",
+        error: error.message 
+      });
+    }
+  });
+
+  // Stripe webhook endpoint
+  app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    
+    if (!sig) {
+      console.error("No Stripe signature found");
+      return res.status(400).send('No signature');
+    }
+
+    try {
+      // In production, you should set STRIPE_WEBHOOK_SECRET
+      const event = stripe.webhooks.constructEvent(
+        req.body, 
+        sig, 
+        process.env.STRIPE_WEBHOOK_SECRET || 'we_test' // For test mode
+      );
+
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const { userId, bundleType, credits } = session.metadata!;
+        
+        console.log(`Payment completed for user ${userId}: ${bundleType} (${credits} credits)`);
+        
+        // Add credits to user's account
+        if (userId && credits) {
+          const user = await storage.getUser(parseInt(userId));
+          if (user) {
+            await storage.updateUserCredits(parseInt(userId), parseInt(credits));
+            console.log(`Added ${credits} credits to user ${userId}`);
+          }
+        }
+      }
+
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error("Webhook error:", error.message);
+      res.status(400).send(`Webhook Error: ${error.message}`);
+    }
+  });
+
+  // Get payment session details (for success page)
+  app.get("/api/stripe/session/:sessionId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { sessionId } = req.params;
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      
+      // Only return session details for the authenticated user
+      if (session.metadata?.userId !== req.session.userId?.toString()) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      res.json({
+        paymentStatus: session.payment_status,
+        customerEmail: session.customer_details?.email,
+        bundleType: session.metadata?.bundleType,
+        credits: session.metadata?.credits,
+        amountTotal: session.amount_total,
+      });
+    } catch (error: any) {
+      console.error("Error retrieving session:", error);
+      res.status(500).json({ message: "Error retrieving payment session" });
+    }
+  });
 
   // Create HTTP server
   const httpServer = createServer(app);

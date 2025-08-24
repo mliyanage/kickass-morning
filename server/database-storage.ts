@@ -648,6 +648,28 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  async updateUserCredits(userId: number, creditsToAdd: number): Promise<User | undefined> {
+    try {
+      console.log(`Adding ${creditsToAdd} credits to user ${userId}`);
+      
+      // Update user's callCredits by adding the new credits
+      const [updatedUser] = await db
+        .update(users)
+        .set({ 
+          callCredits: sql`${users.callCredits} + ${creditsToAdd}`,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      console.log(`Successfully updated credits for user ${userId}. New balance: ${updatedUser?.callCredits}`);
+      return updatedUser;
+    } catch (error) {
+      console.error(`Error updating credits for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
   // Schedule related methods
   async createSchedule(data: any): Promise<Schedule & { isFirstSchedule?: boolean, hasUsedFreeTrial?: boolean }> {
     try {
