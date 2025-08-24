@@ -345,26 +345,25 @@ export default function Dashboard() {
               {userCredits?.callCredits ?? 0}
             </div>
             <div className="text-sm text-gray-500">calls remaining</div>
-            {(userCredits?.callCredits ?? 0) === 0 && (
+            <div className="flex gap-2 mt-3">
               <Button 
                 size="sm" 
-                className="mt-3"
+                variant={(userCredits?.callCredits ?? 0) === 0 ? "default" : "outline"}
                 onClick={() => setShowPaymentModal(true)}
               >
-                Buy More Credits
+                {(userCredits?.callCredits ?? 0) === 0 ? "Buy Credits" : "Buy More"}
               </Button>
-            )}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-2 ml-2"
-              onClick={() => {
-                queryClient.invalidateQueries({ queryKey: ["/api/user/trial-status"] });
-                refetchCredits();
-              }}
-            >
-              Refresh
-            </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  queryClient.invalidateQueries({ queryKey: ["/api/user/trial-status"] });
+                  refetchCredits();
+                }}
+              >
+                Refresh
+              </Button>
+            </div>
           </div>
         </div>
       </div>
