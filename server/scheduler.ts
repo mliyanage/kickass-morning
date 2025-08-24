@@ -160,27 +160,6 @@ async function processScheduledCalls() {
           );
         }
 
-        // TEST: Are we reaching this point?
-        console.log(`🔍 REACHED CREDIT DEDUCTION SECTION - About to check credits for user ${user.id}`);
-
-        // Deduct credit after successful call (only for users who have made calls before)
-        console.log(`Credit deduction check: isFirstCall=${isFirstCall}, call.status=${call.status}, callHistory.length=${userCallHistory.length}`);
-        if (!isFirstCall && call.status && !['failed', 'busy', 'no-answer'].includes(call.status)) {
-          console.log(`Attempting to deduct credit for user ${user.id} - call status: ${call.status}`);
-          try {
-            const deductResult = await storage.deductUserCredit(user.id);
-            if (deductResult.success) {
-              console.log(`Successfully deducted 1 credit from user ${user.id}. New balance: ${deductResult.newBalance}`);
-            } else {
-              console.error(`Failed to deduct credit from user ${user.id}. Current balance: ${deductResult.newBalance}`);
-            }
-          } catch (error) {
-            console.error(`Error deducting credit from user ${user.id}:`, error);
-          }
-        } else {
-          console.log(`Skipping credit deduction: isFirstCall=${isFirstCall}, status=${call.status}, failedStatus=${['failed', 'busy', 'no-answer'].includes(call.status)}`);
-        }
-
         // Create a history record after updating the schedule
         
         // Store the call time as a simple timestamp representing the scheduled time
@@ -206,6 +185,27 @@ async function processScheduledCalls() {
           recordingUrl: call.recordingUrl,
           callSid: call.callSid, // Add the Twilio Call SID
         });
+
+        // TEST: Are we reaching this point?
+        console.log(`🔍 REACHED CREDIT DEDUCTION SECTION - About to check credits for user ${user.id}`);
+
+        // Deduct credit after successful call (only for users who have made calls before)
+        console.log(`Credit deduction check: isFirstCall=${isFirstCall}, call.status=${call.status}, callHistory.length=${userCallHistory.length}`);
+        if (!isFirstCall && call.status && !['failed', 'busy', 'no-answer'].includes(call.status)) {
+          console.log(`Attempting to deduct credit for user ${user.id} - call status: ${call.status}`);
+          try {
+            const deductResult = await storage.deductUserCredit(user.id);
+            if (deductResult.success) {
+              console.log(`Successfully deducted 1 credit from user ${user.id}. New balance: ${deductResult.newBalance}`);
+            } else {
+              console.error(`Failed to deduct credit from user ${user.id}. Current balance: ${deductResult.newBalance}`);
+            }
+          } catch (error) {
+            console.error(`Error deducting credit from user ${user.id}:`, error);
+          }
+        } else {
+          console.log(`Skipping credit deduction: isFirstCall=${isFirstCall}, status=${call.status}, failedStatus=${['failed', 'busy', 'no-answer'].includes(call.status)}`);
+        }
 
         // Log call result with appropriate message based on status
         if (call.status === CallStatus.FAILED) {
