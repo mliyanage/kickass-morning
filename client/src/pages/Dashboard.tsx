@@ -1,6 +1,6 @@
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Schedule, CallHistory } from "@/types";
@@ -9,6 +9,7 @@ import ScheduleItem from "@/components/ScheduleItem";
 import CallHistoryItem from "@/components/CallHistoryItem";
 import { PersonalizationSection } from "@/components/PersonalizationSection";
 import PaymentUpsell from "@/components/PaymentUpsell";
+import GuidedModal from "@/components/GuidedModal";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Phone, Play, RefreshCw } from "lucide-react";
 import {
@@ -57,6 +58,16 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  
+  // Guided onboarding state
+  const [showPersonalizationModal, setShowPersonalizationModal] = useState(false);
+  const [showSampleCallModal, setShowSampleCallModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  
+  // Scroll references
+  const personalizationRef = useRef<HTMLDivElement>(null);
+  const sampleCallRef = useRef<HTMLDivElement>(null);
+  const scheduleRef = useRef<HTMLDivElement>(null);
 
   // Auto-refresh cache on component mount (handles Firebase verification navigation and schedule creation)
   useEffect(() => {
@@ -96,8 +107,6 @@ export default function Dashboard() {
     }
   }, [userData?.authenticated, refetchCredits]);
 
-
-
   // Get user schedules
   const {
     data: schedules = [],
@@ -115,6 +124,55 @@ export default function Dashboard() {
   } = useQuery<CallHistory[]>({
     queryKey: ["/api/call/history"],
   });
+
+  // Smooth scroll helper function
+  const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
+    if (ref.current) {
+      ref.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  };
+
+  // Determine user journey stage and show appropriate modals
+  useEffect(() => {
+    if (!userData?.authenticated || !callHistory) return;
+
+    const isFirstTimeUser = callHistory.length === 0;
+    const isPersonalized = userData.user.isPersonalized;
+    const hasTriedSampleCall = callHistory.length > 0;
+
+    // Only show modals for first-time users
+    if (isFirstTimeUser) {
+      if (!isPersonalized) {
+        // Step 1: Show personalization modal
+        const timer = setTimeout(() => {
+          setShowPersonalizationModal(true);
+          scrollToSection(personalizationRef);
+        }, 1000);
+        return () => clearTimeout(timer);
+      } else if (!hasTriedSampleCall) {
+        // Step 2: Show sample call modal
+        const timer = setTimeout(() => {
+          setShowSampleCallModal(true);
+          scrollToSection(sampleCallRef);
+        }, 1000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [userData, callHistory]);
+
+  // Show schedule modal after sample call completion
+  useEffect(() => {
+    if (callHistory && callHistory.length === 1 && schedules.length === 0) {
+      const timer = setTimeout(() => {
+        setShowScheduleModal(true);
+        scrollToSection(scheduleRef);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [callHistory, schedules]);
 
   // Sample call mutation
   const sampleCallMutation = useMutation({
@@ -310,176 +368,187 @@ export default function Dashboard() {
     );
   }
 
+  // Determine what sections to show based on user journey
+  const isFirstTimeUser = callHistory.length === 0;
+  const isPersonalized = userData?.user?.isPersonalized;
+  const hasTriedSampleCall = callHistory.length > 0;
+  
+  // Step-by-step visibility logic
+  const showPersonalizationSection = !isPersonalized || isFirstTimeUser;
+  const showSampleCallSection = isPersonalized && !hasTriedSampleCall;
+  const showScheduleSection = isPersonalized;
+  const showCreditsSection = hasTriedSampleCall;
+  const showHistorySection = hasTriedSampleCall;
+
   return (
     <AppLayout>
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          Ready to Take Charge, Boss!
-        </h1>
-        <p className="text-lg text-gray-600">
-          Welcome to your KickAss Morning Dashboard.
-        </p>
-      </div>
-
-      {/* Personalization Section */}
-      <PersonalizationSection />
-
-      {/* Credits Display */}
-      <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="bg-primary/10 p-3 rounded-full">
-              <Phone className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900">
-                Your Wake-up Credits
-              </h3>
-              <p className="text-gray-600">
-                Ready to power your mornings
-              </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-4xl font-bold text-primary mb-1">
-              {userCredits?.callCredits ?? 0}
-            </div>
-            <div className="text-sm text-gray-500">calls remaining</div>
-            <div className="flex gap-2 mt-3">
-              <Button 
-                size="sm" 
-                variant={(userCredits?.callCredits ?? 0) === 0 ? "default" : "outline"}
-                onClick={() => setShowPaymentModal(true)}
-              >
-                {(userCredits?.callCredits ?? 0) === 0 ? "Buy Credits" : "Buy More"}
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  queryClient.invalidateQueries({ queryKey: ["/api/user/trial-status"] });
-                  refetchCredits();
-                }}
-                title="Refresh credit balance"
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+      {/* Personalization Section - Step 1 */}
+      {showPersonalizationSection && (
+        <div ref={personalizationRef}>
+          <PersonalizationSection />
         </div>
-      </div>
+      )}
 
-      {/* Hero/Call-to-Action Section */}
-      <div className="shadow sm:rounded-md sm:overflow-hidden mb-6">
-        <div className="bg-white py-6 px-4 sm:p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Try a Sample Call
-              </h2>
-              <p className="text-gray-600 mt-1">
-                Experience your first AI-powered wake-up
-              </p>
-            </div>
-          </div>
-          
-          <div>
-            <p className="text-gray-600 mb-6">
-              Not sure what to expect? Hear a personalized motivational
-              message sent to your phone — just like your real wake-up call.
-            </p>
-
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <div className="flex-1">
-                {userData?.user?.phoneVerified ? (
-                    <div className="flex items-center text-sm text-green-700 mb-4">
-                      <Phone className="h-4 w-4 mr-2" />
-                      <span className="font-medium">
-                        Ready to call: {userData.user.phone} ✓
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                      <div className="flex items-center">
-                        <div className="text-yellow-600 mr-3">🔒</div>
-                        <div>
-                          <p className="text-sm font-medium text-yellow-800">
-                            Your phone isn't verified yet.
-                          </p>
-                          <p className="text-sm text-yellow-700">
-                            → Verify now to unlock your first wake-up preview.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+      {/* Credits Display - Show after first call */}
+      {showCreditsSection && (
+        <div className="bg-white p-6 rounded-lg shadow mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="bg-primary/10 p-3 rounded-full">
+                <Phone className="h-6 w-6 text-primary" />
               </div>
-              <div className="flex-shrink-0 flex gap-2">
-
-                <Button
-                  size="lg"
-                  className="w-full md:w-auto"
-                  onClick={handleSampleCall}
-                  disabled={sampleCallMutation.isPending}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Your Wake-up Credits
+                </h3>
+                <p className="text-gray-600">
+                  Ready to power your mornings
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-4xl font-bold text-primary mb-1">
+                {userCredits?.callCredits ?? 0}
+              </div>
+              <div className="text-sm text-gray-500">calls remaining</div>
+              <div className="flex gap-2 mt-3">
+                <Button 
+                  size="sm" 
+                  variant={(userCredits?.callCredits ?? 0) === 0 ? "default" : "outline"}
+                  onClick={() => setShowPaymentModal(true)}
                 >
-                  <Play className="mr-2 h-4 w-4" />
-                  {sampleCallMutation.isPending
-                    ? "Initiating call..."
-                    : "Try It Now"}
+                  {(userCredits?.callCredits ?? 0) === 0 ? "Buy Credits" : "Buy More"}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    queryClient.invalidateQueries({ queryKey: ["/api/user/trial-status"] });
+                    refetchCredits();
+                  }}
+                  title="Refresh credit balance"
+                >
+                  <RefreshCw className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Wakeup Schedule Section */}
-      <div className="shadow sm:rounded-md sm:overflow-hidden">
-        <div className="bg-white py-6 px-4 sm:p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Your Wake-Up Schedule
-              </h2>
-              <p className="text-gray-600 mt-1">
-                Let's set up your first real wake-up call.
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                No more snoozing. No more excuses. Choose a time, pick your
-                voice, and let us kickstart your morning.
-              </p>
+      {/* Sample Call Section - Step 2 */}
+      {showSampleCallSection && (
+        <div ref={sampleCallRef} className="shadow sm:rounded-md sm:overflow-hidden mb-6">
+          <div className="bg-white py-6 px-4 sm:p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Try a Sample Call
+                </h2>
+                <p className="text-gray-600 mt-1">
+                  Experience your first AI-powered wake-up
+                </p>
+              </div>
             </div>
-            <Button
-              onClick={() => {
-                const { user } = userData || {};
-                if (user && !user.phoneVerified) {
-                  localStorage.setItem(
-                    "phoneVerificationReturnUrl",
-                    "/schedule-call",
-                  );
-                  setLocation("/phone-verification");
-                } else {
-                  setLocation("/schedule-call");
-                }
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 mr-1.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-              Add Call
-            </Button>
+            
+            <div>
+              <p className="text-gray-600 mb-6">
+                Not sure what to expect? Hear a personalized motivational
+                message sent to your phone — just like your real wake-up call.
+              </p>
+
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex-1">
+                  {userData?.user?.phoneVerified ? (
+                      <div className="flex items-center text-sm text-green-700 mb-4">
+                        <Phone className="h-4 w-4 mr-2" />
+                        <span className="font-medium">
+                          Ready to call: {userData.user.phone} ✓
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-center">
+                          <div className="text-yellow-600 mr-3">🔒</div>
+                          <div>
+                            <p className="text-sm font-medium text-yellow-800">
+                              Your phone isn't verified yet.
+                            </p>
+                            <p className="text-sm text-yellow-700">
+                              → Verify now to unlock your first wake-up preview.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                </div>
+                <div className="flex-shrink-0 flex gap-2">
+                  <Button
+                    size="lg"
+                    className="w-full md:w-auto"
+                    onClick={handleSampleCall}
+                    disabled={sampleCallMutation.isPending}
+                  >
+                    <Play className="mr-2 h-4 w-4" />
+                    {sampleCallMutation.isPending
+                      ? "Initiating call..."
+                      : "Try It Now"}
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* Schedule Section - Step 3 */}
+      {showScheduleSection && (
+        <div ref={scheduleRef} className="shadow sm:rounded-md sm:overflow-hidden">
+          <div className="bg-white py-6 px-4 sm:p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Your Wake-Up Schedule
+                </h2>
+                <p className="text-gray-600 mt-1">
+                  Let's set up your first real wake-up call.
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  No more snoozing. No more excuses. Choose a time, pick your
+                  voice, and let us kickstart your morning.
+                </p>
+              </div>
+              <Button
+                onClick={() => {
+                  const { user } = userData || {};
+                  if (user && !user.phoneVerified) {
+                    localStorage.setItem(
+                      "phoneVerificationReturnUrl",
+                      "/schedule-call",
+                    );
+                    setLocation("/phone-verification");
+                  } else {
+                    setLocation("/schedule-call");
+                  }
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 mr-1.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                Add Call
+              </Button>
+            </div>
 
           {nextCall && (
             <div className="bg-primary-50 rounded-lg p-4 flex items-start mb-6">
@@ -561,8 +630,10 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+      )}
 
-      {/* Call History Section */}
+      {/* Call History Section - Show after first call */}
+      {showHistorySection && (
       <div className="shadow sm:rounded-md sm:overflow-hidden">
         <div className="bg-white py-6 px-4 sm:p-6">
           <div className="mb-6">
@@ -643,6 +714,49 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+      )}
+
+      {/* Guided Modals */}
+      <GuidedModal
+        isOpen={showPersonalizationModal}
+        onClose={() => setShowPersonalizationModal(false)}
+        title="Let's Personalize Your Wake-Up Experience"
+        description="First, tell us about your goals and what motivates you. This helps us create personalized wake-up messages that actually work for you."
+        actionText="Get Started"
+        onAction={() => scrollToSection(personalizationRef)}
+      />
+      
+      <GuidedModal
+        isOpen={showSampleCallModal}
+        onClose={() => setShowSampleCallModal(false)}
+        title="Try Your First Sample Call"
+        description="Perfect! Now let's test the experience with a sample call. You'll receive a personalized motivational message based on your preferences."
+        actionText="Try Sample Call"
+        onAction={() => {
+          scrollToSection(sampleCallRef);
+          // Trigger sample call if phone is verified
+          if (userData?.user?.phoneVerified) {
+            handleSampleCall();
+          }
+        }}
+      />
+      
+      <GuidedModal
+        isOpen={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        title="Schedule Your First Wake-Up Call"
+        description="Great job! You've experienced the power of KickAss Morning. Now let's schedule your first real wake-up call to start building your morning routine."
+        actionText="Schedule Now"
+        onAction={() => {
+          const { user } = userData || {};
+          if (user && !user.phoneVerified) {
+            localStorage.setItem("phoneVerificationReturnUrl", "/schedule-call");
+            setLocation("/phone-verification");
+          } else {
+            setLocation("/schedule-call");
+          }
+        }}
+      />
 
       {/* Payment Modal */}
       <PaymentUpsell

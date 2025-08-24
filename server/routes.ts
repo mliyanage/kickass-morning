@@ -25,12 +25,12 @@ import * as nodeSchedule from "node-schedule";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
-import { detectEnvironment } from './env-utils';
+import { detectEnvironment } from "./env-utils";
 import Stripe from "stripe";
 
 // Initialize Stripe
 if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+  throw new Error("Missing required Stripe secret: STRIPE_SECRET_KEY");
 }
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -124,29 +124,33 @@ const isPersonalized = async (
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup PostgreSQL session store for production
   const PostgreSqlStore = connectPgSimple(session);
-  
+
   // Determine if we should use PostgreSQL session store (test and production)
   const env = detectEnvironment();
   // Use PostgreSQL sessions for all environments for consistency
   const usePostgreSQLSessions = true;
-  
-  console.log(`[${new Date().toISOString()}] Session store: PostgreSQL (Environment: ${env})`);
-  
+
+  console.log(
+    `[${new Date().toISOString()}] Session store: PostgreSQL (Environment: ${env})`,
+  );
+
   // Setup express-session middleware with appropriate store
   app.use(
     session({
-      store: usePostgreSQLSessions ? new PostgreSqlStore({
-        pool: pool,
-        tableName: 'session',
-        createTableIfMissing: true
-      }) : undefined, // PostgreSQL sessions used for all environments
+      store: usePostgreSQLSessions
+        ? new PostgreSqlStore({
+            pool: pool,
+            tableName: "session",
+            createTableIfMissing: true,
+          })
+        : undefined, // PostgreSQL sessions used for all environments
       secret: process.env.SESSION_SECRET || "wakeup-buddy-secret",
       resave: false,
       saveUninitialized: false, // Changed to false for better security
-      cookie: { 
+      cookie: {
         secure: false, // Set to true when using HTTPS in production
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        httpOnly: true // Prevent XSS attacks
+        httpOnly: true, // Prevent XSS attacks
       },
     }),
   );
@@ -166,16 +170,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health", (req: Request, res: Response) => {
     const memUsage = process.memoryUsage();
     const uptime = process.uptime();
-    res.json({ 
-      status: "OK", 
+    res.json({
+      status: "OK",
       timestamp: new Date().toISOString(),
       uptime: Math.floor(uptime),
       memory: {
-        rss: Math.round(memUsage.rss/1024/1024),
-        heapUsed: Math.round(memUsage.heapUsed/1024/1024),
-        heapTotal: Math.round(memUsage.heapTotal/1024/1024)
+        rss: Math.round(memUsage.rss / 1024 / 1024),
+        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
       },
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || "development",
     });
   });
 
@@ -349,7 +353,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`User ${existingUser.id} logged in successfully`);
-      console.log(`Session ID: ${req.sessionID}, User ID in session: ${req.session.userId}`);
+      console.log(
+        `Session ID: ${req.sessionID}, User ID in session: ${req.session.userId}`,
+      );
 
       // Return success
       res.status(200).json({
@@ -381,7 +387,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/check", async (req: Request, res: Response) => {
-    console.log(`Auth check - Session ID: ${req.sessionID}, User ID: ${req.session.userId}`);
+    console.log(
+      `Auth check - Session ID: ${req.sessionID}, User ID: ${req.session.userId}`,
+    );
     if (!req.session.userId) {
       return res.status(200).json({
         authenticated: false,
@@ -583,7 +591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: Request, res: Response) => {
       try {
         const { firebaseToken, phone } = req.body;
-        
+
         if (!firebaseToken || !phone) {
           return res.status(400).json({
             message: "Firebase token and phone number are required.",
@@ -593,27 +601,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Validate phone number format
         if (!phone.startsWith("+")) {
           return res.status(400).json({
-            message: "Invalid phone number format. Must start with '+' followed by country code.",
+            message:
+              "Invalid phone number format. Must start with '+' followed by country code.",
           });
         }
 
         // TODO: Verify Firebase token with Firebase Admin SDK
         // For now, we'll trust the frontend verification
         // In production, you should verify the token server-side
-        
-        console.log(`[Firebase] Phone verification successful for user ${req.session.userId}, phone ${phone}`);
-        
+
+        console.log(
+          `[Firebase] Phone verification successful for user ${req.session.userId}, phone ${phone}`,
+        );
+
         // Update user's phone number and verification status
         await storage.updateUserPhone(req.session.userId!, phone, true);
 
-        res.status(200).json({ 
+        res.status(200).json({
           message: "Phone number verified successfully with Firebase.",
-          method: "firebase"
+          method: "firebase",
         });
       } catch (error) {
         console.error("Firebase verify phone error:", error);
-        res.status(500).json({ 
-          message: "An error occurred while verifying phone with Firebase." 
+        res.status(500).json({
+          message: "An error occurred while verifying phone with Firebase.",
         });
       }
     },
@@ -692,13 +703,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     isAuthenticated,
     async (req: Request, res: Response) => {
       try {
-        const trialStatus = await storage.getUserTrialStatus(req.session.userId!);
-        
+        const trialStatus = await storage.getUserTrialStatus(
+          req.session.userId!,
+        );
+
         // Prevent caching to ensure fresh credit data
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-        
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+
         res.status(200).json(trialStatus);
       } catch (error) {
         console.error("Get trial status error:", error);
@@ -829,22 +842,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           req.session.userId!,
         );
         if (!personalization) {
-          const errorResponse = { 
+          const errorResponse = {
             message: "Please complete personalization first.",
-            personalizationRequired: true
+            personalizationRequired: true,
           };
-          console.log('[Schedule Creation] Personalization required, sending 403 response:', errorResponse);
+          console.log(
+            "[Schedule Creation] Personalization required, sending 403 response:",
+            errorResponse,
+          );
           return res.status(403).json(errorResponse);
         }
 
         // Check schedule limits and duplicates
-        const existingSchedules = await storage.getUserSchedules(req.session.userId!);
-        
+        const existingSchedules = await storage.getUserSchedules(
+          req.session.userId!,
+        );
+
         // Limit: Maximum 3 schedules per user
         if (existingSchedules.length >= 3) {
           return res.status(400).json({
-            message: "Maximum 3 schedules allowed per user. Please delete an existing schedule first.",
-            maxSchedulesReached: true
+            message:
+              "Maximum 3 schedules allowed per user. Please delete an existing schedule first.",
+            maxSchedulesReached: true,
           });
         }
 
@@ -852,28 +871,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const formattedWeekdays = Array.isArray(validatedData.weekdays)
           ? validatedData.weekdays.join(",")
           : validatedData.weekdays;
-        
-        const duplicateSchedule = existingSchedules.find(existing => {
+
+        const duplicateSchedule = existingSchedules.find((existing) => {
           if (validatedData.isRecurring && existing.isRecurring) {
             // For recurring schedules, check time, timezone, and weekdays
-            return existing.wakeupTime === validatedData.wakeupTime &&
-                   existing.timezone === validatedData.timezone &&
-                   existing.weekdays === formattedWeekdays &&
-                   existing.isActive;
-          } else if (!validatedData.isRecurring && !existing.isRecurring && validatedData.date) {
+            return (
+              existing.wakeupTime === validatedData.wakeupTime &&
+              existing.timezone === validatedData.timezone &&
+              existing.weekdays === formattedWeekdays &&
+              existing.isActive
+            );
+          } else if (
+            !validatedData.isRecurring &&
+            !existing.isRecurring &&
+            validatedData.date
+          ) {
             // For one-time schedules, check date, time, and timezone
             // Note: one-time schedules are not implemented in current schema
-            return existing.wakeupTime === validatedData.wakeupTime &&
-                   existing.timezone === validatedData.timezone &&
-                   existing.isActive;
+            return (
+              existing.wakeupTime === validatedData.wakeupTime &&
+              existing.timezone === validatedData.timezone &&
+              existing.isActive
+            );
           }
           return false;
         });
 
         if (duplicateSchedule) {
           return res.status(400).json({
-            message: "A schedule with the same time and settings already exists.",
-            duplicateSchedule: true
+            message:
+              "A schedule with the same time and settings already exists.",
+            duplicateSchedule: true,
           });
         }
 
@@ -903,9 +931,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userSchedules = await storage.getUserSchedules(user.id);
         if (userSchedules.length === 1 && !user.welcomeEmailSent) {
           // This is their first schedule, send welcome email
-          const firstName = user.name ? user.name.split(' ')[0] : 'there';
+          const firstName = user.name ? user.name.split(" ")[0] : "there";
           const emailSent = await sendWelcomeEmail(user.email, firstName);
-          
+
           if (emailSent) {
             // Mark welcome email as sent
             await storage.updateWelcomeEmailSent(user.id);
@@ -1036,14 +1064,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateScheduleStatus(scheduleId, newStatus);
 
         const action = newStatus ? "resumed" : "paused";
-        const message = newStatus 
-          ? "Schedule has been resumed and is now active." 
+        const message = newStatus
+          ? "Schedule has been resumed and is now active."
           : "Schedule has been paused and is now inactive.";
 
-        res.status(200).json({ 
+        res.status(200).json({
           message,
           isActive: newStatus,
-          action
+          action,
         });
       } catch (error) {
         console.error("Toggle schedule error:", error);
@@ -1095,6 +1123,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           voice: personalization.voice,
         });
 
+        // Check if user has made any calls before.
+        const userCallHistory = await storage.getUserCallHistory(
+          req.session.userId!,
+        );
+        console.log("User call history:", userCallHistory.length);
+        const isFirstCall = userCallHistory.length === 0;
+
+        // Allow call if this is first call ever
+        if (!isFirstCall) {
+          console.log(
+            `User ${req.session.userId!} has already made calls - cannot make sample call`,
+          );
+          return res.status(400).json({
+            message: "Sample calls are only available for new users.",
+          });
+        }
+
+        console.log(
+          `Sample call for user ${req.session.userId!}: isFirstCall=${isFirstCall}`,
+        );
+
         // Generate message for the sample call
         const message = await generateVoiceMessage(
           personalization.goals as GoalType[],
@@ -1106,38 +1155,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         console.log("Generated voice message, length:", message.length);
 
-        // Check if user has sufficient credits before making sample call
-        const trialStatus = await storage.getUserTrialStatus(req.session.userId!);
-        const userCallHistory = await storage.getUserCallHistory(req.session.userId!);
-        const isFirstCall = userCallHistory.length === 0;
-
-        // Allow call if this is first call ever OR user has credits
-        if (!isFirstCall && trialStatus.callCredits <= 0) {
-          console.log(`User ${req.session.userId!} has no credits (${trialStatus.callCredits}) - cannot make sample call`);
-          return res.status(400).json({ 
-            message: "Insufficient credits to make call",
-            credits: trialStatus.callCredits 
-          });
-        }
-
-        console.log(`Sample call for user ${req.session.userId!}: isFirstCall=${isFirstCall}, credits=${trialStatus.callCredits}`);
-
         // Make the sample call using Twilio
         const call = await makeCall(user.phone, message, personalization.voice);
-
-        // Deduct credit after successful sample call (only for users who have made calls before)
-        if (!isFirstCall && call.status && !['failed', 'busy', 'no-answer'].includes(call.status)) {
-          try {
-            const deductResult = await storage.deductUserCredit(req.session.userId!);
-            if (deductResult.success) {
-              console.log(`Successfully deducted 1 credit from user ${req.session.userId!} for sample call. New balance: ${deductResult.newBalance}`);
-            } else {
-              console.error(`Failed to deduct credit from user ${req.session.userId!} for sample call. Current balance: ${deductResult.newBalance}`);
-            }
-          } catch (error) {
-            console.error(`Error deducting credit from user ${req.session.userId!}:`, error);
-          }
-        }
 
         // Log the sample call in history
         await storage.createCallHistory({
@@ -1359,84 +1378,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   // Stripe payment routes
-  app.post("/api/stripe/create-checkout", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const { bundleType } = req.body;
-      
-      if (!bundleType || !["20_calls", "50_calls"].includes(bundleType)) {
-        return res.status(400).json({ message: "Invalid bundle type" });
-      }
+  app.post(
+    "/api/stripe/create-checkout",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const { bundleType } = req.body;
 
-      // Bundle configurations
-      const bundles = {
-        "20_calls": { price: 999, credits: 20, name: "20 Wake-up Calls" }, // $9.99 in cents
-        "50_calls": { price: 1999, credits: 50, name: "50 Wake-up Calls" }  // $19.99 in cents
-      };
+        if (!bundleType || !["20_calls", "50_calls"].includes(bundleType)) {
+          return res.status(400).json({ message: "Invalid bundle type" });
+        }
 
-      const bundle = bundles[bundleType as keyof typeof bundles];
+        // Bundle configurations
+        const bundles = {
+          "20_calls": { price: 999, credits: 20, name: "20 Wake-up Calls" }, // $9.99 in cents
+          "50_calls": { price: 1999, credits: 50, name: "50 Wake-up Calls" }, // $19.99 in cents
+        };
 
-      // Create Stripe Checkout Session
-      const session = await stripe.checkout.sessions.create({
-        mode: 'payment',
-        payment_method_types: ['card'],
-        line_items: [{
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: bundle.name,
-              description: `${bundle.credits} AI-powered wake-up calls to start your mornings strong!`,
+        const bundle = bundles[bundleType as keyof typeof bundles];
+
+        // Create Stripe Checkout Session
+        const session = await stripe.checkout.sessions.create({
+          mode: "payment",
+          payment_method_types: ["card"],
+          line_items: [
+            {
+              price_data: {
+                currency: "usd",
+                product_data: {
+                  name: bundle.name,
+                  description: `${bundle.credits} AI-powered wake-up calls to start your mornings strong!`,
+                },
+                unit_amount: bundle.price,
+              },
+              quantity: 1,
             },
-            unit_amount: bundle.price,
+          ],
+          success_url: `${req.headers.origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${req.headers.origin}/dashboard`,
+          metadata: {
+            userId: req.session.userId!.toString(),
+            bundleType,
+            credits: bundle.credits.toString(),
           },
-          quantity: 1,
-        }],
-        success_url: `${req.headers.origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.origin}/dashboard`,
-        metadata: {
-          userId: req.session.userId!.toString(),
-          bundleType,
-          credits: bundle.credits.toString(),
-        },
-      });
+        });
 
-      res.json({ 
-        checkoutUrl: session.url,
-        sessionId: session.id 
-      });
-    } catch (error: any) {
-      console.error("Stripe checkout error:", error);
-      res.status(500).json({ 
-        message: "Error creating checkout session",
-        error: error.message 
-      });
-    }
-  });
+        res.json({
+          checkoutUrl: session.url,
+          sessionId: session.id,
+        });
+      } catch (error: any) {
+        console.error("Stripe checkout error:", error);
+        res.status(500).json({
+          message: "Error creating checkout session",
+          error: error.message,
+        });
+      }
+    },
+  );
 
   // Stripe webhook endpoint is now registered in index.ts before JSON parsing middleware
 
   // Get payment session details (for success page)
-  app.get("/api/stripe/session/:sessionId", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const { sessionId } = req.params;
-      const session = await stripe.checkout.sessions.retrieve(sessionId);
-      
-      // Only return session details for the authenticated user
-      if (session.metadata?.userId !== req.session.userId?.toString()) {
-        return res.status(403).json({ message: "Access denied" });
-      }
+  app.get(
+    "/api/stripe/session/:sessionId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const { sessionId } = req.params;
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-      res.json({
-        paymentStatus: session.payment_status,
-        customerEmail: session.customer_details?.email,
-        bundleType: session.metadata?.bundleType,
-        credits: session.metadata?.credits,
-        amountTotal: session.amount_total,
-      });
-    } catch (error: any) {
-      console.error("Error retrieving session:", error);
-      res.status(500).json({ message: "Error retrieving payment session" });
-    }
-  });
+        // Only return session details for the authenticated user
+        if (session.metadata?.userId !== req.session.userId?.toString()) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+
+        res.json({
+          paymentStatus: session.payment_status,
+          customerEmail: session.customer_details?.email,
+          bundleType: session.metadata?.bundleType,
+          credits: session.metadata?.credits,
+          amountTotal: session.amount_total,
+        });
+      } catch (error: any) {
+        console.error("Error retrieving session:", error);
+        res.status(500).json({ message: "Error retrieving payment session" });
+      }
+    },
+  );
 
   // Create HTTP server
   const httpServer = createServer(app);
