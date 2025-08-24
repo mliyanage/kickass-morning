@@ -8,6 +8,7 @@ import AppLayout from "@/components/layouts/AppLayout";
 import ScheduleItem from "@/components/ScheduleItem";
 import CallHistoryItem from "@/components/CallHistoryItem";
 import { PersonalizationSection } from "@/components/PersonalizationSection";
+import PaymentUpsell from "@/components/PaymentUpsell";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Phone, Play } from "lucide-react";
 import {
@@ -55,6 +56,7 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Auto-refresh cache on component mount (handles Firebase verification navigation and schedule creation)
   useEffect(() => {
@@ -347,7 +349,7 @@ export default function Dashboard() {
               <Button 
                 size="sm" 
                 className="mt-3"
-                onClick={() => setLocation("/schedule-call")}
+                onClick={() => setShowPaymentModal(true)}
               >
                 Buy More Credits
               </Button>
@@ -641,6 +643,13 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <PaymentUpsell
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onSkip={() => setShowPaymentModal(false)}
+      />
     </AppLayout>
   );
 }
