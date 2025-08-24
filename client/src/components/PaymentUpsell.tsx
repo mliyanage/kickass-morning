@@ -17,8 +17,10 @@ interface PaymentUpsellProps {
 export default function PaymentUpsell({ isOpen, onClose, onSelectBundle, onSkip }: PaymentUpsellProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [selectedBundle, setSelectedBundle] = useState<string | null>(null);
 
   const handleBundleSelect = async (bundleType: "20_calls" | "50_calls") => {
+    setSelectedBundle(bundleType);
     setIsLoading(bundleType);
     
     try {
@@ -36,6 +38,7 @@ export default function PaymentUpsell({ isOpen, onClose, onSelectBundle, onSkip 
         description: error.message || "Failed to create payment session. Please try again.",
       });
       setIsLoading(null);
+      setSelectedBundle(null);
     }
   };
   return (
@@ -63,13 +66,19 @@ export default function PaymentUpsell({ isOpen, onClose, onSelectBundle, onSkip 
           <div className="space-y-3">
             {/* 20 Calls Bundle */}
             <Card 
-              className="cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all"
+              className={`cursor-pointer transition-all duration-200 border-2 ${
+                selectedBundle === "20_calls" 
+                  ? "border-primary bg-primary/5 shadow-lg" 
+                  : "border-transparent hover:border-primary/30 hover:bg-primary/5 hover:shadow-md hover:-translate-y-0.5"
+              }`}
               onClick={() => handleBundleSelect("20_calls")}
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="bg-primary/10 p-2 rounded-lg">
+                    <div className={`p-2 rounded-lg ${
+                      selectedBundle === "20_calls" ? "bg-primary/20" : "bg-primary/10"
+                    }`}>
                       <Phone className="h-5 w-5 text-primary" />
                     </div>
                     <div>
@@ -81,7 +90,10 @@ export default function PaymentUpsell({ isOpen, onClose, onSelectBundle, onSkip 
                     <div className="text-2xl font-bold">$9.99</div>
                     <div className="text-xs text-gray-500">$0.50 per call</div>
                     {isLoading === "20_calls" && (
-                      <div className="text-xs text-primary">Processing...</div>
+                      <div className="text-xs text-primary font-medium">Processing...</div>
+                    )}
+                    {selectedBundle === "20_calls" && isLoading !== "20_calls" && (
+                      <div className="text-xs text-primary font-medium">Selected ✓</div>
                     )}
                   </div>
                 </div>
@@ -90,7 +102,11 @@ export default function PaymentUpsell({ isOpen, onClose, onSelectBundle, onSkip 
 
             {/* 50 Calls Bundle - Popular */}
             <Card 
-              className="cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all relative"
+              className={`cursor-pointer transition-all duration-200 border-2 relative ${
+                selectedBundle === "50_calls" 
+                  ? "border-primary bg-primary/5 shadow-lg" 
+                  : "border-transparent hover:border-primary/30 hover:bg-primary/5 hover:shadow-md hover:-translate-y-0.5"
+              }`}
               onClick={() => handleBundleSelect("50_calls")}
             >
               <div className="absolute -top-2 -right-2">
@@ -102,7 +118,9 @@ export default function PaymentUpsell({ isOpen, onClose, onSelectBundle, onSkip 
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="bg-primary/10 p-2 rounded-lg">
+                    <div className={`p-2 rounded-lg ${
+                      selectedBundle === "50_calls" ? "bg-primary/20" : "bg-primary/10"
+                    }`}>
                       <Phone className="h-5 w-5 text-primary" />
                     </div>
                     <div>
@@ -115,7 +133,10 @@ export default function PaymentUpsell({ isOpen, onClose, onSelectBundle, onSkip 
                     <div className="text-xs text-gray-500">$0.40 per call</div>
                     <div className="text-xs text-green-600 font-medium">Save 20%</div>
                     {isLoading === "50_calls" && (
-                      <div className="text-xs text-primary">Processing...</div>
+                      <div className="text-xs text-primary font-medium">Processing...</div>
+                    )}
+                    {selectedBundle === "50_calls" && isLoading !== "50_calls" && (
+                      <div className="text-xs text-primary font-medium">Selected ✓</div>
                     )}
                   </div>
                 </div>
