@@ -160,6 +160,9 @@ async function processScheduledCalls() {
           );
         }
 
+        // TEST: Are we reaching this point?
+        console.log(`🔍 REACHED CREDIT DEDUCTION SECTION - About to check credits for user ${user.id}`);
+
         // Deduct credit after successful call (only for users who have made calls before)
         console.log(`Credit deduction check: isFirstCall=${isFirstCall}, call.status=${call.status}, callHistory.length=${userCallHistory.length}`);
         if (!isFirstCall && call.status && !['failed', 'busy', 'no-answer'].includes(call.status)) {
