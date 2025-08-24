@@ -1106,8 +1106,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         console.log("Generated voice message, length:", message.length);
 
+        // Check if user has sufficient credits before making sample call
+        const trialStatus = await storage.getUserTrialStatus(req.session.userId!);
+        const userCallHistory = await storage.getUserCallHistory(req.session.userId!);
+        const isFirstCall = userCallHistory.length === 0;
+
+        // Allow call if this is first call ever OR user has credits
+        if (!isFirstCall && trialStatus.callCredits <= 0) {
+          console.log(`User ${req.session.userId!} has no credits (${trialStatus.callCredits}) - cannot make sample call`);
+          return res.status(400).json({ 
+            message: "Insufficient credits to make call",
+            credits: trialStatus.callCredits 
+          });
+        }
+
+        console.log(`Sample call for user ${req.session.userId!}: isFirstCall=${isFirstCall}, credits=${trialStatus.callCredits}`);
+
         // Make the sample call using Twilio
         const call = await makeCall(user.phone, message, personalization.voice);
+
+        // Deduct credit after successful sample call (only for users who have made calls before)
+        if (!isFirstCall && call.status && !['failed', 'busy', 'no-answer'].includes(call.status)) {
+          try {
+            const deductResult = await storage.deductUserCredit(req.session.userId!);
+            if (deductResult.success) {
+              console.log(`Successfully deducted 1 credit from user ${req.session.userId!} for sample call. New balance: ${deductResult.newBalance}`);
+            } else {
+              console.error(`Failed to deduct credit from user ${req.session.userId!} for sample call. Current balance: ${deductResult.newBalance}`);
+            }
+          } catch (error) {
+            console.error(`Error deducting credit from user ${req.session.userId!}:`, error);
+          }
+        }
 
         // Log the sample call in history
         await storage.createCallHistory({

@@ -186,13 +186,8 @@ async function processScheduledCalls() {
           callSid: call.callSid, // Add the Twilio Call SID
         });
 
-        // TEST: Are we reaching this point?
-        console.log(`🔍 REACHED CREDIT DEDUCTION SECTION - About to check credits for user ${user.id}`);
-
         // Deduct credit after successful call (only for users who have made calls before)
-        console.log(`Credit deduction check: isFirstCall=${isFirstCall}, call.status=${call.status}, callHistory.length=${userCallHistory.length}`);
         if (!isFirstCall && call.status && !['failed', 'busy', 'no-answer'].includes(call.status)) {
-          console.log(`Attempting to deduct credit for user ${user.id} - call status: ${call.status}`);
           try {
             const deductResult = await storage.deductUserCredit(user.id);
             if (deductResult.success) {
@@ -203,8 +198,6 @@ async function processScheduledCalls() {
           } catch (error) {
             console.error(`Error deducting credit from user ${user.id}:`, error);
           }
-        } else {
-          console.log(`Skipping credit deduction: isFirstCall=${isFirstCall}, status=${call.status}, failedStatus=${['failed', 'busy', 'no-answer'].includes(call.status)}`);
         }
 
         // Log call result with appropriate message based on status
