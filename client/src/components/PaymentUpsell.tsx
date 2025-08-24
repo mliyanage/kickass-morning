@@ -42,7 +42,7 @@ export default function PaymentUpsell({ isOpen, onClose, onSelectBundle, onSkip 
     }
   };
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-center">
