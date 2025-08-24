@@ -135,15 +135,16 @@ export default function Dashboard() {
     }
   };
 
-  // Determine user journey stage and show appropriate modals
+  // Consolidated guided modal logic to prevent race conditions
   useEffect(() => {
     if (!userData?.authenticated || !callHistory) return;
 
     const isFirstTimeUser = callHistory.length === 0;
-    const isPersonalized = userData.user.isPersonalized;
+    const isPersonalized = userData.user?.isPersonalized || false;
     const hasTriedSampleCall = callHistory.length > 0;
+    const hasSchedules = schedules.length > 0;
 
-    // Only show modals for first-time users
+    // Only show modals for first-time users, with proper cleanup
     if (isFirstTimeUser) {
       if (!isPersonalized) {
         // Step 1: Show personalization modal
@@ -152,49 +153,57 @@ export default function Dashboard() {
           scrollToSection(personalizationRef);
         }, 1000);
         return () => clearTimeout(timer);
-      } else if (!hasTriedSampleCall) {
-        // Step 2: Show sample call modal
+      } else {
+        // Step 2: Show sample call modal for personalized but first-time users
         const timer = setTimeout(() => {
           setShowSampleCallModal(true);
           scrollToSection(sampleCallRef);
         }, 1000);
         return () => clearTimeout(timer);
       }
-    }
-  }, [userData, callHistory]);
-
-  // Show schedule modal after sample call completion
-  useEffect(() => {
-    if (callHistory && callHistory.length === 1 && schedules.length === 0) {
+    } else if (hasTriedSampleCall && !hasSchedules && callHistory.length === 1) {
+      // Step 3: Show schedule modal after first sample call
       const timer = setTimeout(() => {
         setShowScheduleModal(true);
         scrollToSection(scheduleRef);
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [callHistory, schedules]);
+  }, [userData, callHistory, schedules]);
 
-  // Sample call mutation
+  // Sample call mutation with better error handling
   const sampleCallMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest("POST", "/api/call/sample", {});
     },
     onSuccess: () => {
-      toast({
-        title: "Sample call initiated",
-        description: "A sample wakeup call will be sent to your phone shortly.",
-      });
-      // Refresh call history after a short delay to show the new call
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/call/history"] });
-      }, 2000);
+      try {
+        toast({
+          title: "Sample call initiated",
+          description: "A sample wakeup call will be sent to your phone shortly.",
+        });
+        // Refresh call history after a short delay to show the new call
+        setTimeout(() => {
+          try {
+            queryClient.invalidateQueries({ queryKey: ["/api/call/history"] });
+          } catch (error) {
+            console.error("Error invalidating call history:", error);
+          }
+        }, 2000);
+      } catch (error) {
+        console.error("Error in sample call success handler:", error);
+      }
     },
     onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Failed to start sample call",
-        description: error.message || "Please try again later.",
-      });
+      try {
+        toast({
+          variant: "destructive",
+          title: "Failed to start sample call",
+          description: error?.message || "Please try again later.",
+        });
+      } catch (toastError) {
+        console.error("Error showing error toast:", toastError);
+      }
     },
   });
 
