@@ -374,8 +374,8 @@ export default function Dashboard() {
   const hasTriedSampleCall = callHistory.length > 0;
   
   // Step-by-step visibility logic
-  const showPersonalizationSection = !isPersonalized || isFirstTimeUser;
-  const showSampleCallSection = isPersonalized && !hasTriedSampleCall;
+  const showPersonalizationSection = true; // Always show so users can update settings
+  const showSampleCallSection = isPersonalized && !hasTriedSampleCall; // Hide after first call
   const showScheduleSection = isPersonalized;
   const showCreditsSection = hasTriedSampleCall;
   const showHistorySection = hasTriedSampleCall;
