@@ -98,16 +98,19 @@ async function processScheduledCalls() {
         // Check if user has sufficient credits before making the call
         const trialStatus = await storage.getUserTrialStatus(user.id);
         const hasCredits = trialStatus.callCredits > 0;
-        const hasUsedFreeTrial = trialStatus.hasUsedFreeTrial;
+        
+        // Check if this is user's first actual call (based on call history, not schedule creation)
+        const userCallHistory = await storage.getUserCallHistory(user.id);
+        const isFirstCall = userCallHistory.length === 0;
 
-        // Allow call if user hasn't used free trial OR has credits
-        if (!hasUsedFreeTrial) {
-          console.log(`User ${user.id} using free trial call - no credits required`);
+        // Allow call if this is first call ever OR user has credits
+        if (isFirstCall) {
+          console.log(`User ${user.id} making their first call - free trial applies`);
         } else if (!hasCredits) {
-          console.log(`User ${user.id} has no credits (${trialStatus.callCredits}) - skipping call for schedule ${schedule.id}`);
+          console.log(`User ${user.id} has no credits (${trialStatus.callCredits}) and has made ${userCallHistory.length} calls before - skipping call for schedule ${schedule.id}`);
           continue;
         } else {
-          console.log(`User ${user.id} has ${trialStatus.callCredits} credits - proceeding with call`);
+          console.log(`User ${user.id} has ${trialStatus.callCredits} credits and has made ${userCallHistory.length} calls before - proceeding with call`);
         }
 
         // Use voice from personalization data with a fallback
@@ -157,8 +160,8 @@ async function processScheduledCalls() {
           );
         }
 
-        // Deduct credit after successful call (only for paid users)
-        if (hasUsedFreeTrial && call.status && ['queued', 'ringing', 'in-progress'].includes(call.status)) {
+        // Deduct credit after successful call (only for users who have made calls before)
+        if (!isFirstCall && call.status && ['queued', 'ringing', 'in-progress'].includes(call.status)) {
           try {
             const deductResult = await storage.deductUserCredit(user.id);
             if (deductResult.success) {
