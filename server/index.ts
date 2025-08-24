@@ -66,12 +66,20 @@ app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), async
     // Import storage here to avoid circular dependencies
     const { storage } = await import('./storage');
     
-    // In production, you should set STRIPE_WEBHOOK_SECRET
-    const event = stripe.webhooks.constructEvent(
-      req.body, 
-      sig, 
-      process.env.STRIPE_WEBHOOK_SECRET || 'we_test' // For test mode
-    );
+    let event;
+    
+    // In development mode, skip signature verification
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      console.log("Development mode: Skipping webhook signature verification");
+      event = JSON.parse(req.body.toString());
+    } else {
+      // In production, verify the webhook signature
+      event = stripe.webhooks.constructEvent(
+        req.body, 
+        sig, 
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+    }
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as any;
