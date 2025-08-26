@@ -1,369 +1,197 @@
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useEffect, useState, useRef } from "react";
-import { apiRequest } from "@/lib/queryClient";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Schedule, CallHistory } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Phone, 
+  Calendar, 
+  Clock,
+  Play,
+  RefreshCw
+} from "lucide-react";
 import AppLayout from "@/components/layouts/AppLayout";
+import { PersonalizationSection } from "@/components/PersonalizationSection";
 import ScheduleItem from "@/components/ScheduleItem";
 import CallHistoryItem from "@/components/CallHistoryItem";
-import { PersonalizationSection } from "@/components/PersonalizationSection";
-import PaymentUpsell from "@/components/PaymentUpsell";
 import GuidedModal from "@/components/GuidedModal";
-import { Button } from "@/components/ui/button";
-import { AlertCircle, Phone, Play, RefreshCw } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import PaymentUpsell from "@/components/PaymentUpsell";
+import { apiRequest } from "@/lib/queryClient";
+import { format, parseISO } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 
-// Helper function to format timezone display
-const formatTimezone = (timezone: string): string => {
-  // Extract the last part of the timezone identifier (the city/region name)
-  const parts = timezone.split("/");
-  const lastPart = parts[parts.length - 1];
-
-  // Replace underscores with spaces and format the name
-  return lastPart.replace(/_/g, " ");
-};
-
-// Format time with AM/PM indicator
-const formatTimeWithAmPm = (time: string): string => {
-  // Input time is in HH:mm format (24-hour)
-  const [hours, minutes] = time.split(':').map(Number);
-  const hour12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  return `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-};
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  isPersonalized: boolean;
+  phoneVerified: boolean;
+  phone?: string;
+  timezone: string;
+  goals: string[];
+  struggles: string[];
+  voiceName: string;
+}
 
 interface UserData {
-  authenticated: boolean;
-  user: {
-    id: number;
-    email: string;
-    name: string;
-    phone: string | null;
-    phoneVerified: boolean;
-    isPersonalized: boolean;
-    callCredits?: number;
-  };
+  user: User;
+}
+
+interface Schedule {
+  id: number;
+  wakeupTime: string;
+  timezone: string;
+  weekdays: number[];
+  isActive: boolean;
+  voiceName: string;
+  isRecurring: boolean;
+}
+
+interface CallHistory {
+  id: number;
+  userId: number;
+  phoneNumber: string;
+  voiceName: string;
+  scheduledTime: string;
+  actualCallTime: string;
+  duration: number | null;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'failed' | 'no_answer';
+  recordingUrl: string | null;
+  twilioCallSid: string | null;
+  createdAt: string;
+}
+
+interface UserCredits {
+  callCredits: number;
 }
 
 export default function Dashboard() {
-  const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  
-  // Guided onboarding state
+
+  // Modal states
   const [showPersonalizationModal, setShowPersonalizationModal] = useState(false);
   const [showSampleCallModal, setShowSampleCallModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  
-  // Scroll references
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  // Refs for scrolling
   const personalizationRef = useRef<HTMLDivElement>(null);
   const sampleCallRef = useRef<HTMLDivElement>(null);
   const scheduleRef = useRef<HTMLDivElement>(null);
 
-  // Auto-refresh cache on component mount (handles Firebase verification navigation and schedule creation)
-  useEffect(() => {
-    const refreshCache = async () => {
-      await queryClient.resetQueries({ queryKey: ["/api/auth/check"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/auth/check"] });
-      // Also refresh schedules to show any newly created ones
-      await queryClient.invalidateQueries({ queryKey: ["/api/schedule"] });
-      // Refresh credits to show updated balances
-      await queryClient.invalidateQueries({ queryKey: ["/api/user/trial-status"] });
-    };
-    
-    // Refresh cache when component mounts to ensure fresh data
-    refreshCache();
-  }, [queryClient]);
-
-  // Get user data for phone verification check (restored original caching)
-  const { data: userData } = useQuery<UserData>({
-    queryKey: ["/api/auth/check"],
-  });
-
-  // Get user's credit information
-  const { data: userCredits, refetch: refetchCredits } = useQuery<{ hasUsedFreeTrial: boolean, callCredits: number }>({
-    queryKey: ["/api/user/trial-status"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/user/trial-status");
-      return response;
-    },
-    enabled: !!userData?.authenticated,
-    staleTime: 0, // Always fetch fresh data
-  });
-
-  // Refresh credits when returning from payment
-  useEffect(() => {
-    if (userData?.authenticated) {
-      refetchCredits();
-    }
-  }, [userData?.authenticated, refetchCredits]);
-
-  // Get user schedules
-  const {
-    data: schedules = [],
-    isLoading: isLoadingSchedules,
-    error: schedulesError,
-  } = useQuery<Schedule[]>({
-    queryKey: ["/api/schedule"],
-  });
-
-  // Get call history
-  const {
-    data: callHistory = [],
-    isLoading: isLoadingHistory,
-    error: historyError,
-  } = useQuery<CallHistory[]>({
-    queryKey: ["/api/call/history"],
-  });
-
-  // Smooth scroll helper function
+  // Scroll to section helper
   const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
-    if (ref.current) {
-      ref.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      });
-    }
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
-  // Consolidated guided modal logic to prevent race conditions
-  useEffect(() => {
-    if (!userData?.authenticated || !callHistory) return;
+  // Queries
+  const { data: userData, error: userError } = useQuery<UserData>({ 
+    queryKey: ["/api/user"] 
+  });
 
-    const isFirstTimeUser = callHistory.length === 0;
-    const isPersonalized = userData.user?.isPersonalized || false;
-    const hasTriedSampleCall = callHistory.length > 0;
-    const hasSchedules = schedules.length > 0;
+  const { data: schedules, isLoading: schedulesLoading, error: schedulesError } = useQuery<Schedule[]>({ 
+    queryKey: ["/api/schedules"] 
+  });
 
-    // Only show modals for first-time users, with proper cleanup
-    if (isFirstTimeUser) {
-      if (!isPersonalized) {
-        // Step 1: Show personalization modal
-        const timer = setTimeout(() => {
-          setShowPersonalizationModal(true);
-          scrollToSection(personalizationRef);
-        }, 1000);
-        return () => clearTimeout(timer);
-      } else {
-        // Step 2: Show sample call modal for personalized but first-time users
-        const timer = setTimeout(() => {
-          setShowSampleCallModal(true);
-          scrollToSection(sampleCallRef);
-        }, 1000);
-        return () => clearTimeout(timer);
-      }
-    } else if (hasTriedSampleCall && !hasSchedules && callHistory.length === 1) {
-      // Step 3: Show schedule modal after first sample call
-      const timer = setTimeout(() => {
-        setShowScheduleModal(true);
-        scrollToSection(scheduleRef);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [userData, callHistory, schedules]);
+  const { data: callHistory, isLoading: historyLoading, error: historyError } = useQuery<CallHistory[]>({ 
+    queryKey: ["/api/call-history"] 
+  });
 
-  // Sample call mutation with better error handling
+  const { data: userCredits, isLoading: creditsLoading, refetch: refetchCredits } = useQuery<UserCredits>({ 
+    queryKey: ["/api/user/trial-status"] 
+  });
+
+  // Sample call mutation
   const sampleCallMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("POST", "/api/call/sample", {});
-    },
+    mutationFn: () => apiRequest("POST", "/api/sample-call"),
     onSuccess: () => {
-      try {
-        toast({
-          title: "Sample call initiated",
-          description: "A sample wakeup call will be sent to your phone shortly.",
-        });
-        // Refresh call history after a short delay to show the new call
-        setTimeout(() => {
-          try {
-            queryClient.invalidateQueries({ queryKey: ["/api/call/history"] });
-          } catch (error) {
-            console.error("Error invalidating call history:", error);
-          }
-        }, 2000);
-      } catch (error) {
-        console.error("Error in sample call success handler:", error);
-      }
+      toast({
+        title: "Sample call initiated!",
+        description: "Check your phone in a few seconds for your personalized wake-up message.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/call-history"] });
     },
-    onError: (error) => {
-      try {
-        toast({
-          variant: "destructive",
-          title: "Failed to start sample call",
-          description: error?.message || "Please try again later.",
-        });
-      } catch (toastError) {
-        console.error("Error showing error toast:", toastError);
-      }
+    onError: (error: any) => {
+      toast({
+        title: "Sample call failed",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
     },
   });
 
-  const handleSampleCall = async () => {
-    try {
-      // Get the latest user data from the server to ensure phone verification status is current
-      const authCheckResponse = await apiRequest("GET", "/api/auth/check");
-      const latestUserData = authCheckResponse;
-
-      // Check if user has verified phone using the latest data
-      if (
-        latestUserData &&
-        latestUserData.user &&
-        !latestUserData.user.phoneVerified
-      ) {
-        toast({
-          title: "Phone verification required",
-          description: "Please verify your phone number to receive calls.",
-        });
-        localStorage.setItem("phoneVerificationReturnUrl", "/dashboard");
-        setLocation("/phone-verification");
-        return;
-      }
-
-      // Proceed with the sample call
-      sampleCallMutation.mutate();
-    } catch (error) {
-      console.error("Error checking auth status:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not verify your phone status. Please try again.",
-      });
-    }
-  };
-
-  // Next scheduled call
-  const nextCall = schedules.find((schedule: Schedule) => schedule.isActive);
-
-  // Format the next call time and date
-  const getNextCallText = () => {
-    if (!nextCall) return "No upcoming calls scheduled";
-
-    const weekdayNames = [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ];
-    const today = new Date();
-    const todayDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-
-    if (nextCall.isRecurring) {
-      // Find the next occurrence
-      const weekdaysArray = Array.isArray(nextCall.weekdays)
-        ? nextCall.weekdays
-        : [nextCall.weekdays];
-      const dayIndices = weekdaysArray
-        .map((day: string) => {
-          switch (day) {
-            case "sun":
-              return 0;
-            case "mon":
-              return 1;
-            case "tue":
-              return 2;
-            case "wed":
-              return 3;
-            case "thu":
-              return 4;
-            case "fri":
-              return 5;
-            case "sat":
-              return 6;
-            default:
-              return -1;
-          }
-        })
-        .filter((index: number) => index !== -1);
-
-      // Find the next day index that's >= today
-      let nextDayIndex = dayIndices.find((day: number) => day >= todayDay);
-
-      // If not found, wrap around to the first day of next week
-      if (nextDayIndex === undefined && dayIndices.length > 0) {
-        nextDayIndex = dayIndices[0];
-      }
-
-      if (nextDayIndex !== undefined) {
-        const dayName = weekdayNames[nextDayIndex];
-        // Format the timezone for display
-        const formattedTimezone = formatTimezone(nextCall.timezone);
-        return `${nextDayIndex === todayDay ? "Today" : dayName} at ${formatTimeWithAmPm(nextCall.wakeupTime)} (${formattedTimezone})`;
-      }
-    } else if (nextCall.date) {
-      const callDate = new Date(nextCall.date);
-      const formattedDate = callDate.toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "short",
-        day: "numeric",
-      });
-      // Format the timezone for display
-      const formattedTimezone = formatTimezone(nextCall.timezone);
-      return `${formattedDate} at ${formatTimeWithAmPm(nextCall.wakeupTime)} (${formattedTimezone})`;
-    }
-
-    return "Schedule details unavailable";
-  };
-
-  // Toggle schedule status mutation
+  // Toggle schedule mutation
   const toggleScheduleMutation = useMutation({
-    mutationFn: async (scheduleId: number) => {
-      return await apiRequest("POST", `/api/schedule/${scheduleId}/toggle`, {});
-    },
-    onSuccess: (data) => {
+    mutationFn: (scheduleId: number) => 
+      apiRequest("PUT", `/api/schedules/${scheduleId}/toggle`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/schedules"] });
       toast({
-        title:
-          data.action === "resumed" ? "Schedule resumed" : "Schedule paused",
-        description: data.message,
+        title: "Schedule updated successfully",
+        description: "Your wake-up call schedule has been updated.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/schedule"] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
-        variant: "destructive",
         title: "Failed to update schedule",
         description: error.message || "Please try again later.",
+        variant: "destructive",
       });
     },
   });
+
+  // Helper functions
+  const handleSampleCall = () => {
+    sampleCallMutation.mutate();
+  };
 
   const handleToggleSchedule = (scheduleId: number) => {
     toggleScheduleMutation.mutate(scheduleId);
   };
 
-  if (isLoadingSchedules || isLoadingHistory) {
+  const formatDateTime = (dateTimeString: string) => {
+    try {
+      const userTimezone = userData?.user?.timezone || 'UTC';
+      const date = parseISO(dateTimeString);
+      return formatInTimeZone(date, userTimezone, 'MMM dd, yyyy h:mm a');
+    } catch (error) {
+      return dateTimeString;
+    }
+  };
+
+  const getNextCallText = () => {
+    if (!schedules || schedules.length === 0) return "No scheduled calls";
+    
+    const activeSchedules = schedules.filter(s => s.isActive);
+    if (activeSchedules.length === 0) return "No active schedules";
+    
+    return `Next call at ${activeSchedules[0].wakeupTime}`;
+  };
+
+  const nextCall = schedules?.find(s => s.isActive);
+
+  // Show loading state
+  if (schedulesLoading || historyLoading || creditsLoading) {
     return (
       <AppLayout>
-        <div className="text-center py-16">
-          <p>Loading your dashboard...</p>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading"/>
         </div>
       </AppLayout>
     );
   }
 
-  if (schedulesError || historyError) {
+  // Show error state
+  if (userError || schedulesError || historyError) {
     return (
       <AppLayout>
         <Card className="w-full max-w-md mx-auto">
-          <CardContent className="pt-6">
-            <div className="flex mb-4 gap-2">
-              <AlertCircle className="h-8 w-8 text-red-500" />
-              <h1 className="text-2xl font-bold text-gray-900">
-                Error Loading Dashboard
-              </h1>
-            </div>
-            <p className="mt-4 text-sm text-gray-600">
+          <CardContent className="p-6 text-center">
+            <h2 className="text-xl font-semibold mb-4">Something went wrong</h2>
+            <p className="text-gray-600 mb-4">
               {schedulesError?.message ||
                 historyError?.message ||
                 "Failed to load your data. Please try again."}
@@ -378,9 +206,9 @@ export default function Dashboard() {
   }
 
   // Determine what sections to show based on user journey
-  const isFirstTimeUser = callHistory.length === 0;
+  const isFirstTimeUser = callHistory?.length === 0;
   const isPersonalized = userData?.user?.isPersonalized;
-  const hasTriedSampleCall = callHistory.length > 0;
+  const hasTriedSampleCall = (callHistory?.length ?? 0) > 0;
   
   // Step-by-step visibility logic
   const showPersonalizationSection = true; // Always show so users can update settings
@@ -391,339 +219,388 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      {/* Personalization Section - Step 1 */}
-      {showPersonalizationSection && (
-        <div ref={personalizationRef}>
-          <PersonalizationSection />
-        </div>
-      )}
-
-      {/* Credits Display - Show after first call */}
-      {showCreditsSection && (
-        <div className="bg-white p-6 rounded-lg shadow mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <Phone className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900">
-                  Your Wake-up Credits
-                </h3>
-                <p className="text-gray-600">
-                  Ready to power your mornings
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-4xl font-bold text-primary mb-1">
-                {userCredits?.callCredits ?? 0}
-              </div>
-              <div className="text-sm text-gray-500">calls remaining</div>
-              <div className="flex gap-2 mt-3">
-                <Button 
-                  size="sm" 
-                  variant={(userCredits?.callCredits ?? 0) === 0 ? "default" : "outline"}
-                  onClick={() => setShowPaymentModal(true)}
-                >
-                  {(userCredits?.callCredits ?? 0) === 0 ? "Buy Credits" : "Buy More"}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => {
-                    queryClient.invalidateQueries({ queryKey: ["/api/user/trial-status"] });
-                    refetchCredits();
-                  }}
-                  title="Refresh credit balance"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+      <div className="space-y-6">
+        {/* Personalization Section - Step 1 */}
+        {showPersonalizationSection && (
+          <div 
+            ref={personalizationRef}
+            className="animate-fade-in-up"
+            style={{ animationDelay: '0.1s' }}
+          >
+            <PersonalizationSection />
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Sample Call Section - Step 2 */}
-      {showSampleCallSection && (
-        <div ref={sampleCallRef} className="shadow sm:rounded-md sm:overflow-hidden mb-6">
-          <div className="bg-white py-6 px-4 sm:p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Try a Sample Call
-                </h2>
-                <p className="text-gray-600 mt-1">
-                  Experience your first AI-powered wake-up
-                </p>
-              </div>
-            </div>
-            
-            <div>
-              <p className="text-gray-600 mb-6">
-                Not sure what to expect? Hear a personalized motivational
-                message sent to your phone — just like your real wake-up call.
-              </p>
-
-              <div className="flex flex-col md:flex-row md:items-center gap-4">
-                <div className="flex-1">
-                  {userData?.user?.phoneVerified ? (
-                      <div className="flex items-center text-sm text-green-700 mb-4">
-                        <Phone className="h-4 w-4 mr-2" />
-                        <span className="font-medium">
-                          Ready to call: {userData.user.phone} ✓
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                        <div className="flex items-center">
-                          <div className="text-yellow-600 mr-3">🔒</div>
-                          <div>
-                            <p className="text-sm font-medium text-yellow-800">
-                              Your phone isn't verified yet.
-                            </p>
-                            <p className="text-sm text-yellow-700">
-                              → Verify now to unlock your first wake-up preview.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+        {/* Credits Display - Show after first call */}
+        {showCreditsSection && (
+          <div 
+            className={`bg-white p-6 rounded-lg shadow mb-6 transition-all duration-300 animate-fade-in-up ${
+              (userCredits?.callCredits ?? 0) === 0 
+                ? 'border-2 border-red-400 ring-2 ring-red-100 shadow-lg transform' 
+                : 'border border-gray-200'
+            }`}
+            style={{ animationDelay: '0.2s' }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className={`p-3 rounded-full transition-colors duration-300 ${
+                  (userCredits?.callCredits ?? 0) === 0 
+                    ? 'bg-red-100 animate-pulse' 
+                    : 'bg-primary/10'
+                }`}>
+                  <Phone className={`h-6 w-6 transition-colors duration-300 ${
+                    (userCredits?.callCredits ?? 0) === 0 
+                      ? 'text-red-500' 
+                      : 'text-primary'
+                  }`} />
                 </div>
-                <div className="flex-shrink-0 flex gap-2">
-                  <Button
-                    size="lg"
-                    className="w-full md:w-auto"
-                    onClick={handleSampleCall}
-                    disabled={sampleCallMutation.isPending}
+                <div>
+                  <h3 className={`text-lg font-semibold transition-colors duration-300 ${
+                    (userCredits?.callCredits ?? 0) === 0 
+                      ? 'text-red-700' 
+                      : 'text-gray-900'
+                  }`}>
+                    {(userCredits?.callCredits ?? 0) === 0 
+                      ? '⚠️ No Credits Remaining!' 
+                      : 'Call Credits'}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {(userCredits?.callCredits ?? 0) === 0 
+                      ? 'Purchase credits to continue receiving wake-up calls' 
+                      : 'Your available wake-up call credits'}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className={`text-4xl font-bold mb-1 transition-colors duration-300 ${
+                  (userCredits?.callCredits ?? 0) === 0 
+                    ? 'text-red-500' 
+                    : 'text-primary'
+                }`}>
+                  {userCredits?.callCredits ?? 0}
+                </div>
+                <div className="text-sm text-gray-500">calls remaining</div>
+                <div className="flex gap-2 mt-3">
+                  <Button 
+                    size="sm" 
+                    variant={(userCredits?.callCredits ?? 0) === 0 ? "default" : "outline"}
+                    onClick={() => setShowPaymentModal(true)}
+                    className={`transition-all duration-300 ${
+                      (userCredits?.callCredits ?? 0) === 0 
+                        ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
+                        : ''
+                    }`}
                   >
-                    <Play className="mr-2 h-4 w-4" />
-                    {sampleCallMutation.isPending
-                      ? "Initiating call..."
-                      : "Try It Now"}
+                    {(userCredits?.callCredits ?? 0) === 0 ? "Buy Credits" : "Buy More"}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ["/api/user/trial-status"] });
+                      refetchCredits();
+                    }}
+                    title="Refresh credit balance"
+                  >
+                    <RefreshCw className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Schedule Section - Step 3 */}
-      {showScheduleSection && (
-        <div ref={scheduleRef} className="shadow sm:rounded-md sm:overflow-hidden">
-          <div className="bg-white py-6 px-4 sm:p-6">
-            <div className="flex items-center justify-between mb-6">
+        {/* Sample Call Section - Step 2 */}
+        {showSampleCallSection && (
+          <div 
+            ref={sampleCallRef} 
+            className="shadow sm:rounded-md sm:overflow-hidden mb-6 animate-fade-in-up"
+            style={{ animationDelay: '0.3s' }}
+          >
+            <div className="bg-white py-6 px-4 sm:p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Try a Sample Call
+                  </h2>
+                  <p className="text-gray-600 mt-1">
+                    Experience your first AI-powered wake-up
+                  </p>
+                </div>
+              </div>
+              
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Your Wake-Up Schedule
-                </h2>
-                <p className="text-gray-600 mt-1">
-                  Let's set up your first real wake-up call.
+                <p className="text-gray-600 mb-6">
+                  Not sure what to expect? Hear a personalized motivational
+                  message sent to your phone — just like your real wake-up call.
                 </p>
-                <p className="text-sm text-gray-500 mt-1">
-                  No more snoozing. No more excuses. Choose a time, pick your
-                  voice, and let us kickstart your morning.
-                </p>
-              </div>
-              <Button
-                onClick={() => {
-                  const { user } = userData || {};
-                  if (user && !user.phoneVerified) {
-                    localStorage.setItem(
-                      "phoneVerificationReturnUrl",
-                      "/schedule-call",
-                    );
-                    setLocation("/phone-verification");
-                  } else {
-                    setLocation("/schedule-call");
-                  }
-                }}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4 mr-1.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                Add Call
-              </Button>
-            </div>
 
-          {nextCall && (
-            <div className="bg-primary-50 rounded-lg p-4 flex items-start mb-6">
-              <div className="flex-shrink-0">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-primary"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-primary-800">
-                  Your next wakeup call
-                </h3>
-                <div className="mt-2 text-sm text-primary-700">
-                  <p>{getNextCallText()}</p>
+                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                  <div className="flex-1">
+                    {userData?.user?.phoneVerified ? (
+                        <div className="flex items-center text-sm text-green-700 mb-4">
+                          <Phone className="h-4 w-4 mr-2" />
+                          <span className="font-medium">
+                            Ready to call: {userData.user.phone} ✓
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                          <div className="flex items-center">
+                            <div className="text-yellow-600 mr-3">🔒</div>
+                            <div>
+                              <p className="text-sm font-medium text-yellow-800">
+                                Your phone isn't verified yet.
+                              </p>
+                              <p className="text-sm text-yellow-700">
+                                → Verify now to unlock your first wake-up preview.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                  </div>
+                  <div className="flex-shrink-0 flex gap-2">
+                    <Button
+                      size="lg"
+                      className="w-full md:w-auto"
+                      onClick={handleSampleCall}
+                      disabled={sampleCallMutation.isPending}
+                    >
+                      <Play className="mr-2 h-4 w-4" />
+                      {sampleCallMutation.isPending
+                        ? "Initiating call..."
+                        : "Try It Now"}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
-          )}
-
-          {/* Active wakeup schedule */}
-          {schedules && schedules.length > 0 ? (
-            schedules
-              .sort((a: Schedule, b: Schedule) => {
-                // Sort by active status first (active = true comes first)
-                if (a.isActive !== b.isActive) {
-                  return a.isActive ? -1 : 1;
-                }
-                // Then sort by time for schedules with same active status
-                return a.wakeupTime.localeCompare(b.wakeupTime);
-              })
-              .map((schedule: Schedule) => (
-                <ScheduleItem
-                  key={schedule.id}
-                  schedule={schedule}
-                  onToggleSchedule={() => handleToggleSchedule(schedule.id)}
-                  onEdit={() => setLocation(`/schedule-call?id=${schedule.id}`)}
-                />
-              ))
-          ) : (
-            <div className="text-center py-8 bg-gray-50 rounded-md">
-              <div className="text-4xl mb-4">⏰</div>
-              <p className="text-lg font-medium text-gray-700 mb-2">
-                Let's get your first wake-up win
-              </p>
-              <p className="text-gray-500 mb-6">
-                Ready to ditch the snooze button and start crushing your
-                mornings?
-              </p>
-              <Button
-                size="lg"
-                className="mt-4"
-                onClick={() => {
-                  const { user } = userData || {};
-                  if (user && !user.phoneVerified) {
-                    localStorage.setItem(
-                      "phoneVerificationReturnUrl",
-                      "/schedule-call",
-                    );
-                    setLocation("/phone-verification");
-                  } else {
-                    setLocation("/schedule-call");
-                  }
-                }}
-              >
-                🟡 Schedule a Call
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-      )}
-
-      {/* Call History Section - Show after first call */}
-      {showHistorySection && (
-      <div className="shadow sm:rounded-md sm:overflow-hidden">
-        <div className="bg-white py-6 px-4 sm:p-6">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              🔹 Recent Call History
-            </h2>
-            <p className="text-gray-600 mt-1">
-              Track your wins and streaks. This is how consistency starts.
-            </p>
           </div>
+        )}
 
-          {callHistory && callHistory.length > 0 ? (
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="py-3 pl-4 pr-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 sm:pl-6"
-                    >
-                      Date & Time
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
-                    >
-                      Voice
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
-                    >
-                      Status
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
-                    >
-                      Duration
-                    </th>
-                    <th scope="col" className="relative py-3 pl-3 pr-4 sm:pr-6">
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {callHistory.slice(0, 5).map((call: CallHistory) => (
-                    <CallHistoryItem key={call.id} call={call} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-8 bg-gray-50 rounded-md">
-              <div className="text-4xl mb-4">📞</div>
-              <p className="text-lg font-medium text-gray-700 mb-2">
-                No calls yet — but that's about to change
-              </p>
-              <p className="text-gray-500">
-                Your winning streak starts with your first wake-up call
-              </p>
-            </div>
-          )}
+        {/* Schedule Section - Step 3 */}
+        {showScheduleSection && (
+          <div 
+            ref={scheduleRef} 
+            className="shadow sm:rounded-md sm:overflow-hidden animate-fade-in-up"
+            style={{ animationDelay: '0.4s' }}
+          >
+            <div className="bg-white py-6 px-4 sm:p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Your Wake-Up Schedule
+                  </h2>
+                  <p className="text-gray-600 mt-1">
+                    Let's set up your first real wake-up call.
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    No more snoozing. No more excuses. Choose a time, pick your
+                    voice, and let us kickstart your morning.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    const { user } = userData || {};
+                    if (user && !user.phoneVerified) {
+                      localStorage.setItem(
+                        "phoneVerificationReturnUrl",
+                        "/schedule-call",
+                      );
+                      setLocation("/phone-verification");
+                    } else {
+                      setLocation("/schedule-call");
+                    }
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 mr-1.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                  Add Call
+                </Button>
+              </div>
 
-          {callHistory && callHistory.length > 5 && (
-            <div className="mt-4 text-center">
-              <a
-                href="#"
-                className="text-sm font-medium text-primary hover:text-primary/80"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setLocation("/call-history");
-                }}
-              >
-                View all call history <span aria-hidden="true">→</span>
-              </a>
+              {nextCall && (
+                <div className="bg-primary-50 rounded-lg p-4 flex items-start mb-6">
+                  <div className="flex-shrink-0">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-primary"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-primary-800">
+                      Your next wakeup call
+                    </h3>
+                    <div className="mt-2 text-sm text-primary-700">
+                      <p>{getNextCallText()}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Active wakeup schedule */}
+              {schedules && schedules.length > 0 ? (
+                schedules
+                  .sort((a: Schedule, b: Schedule) => {
+                    // Sort by active status first (active = true comes first)
+                    if (a.isActive !== b.isActive) {
+                      return a.isActive ? -1 : 1;
+                    }
+                    // Then sort by time for schedules with same active status
+                    return a.wakeupTime.localeCompare(b.wakeupTime);
+                  })
+                  .map((schedule: Schedule) => (
+                    <ScheduleItem
+                      key={schedule.id}
+                      schedule={schedule}
+                      onToggleSchedule={() => handleToggleSchedule(schedule.id)}
+                      onEdit={() => setLocation(`/schedule-call?id=${schedule.id}`)}
+                    />
+                  ))
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-md">
+                  <div className="text-4xl mb-4">⏰</div>
+                  <p className="text-lg font-medium text-gray-700 mb-2">
+                    Let's get your first wake-up win
+                  </p>
+                  <p className="text-gray-500 mb-6">
+                    Ready to ditch the snooze button and start crushing your
+                    mornings?
+                  </p>
+                  <Button
+                    size="lg"
+                    className="mt-4"
+                    onClick={() => {
+                      const { user } = userData || {};
+                      if (user && !user.phoneVerified) {
+                        localStorage.setItem(
+                          "phoneVerificationReturnUrl",
+                          "/schedule-call",
+                        );
+                        setLocation("/phone-verification");
+                      } else {
+                        setLocation("/schedule-call");
+                      }
+                    }}
+                  >
+                    🟡 Schedule a Call
+                  </Button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Call History Section - Show after first call */}
+        {showHistorySection && callHistory && callHistory.length > 0 && (
+          <div 
+            className="shadow sm:rounded-md sm:overflow-hidden animate-fade-in-up"
+            style={{ animationDelay: '0.5s' }}
+          >
+            <div className="bg-white py-6 px-4 sm:p-6">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  🔹 Recent Call History
+                </h2>
+                <p className="text-gray-600 mt-1">
+                  Track your wins and streaks. This is how consistency starts.
+                </p>
+              </div>
+
+              {callHistory && callHistory.length > 0 ? (
+                <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-300">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th
+                          scope="col"
+                          className="py-3 pl-4 pr-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 sm:pl-6"
+                        >
+                          Date & Time
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                        >
+                          Voice
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                        >
+                          Status
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                        >
+                          Duration
+                        </th>
+                        <th scope="col" className="relative py-3 pl-3 pr-4 sm:pr-6">
+                          <span className="sr-only">Actions</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white">
+                      {callHistory.slice(0, 5).map((call: CallHistory) => (
+                        <CallHistoryItem key={call.id} call={call} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-md">
+                  <div className="text-4xl mb-4">📞</div>
+                  <p className="text-lg font-medium text-gray-700 mb-2">
+                    No calls yet — but that's about to change
+                  </p>
+                  <p className="text-gray-500">
+                    Your winning streak starts with your first wake-up call
+                  </p>
+                </div>
+              )}
+
+              {callHistory && callHistory.length > 5 && (
+                <div className="mt-4 text-center">
+                  <a
+                    href="#"
+                    className="text-sm font-medium text-primary hover:text-primary/80"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setLocation("/call-history");
+                    }}
+                  >
+                    View all call history <span aria-hidden="true">→</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
-      )}
 
       {/* Guided Modals */}
       <GuidedModal
