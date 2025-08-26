@@ -104,9 +104,9 @@ export default function Dashboard() {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
-  // Queries with proper error handling
+  // Get user data for phone verification check (using original working endpoint)
   const { data: userData, error: userError, isLoading: userLoading } = useQuery<UserData>({ 
-    queryKey: ["/api/user"],
+    queryKey: ["/api/auth/check"],
     retry: 1,
     retryDelay: 1000
   });

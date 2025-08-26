@@ -430,43 +430,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User Routes
-  app.get("/api/user", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const user = await storage.getUser(req.session.userId!);
-      
-      if (!user) {
-        // Session exists but user doesn't - clear the session
-        req.session.destroy((err: any) => {
-          if (err) console.error("Failed to destroy invalid session:", err);
-        });
-        
-        return res.status(401).json({
-          message: "Your session has expired. Please log in again.",
-          requiresAuth: true,
-        });
-      }
-
-      res.status(200).json({
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          phone: user.phone,
-          phoneVerified: user.phoneVerified,
-          isPersonalized: user.isPersonalized,
-          timezone: user.timezone,
-          callCredits: user.callCredits,
-        },
-      });
-    } catch (error) {
-      console.error("Get user error:", error);
-      res.status(500).json({
-        message: "An error occurred while fetching user data.",
-      });
-    }
-  });
-
   // Phone Verification Routes
   app.post(
     "/api/auth/send-otp",
