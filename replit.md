@@ -12,6 +12,14 @@ Preferred communication style: Simple, everyday language.
 - Always plan changes first, show user what will be done, and wait for approval
 - Production stability is critical - avoid any risky modifications
 
+**CRITICAL DEVELOPMENT LESSONS:**
+- NEVER change existing working API endpoints without investigation
+- UI improvements should NEVER require new API endpoints if system was working before
+- ALWAYS check git history to understand what endpoints were originally working
+- If new API endpoint seems needed, investigate why - likely indicates wrong approach
+- When debugging API issues, verify existing endpoints first before creating new ones
+- Follow this sequence: 1) Check what worked before, 2) Verify those endpoints exist, 3) Make minimal changes
+
 ## Recent Changes (August 2025)
 - **✅ UNIFIED STORAGE ARCHITECTURE** - Switched all environments to use PostgreSQL database storage for consistency. Removed fragile in-memory storage that caused authentication and data persistence issues.
 - **✅ FIXED: Schedule Display Issue** - Fixed getUserSchedules query to properly filter for active schedules, resolving dashboard showing empty schedule lists.
