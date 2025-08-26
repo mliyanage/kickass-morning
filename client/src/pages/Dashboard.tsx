@@ -21,44 +21,61 @@ import { apiRequest } from "@/lib/queryClient";
 import { format, parseISO } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 
+// Use proper types from the API responses
 interface User {
   id: number;
-  username: string;
+  name?: string | null;
   email: string;
-  isPersonalized: boolean;
+  phone?: string | null;
   phoneVerified: boolean;
-  phone?: string;
-  timezone: string;
-  goals: string[];
-  struggles: string[];
-  voiceName: string;
+  isPersonalized: boolean;
+  timezone?: string;
+  callCredits: number;
 }
 
 interface UserData {
   user: User;
 }
 
+interface PersonalizationData {
+  goals: string[];
+  struggles: string[];
+  otherGoal?: string;
+  otherStruggle?: string;
+  goalDescription?: string;
+  voice: string;
+}
+
 interface Schedule {
   id: number;
+  userId: number;
   wakeupTime: string;
   timezone: string;
   weekdays: number[];
   isActive: boolean;
-  voiceName: string;
   isRecurring: boolean;
+  date?: string;
+  voiceName?: string;
+  callRetry?: number;
+  advanceNotice?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface CallHistory {
   id: number;
   userId: number;
+  scheduleId?: number;
   phoneNumber: string;
-  voiceName: string;
   scheduledTime: string;
-  actualCallTime: string;
-  duration: number | null;
-  status: 'scheduled' | 'in_progress' | 'completed' | 'failed' | 'no_answer';
-  recordingUrl: string | null;
-  twilioCallSid: string | null;
+  callTime?: string;
+  actualCallTime?: string;
+  duration?: number | null;
+  status: string;
+  voice?: string;
+  voiceName?: string;
+  recordingUrl?: string | null;
+  twilioCallSid?: string | null;
   createdAt: string;
 }
 
@@ -87,21 +104,32 @@ export default function Dashboard() {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
-  // Queries
-  const { data: userData, error: userError } = useQuery<UserData>({ 
-    queryKey: ["/api/user"] 
+  // Queries with proper error handling
+  const { data: userData, error: userError, isLoading: userLoading } = useQuery<UserData>({ 
+    queryKey: ["/api/user"],
+    retry: 1,
+    retryDelay: 1000
   });
 
   const { data: schedules, isLoading: schedulesLoading, error: schedulesError } = useQuery<Schedule[]>({ 
-    queryKey: ["/api/schedules"] 
+    queryKey: ["/api/schedules"],
+    retry: 1,
+    retryDelay: 1000,
+    enabled: !!userData?.user
   });
 
   const { data: callHistory, isLoading: historyLoading, error: historyError } = useQuery<CallHistory[]>({ 
-    queryKey: ["/api/call-history"] 
+    queryKey: ["/api/call-history"],
+    retry: 1,
+    retryDelay: 1000,
+    enabled: !!userData?.user
   });
 
   const { data: userCredits, isLoading: creditsLoading, refetch: refetchCredits } = useQuery<UserCredits>({ 
-    queryKey: ["/api/user/trial-status"] 
+    queryKey: ["/api/user/trial-status"],
+    retry: 1,
+    retryDelay: 1000,
+    enabled: !!userData?.user
   });
 
   // Sample call mutation
@@ -174,7 +202,7 @@ export default function Dashboard() {
   const nextCall = schedules?.find(s => s.isActive);
 
   // Show loading state
-  if (schedulesLoading || historyLoading || creditsLoading) {
+  if (userLoading || schedulesLoading || historyLoading || creditsLoading) {
     return (
       <AppLayout>
         <div className="flex justify-center items-center h-64">
@@ -184,18 +212,25 @@ export default function Dashboard() {
     );
   }
 
-  // Show error state
+  // Show error state with better debugging
   if (userError || schedulesError || historyError) {
+    console.error("Dashboard errors:", { userError, schedulesError, historyError });
     return (
       <AppLayout>
         <Card className="w-full max-w-md mx-auto">
           <CardContent className="p-6 text-center">
             <h2 className="text-xl font-semibold mb-4">Something went wrong</h2>
             <p className="text-gray-600 mb-4">
-              {schedulesError?.message ||
+              {userError?.message ||
+                schedulesError?.message ||
                 historyError?.message ||
                 "Failed to load your data. Please try again."}
             </p>
+            <div className="text-xs text-gray-500 mb-4">
+              {userError && <div>User Error: {userError.message}</div>}
+              {schedulesError && <div>Schedules Error: {schedulesError.message}</div>}
+              {historyError && <div>History Error: {historyError.message}</div>}
+            </div>
             <Button className="mt-4" onClick={() => window.location.reload()}>
               Retry
             </Button>
@@ -463,23 +498,25 @@ export default function Dashboard() {
 
               {/* Active wakeup schedule */}
               {schedules && schedules.length > 0 ? (
-                schedules
-                  .sort((a: Schedule, b: Schedule) => {
-                    // Sort by active status first (active = true comes first)
-                    if (a.isActive !== b.isActive) {
-                      return a.isActive ? -1 : 1;
-                    }
-                    // Then sort by time for schedules with same active status
-                    return a.wakeupTime.localeCompare(b.wakeupTime);
-                  })
-                  .map((schedule: Schedule) => (
-                    <ScheduleItem
-                      key={schedule.id}
-                      schedule={schedule}
-                      onToggleSchedule={() => handleToggleSchedule(schedule.id)}
-                      onEdit={() => setLocation(`/schedule-call?id=${schedule.id}`)}
-                    />
-                  ))
+                <div className="space-y-4">
+                  {schedules
+                    .sort((a: Schedule, b: Schedule) => {
+                      // Sort by active status first (active = true comes first)
+                      if (a.isActive !== b.isActive) {
+                        return a.isActive ? -1 : 1;
+                      }
+                      // Then sort by time for schedules with same active status
+                      return a.wakeupTime.localeCompare(b.wakeupTime);
+                    })
+                    .map((schedule: Schedule) => (
+                      <ScheduleItem
+                        key={schedule.id}
+                        schedule={schedule}
+                        onToggleSchedule={() => handleToggleSchedule(schedule.id)}
+                        onEdit={() => setLocation(`/schedule-call?id=${schedule.id}`)}
+                      />
+                    ))}
+                </div>
               ) : (
                 <div className="text-center py-8 bg-gray-50 rounded-md">
                   <div className="text-4xl mb-4">⏰</div>
