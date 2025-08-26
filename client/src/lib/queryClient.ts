@@ -37,7 +37,27 @@ export async function apiRequest(
   }
   
   // Parse and return JSON for successful responses
-  return await res.json();
+  try {
+    return await res.json();
+  } catch (jsonError) {
+    console.error(`Failed to parse JSON from ${url}:`, {
+      status: res.status,
+      statusText: res.statusText,
+      contentType: res.headers.get('content-type'),
+      error: jsonError
+    });
+    
+    // Clone response to read as text for debugging
+    const responseClone = res.clone();
+    try {
+      const responseText = await responseClone.text();
+      console.error(`Response text from ${url}:`, responseText.substring(0, 500));
+    } catch (textError) {
+      console.error('Could not read response as text:', textError);
+    }
+    
+    throw new Error(`Invalid JSON response from ${url}: ${jsonError.message}`);
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -76,7 +96,20 @@ export const getQueryFn: <T>(options: {
       }
     }
 
-    return await res.json();
+    try {
+      return await res.json();
+    } catch (jsonError) {
+      console.error(`Failed to parse JSON from ${queryKey[0]}:`, {
+        status: res.status,
+        statusText: res.statusText,
+        headers: Object.fromEntries(res.headers.entries()),
+        error: jsonError
+      });
+      
+      // Note: Cannot get response text here since body was already consumed by json() attempt
+      
+      throw new Error(`Invalid JSON response from ${queryKey[0]}: ${jsonError.message}`);
+    }
   };
 
 export const queryClient = new QueryClient({
