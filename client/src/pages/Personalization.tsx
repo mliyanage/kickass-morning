@@ -630,11 +630,8 @@ export default function Personalization() {
 
               <div className="border border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
                 <Label htmlFor="goal-description" className="text-base font-medium">
-                  Tell us more about your goals and challenges
+                  Tell us 1 to 3 specific tasks you want to achieve in the morning related to your goals
                 </Label>
-                <p className="text-sm text-gray-500 mt-1 mb-2">
-                  Share specific details about your morning goals to help us personalize your wake-up messages
-                </p>
                 <Textarea
                   id="goal-description"
                   rows={4}
