@@ -68,27 +68,34 @@ export interface Schedule {
   timezone: string;
   weekdays: string[] | string; // Can be array or string (from database it might come as string)
   isRecurring: boolean;
-  date: string | null;
-  callRetry: boolean;
-  advanceNotice: boolean;
-  goalType: GoalType;
-  struggleType: StruggleType;
-  voiceId: string;
+  date?: string;
+  callRetry?: number;
+  advanceNotice?: number;
+  goalType?: GoalType;
+  struggleType?: StruggleType;
+  voiceId?: string;
   isActive: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 // Call history types
 export interface CallHistory {
   id: number;
-  scheduleId: number;
+  scheduleId?: number;
   userId: number;
-  callTime: string;
+  callTime?: string;
+  scheduledTime?: string;
+  actualCallTime?: string;
+  phoneNumber?: string;
   timezone?: string; // IANA timezone of the scheduled call
-  voice: string;
-  status: "answered" | "missed" | "failed";
-  duration: number | null;
-  recordingUrl?: string;
+  voice?: string;
+  voiceName?: string;
+  status: string;
+  duration?: number | null;
+  recordingUrl?: string | null;
+  twilioCallSid?: string | null;
+  createdAt: string;
 }
 
 // Voice types

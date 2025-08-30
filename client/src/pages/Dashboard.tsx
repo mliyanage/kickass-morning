@@ -51,23 +51,26 @@ interface Schedule {
   userId: number;
   wakeupTime: string;
   timezone: string;
-  weekdays: number[];
+  weekdays: string[];
   isActive: boolean;
   isRecurring: boolean;
   date?: string;
   voiceName?: string;
   callRetry?: number;
   advanceNotice?: number;
+  goalType?: string;
+  struggleType?: string;
+  voiceId?: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 interface CallHistory {
   id: number;
   userId: number;
   scheduleId?: number;
-  phoneNumber: string;
-  scheduledTime: string;
+  phoneNumber?: string;
+  scheduledTime?: string;
   callTime?: string;
   actualCallTime?: string;
   duration?: number | null;
@@ -77,6 +80,7 @@ interface CallHistory {
   recordingUrl?: string | null;
   twilioCallSid?: string | null;
   createdAt: string;
+  timezone?: string;
 }
 
 interface UserCredits {
@@ -119,7 +123,7 @@ export default function Dashboard() {
   });
 
   const { data: callHistory, isLoading: historyLoading, error: historyError } = useQuery<CallHistory[]>({ 
-    queryKey: ["/api/call-history"],
+    queryKey: ["/api/call/history"],
     retry: 1,
     retryDelay: 1000,
     enabled: !!userData?.user
@@ -140,7 +144,7 @@ export default function Dashboard() {
         title: "Sample call initiated!",
         description: "Check your phone in a few seconds for your personalized wake-up message.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/call-history"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/call/history"] });
     },
     onError: (error: any) => {
       toast({
