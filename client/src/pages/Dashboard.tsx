@@ -275,7 +275,7 @@ export default function Dashboard() {
           <div 
             className={`bg-white p-6 rounded-lg shadow mb-6 transition-all duration-300 animate-fade-in-up ${
               (userCredits?.callCredits ?? 0) === 0 
-                ? 'border-2 border-red-400 ring-2 ring-red-100 shadow-lg transform' 
+                ? 'border-2 border-amber-400 ring-2 ring-amber-100 shadow-lg transform' 
                 : 'border border-gray-200'
             }`}
             style={{ animationDelay: '0.2s' }}
@@ -284,23 +284,23 @@ export default function Dashboard() {
               <div className="flex items-center space-x-4">
                 <div className={`p-3 rounded-full transition-colors duration-300 ${
                   (userCredits?.callCredits ?? 0) === 0 
-                    ? 'bg-red-100 animate-pulse' 
+                    ? 'bg-amber-100' 
                     : 'bg-primary/10'
                 }`}>
                   <Phone className={`h-6 w-6 transition-colors duration-300 ${
                     (userCredits?.callCredits ?? 0) === 0 
-                      ? 'text-red-500' 
+                      ? 'text-amber-500' 
                       : 'text-primary'
                   }`} />
                 </div>
                 <div>
                   <h3 className={`text-lg font-semibold transition-colors duration-300 ${
                     (userCredits?.callCredits ?? 0) === 0 
-                      ? 'text-red-700' 
+                      ? 'text-amber-700' 
                       : 'text-gray-900'
                   }`}>
                     {(userCredits?.callCredits ?? 0) === 0 
-                      ? '⚠️ No Credits Remaining!' 
+                      ? 'No Credits Remaining' 
                       : 'Call Credits'}
                   </h3>
                   <p className="text-sm text-gray-600">
@@ -313,7 +313,7 @@ export default function Dashboard() {
               <div className="text-right">
                 <div className={`text-4xl font-bold mb-1 transition-colors duration-300 ${
                   (userCredits?.callCredits ?? 0) === 0 
-                    ? 'text-red-500' 
+                    ? 'text-amber-500' 
                     : 'text-primary'
                 }`}>
                   {userCredits?.callCredits ?? 0}
@@ -326,7 +326,7 @@ export default function Dashboard() {
                     onClick={() => setShowPaymentModal(true)}
                     className={`transition-all duration-300 ${
                       (userCredits?.callCredits ?? 0) === 0 
-                        ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
+                        ? 'bg-amber-600 hover:bg-amber-700' 
                         : ''
                     }`}
                   >
