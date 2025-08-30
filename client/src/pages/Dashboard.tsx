@@ -119,7 +119,9 @@ export default function Dashboard() {
     queryKey: ["/api/schedule"],
     retry: 1,
     retryDelay: 1000,
-    enabled: !!userData?.user
+    enabled: !!userData?.user,
+    staleTime: 0, // Always consider data stale to ensure fresh fetch
+    gcTime: 0 // Don't cache data to force fresh fetch (TanStack Query v5)
   });
 
   const { data: callHistory, isLoading: historyLoading, error: historyError } = useQuery<CallHistory[]>({ 

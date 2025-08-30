@@ -246,16 +246,17 @@ export default function ScheduleCall() {
       const endpoint = editingScheduleId ? `/api/schedule?id=${editingScheduleId}` : "/api/schedule";
       return await apiRequest("POST", endpoint, data);
     },
-    onSuccess: (scheduleData: any) => {
-      // Invalidate schedule cache so dashboard refreshes
-      queryClient.invalidateQueries({ queryKey: ['/api/schedule'] });
-      // Also invalidate any potential cached individual schedule data
-      queryClient.invalidateQueries({ queryKey: ['/api/schedule', editingScheduleId] });
-      // Force refetch to ensure UI updates immediately
-      queryClient.refetchQueries({ queryKey: ['/api/schedule'] });
+    onSuccess: async (scheduleData: any) => {
+      // Aggressively clear all schedule-related cache
+      await queryClient.invalidateQueries({ queryKey: ['/api/schedule'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/schedule', editingScheduleId] });
+      // Remove all schedule data from cache entirely
+      queryClient.removeQueries({ queryKey: ['/api/schedule'] });
+      // Force immediate refetch
+      await queryClient.refetchQueries({ queryKey: ['/api/schedule'] });
       
       toast({
-        title: "Schedule saved",
+        title: "Schedule saved", 
         description: "Your wakeup call has been scheduled successfully.",
       });
 
