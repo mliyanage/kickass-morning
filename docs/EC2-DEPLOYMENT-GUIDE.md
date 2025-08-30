@@ -227,30 +227,29 @@ sudo chown kickass:kickass /opt/kickass-morning/.env
 ### 3. Create PM2 Configuration
 
 ```bash
-# Create PM2 ecosystem file
-sudo -u kickass tee /opt/kickass-morning/ecosystem.config.js > /dev/null <<EOF
+# Create PM2 ecosystem file (managed by ec2-user)
+cd /opt/kickass-morning
+tee ecosystem.config.js > /dev/null <<EOF
 module.exports = {
   apps: [{
     name: 'kickass-morning',
-    script: './dist/index.js',
-    cwd: '/opt/kickass-morning/app',
+    script: './app/dist/index.js',
+    cwd: '/opt/kickass-morning',
     env_file: '/opt/kickass-morning/.env',
     instances: 1,
-    exec_mode: 'cluster',
     autorestart: true,
     watch: false,
     max_memory_restart: '1G',
-    error_file: '/opt/kickass-morning/logs/error.log',
-    out_file: '/opt/kickass-morning/logs/out.log',
-    log_file: '/opt/kickass-morning/logs/combined.log',
-    time: true
+    env: {
+      NODE_ENV: 'production'
+    }
   }]
 };
 EOF
 
 # Create logs directory
 sudo mkdir -p /opt/kickass-morning/logs
-sudo chown kickass:kickass /opt/kickass-morning/logs
+sudo chown ec2-user:ec2-user /opt/kickass-morning/logs
 ```
 
 ## Phase 5: Database Migration
@@ -298,7 +297,7 @@ server {
 
     # API and application
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:5000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -346,29 +345,29 @@ sudo systemctl start certbot.timer
 ### 1. Start with PM2
 
 ```bash
-# Start application
+# Start application (using ec2-user)
 cd /opt/kickass-morning
-sudo -u kickass pm2 start ecosystem.config.js
+pm2 start ecosystem.config.js
 
 # Save PM2 configuration
-sudo -u kickass pm2 save
+pm2 save
 
-# Set up PM2 to start on boot
-sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u kickass --hp /opt/kickass-morning
+# Set up PM2 to start on boot (follow the command output)
+pm2 startup
 ```
 
 ### 2. Verify Deployment
 
 ```bash
 # Check application status
-sudo -u kickass pm2 status
-sudo -u kickass pm2 logs
+pm2 status
+pm2 logs kickass-morning
 
 # Test local connection
-curl http://localhost:3000/api/health
+curl http://localhost:5000/api/health
 
 # Test external connection
-curl https://kickassmorning.com
+curl https://app.kickassmorning.com
 ```
 
 ## Phase 9: Monitoring and Maintenance
@@ -410,16 +409,16 @@ sudo rpm -U amazon-cloudwatch-agent.rpm
 
 ```bash
 # Restart application
-sudo -u kickass pm2 restart kickass-morning
+pm2 restart kickass-morning --update-env
 
 # View logs
-sudo -u kickass pm2 logs kickass-morning
+pm2 logs kickass-morning
 
 # Monitor in real-time
-sudo -u kickass pm2 monit
+pm2 monit
 
 # Stop application
-sudo -u kickass pm2 stop kickass-morning
+pm2 stop kickass-morning
 ```
 
 ### System Management
@@ -461,29 +460,33 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM use
 
 ```bash
 # Stop application
-sudo -u kickass pm2 stop kickass-morning
+pm2 stop kickass-morning
 
 # Update code (if using git)
 cd /opt/kickass-morning/app
 sudo -u kickass git pull origin main
 
-# Install dependencies and build
-sudo -u kickass bash -c 'source /opt/kickass-morning/.bashrc && npm ci --only=production'
-sudo -u kickass bash -c 'source /opt/kickass-morning/.bashrc && npm run build'
+# Install dependencies (as ec2-user but install to app directory)
+cd /opt/kickass-morning/app
+npm ci --only=production
+
+# Build with environment variables
+set -a; source ../.env; set +a; npm run build
 
 # Run any database migrations (with SSL workaround)
 export NODE_TLS_REJECT_UNAUTHORIZED=0
 source /opt/kickass-morning/.env && npm run db:push
 
 # Start application
-sudo -u kickass pm2 start kickass-morning
+cd /opt/kickass-morning
+pm2 start ecosystem.config.js
 ```
 
 ### 2. Zero-Downtime Deployment
 
 ```bash
 # Use PM2 reload for zero-downtime
-sudo -u kickass pm2 reload kickass-morning
+pm2 reload kickass-morning
 ```
 
 ## Backup Strategy
@@ -524,9 +527,9 @@ sudo tar -czf /opt/kickass-morning/backups/app_backup_$(date +%Y%m%d).tar.gz \
 
 1. **Application won't start**
    ```bash
-   sudo -u kickass pm2 logs kickass-morning
-   # Check if PATH is set correctly for kickass user
-   sudo -u kickass bash -c 'echo $PATH'
+   pm2 logs kickass-morning
+   # Check if all dependencies are installed
+   cd /opt/kickass-morning/app && npm list
    ```
 
 2. **Database connection issues**
