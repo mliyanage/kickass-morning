@@ -223,6 +223,14 @@ export default function Personalization() {
         });
         return;
       }
+      if (!goalDescription.trim()) {
+        toast({
+          variant: "destructive",
+          title: "Please describe your tasks",
+          description: "Tell us 1 to 3 specific tasks you want to achieve in the morning.",
+        });
+        return;
+      }
       setStep(2);
     } else if (step === 2) {
       if (struggles.length === 0) {
