@@ -98,19 +98,25 @@ async function processScheduledCalls() {
         // Check if user has sufficient credits before making the call
         const trialStatus = await storage.getUserTrialStatus(user.id);
         const hasCredits = trialStatus.callCredits > 0;
-        
+
         // Check if this is user's first actual call (based on call history, not schedule creation)
         const userCallHistory = await storage.getUserCallHistory(user.id);
         const isFirstCall = userCallHistory.length === 0;
 
         // Allow call if this is first call ever OR user has credits
         if (isFirstCall) {
-          console.log(`User ${user.id} making their first call - free trial applies`);
+          console.log(
+            `User ${user.id} making their first call - free trial applies`,
+          );
         } else if (!hasCredits) {
-          console.log(`User ${user.id} has no credits (${trialStatus.callCredits}) and has made ${userCallHistory.length} calls before - skipping call for schedule ${schedule.id}`);
+          console.log(
+            `User ${user.id} has no credits (${trialStatus.callCredits}) and has made ${userCallHistory.length} calls before - skipping call for schedule ${schedule.id}`,
+          );
           continue;
         } else {
-          console.log(`User ${user.id} has ${trialStatus.callCredits} credits and has made ${userCallHistory.length} calls before - proceeding with call`);
+          console.log(
+            `User ${user.id} has ${trialStatus.callCredits} credits and has made ${userCallHistory.length} calls before - proceeding with call`,
+          );
         }
 
         // Use voice from personalization data with a fallback
@@ -161,19 +167,28 @@ async function processScheduledCalls() {
         }
 
         // Create a history record after updating the schedule
-        
+
         // Store the call time as a simple timestamp representing the scheduled time
-        const [hours, minutes] = schedule.wakeupTime.split(':').map(Number);
-        
+        const [hours, minutes] = schedule.wakeupTime.split(":").map(Number);
+
         // Create a timestamp that represents the scheduled time in a timezone-neutral way
         // We'll store just the date and time components, relying on the timezone field for context
-        const { toZonedTime } = await import('date-fns-tz');
+        const { toZonedTime } = await import("date-fns-tz");
         const now = new Date();
         const nowInUserTz = toZonedTime(now, schedule.timezone);
-        
+
         // Create the scheduled time using today's date in the user's timezone
-        const scheduledCallTime = new Date(nowInUserTz.getFullYear(), nowInUserTz.getMonth(), nowInUserTz.getDate(), hours, minutes, 0, 0);
-        
+        const scheduledCallTime = new Date(
+          nowInUserTz.getFullYear(),
+          nowInUserTz.getMonth(),
+          nowInUserTz.getDate(),
+          hours,
+          minutes,
+          0,
+          0,
+        );
+
+        console.log("in call history section");
         const callHistory = await storage.createCallHistory({
           userId: user.id,
           scheduleId: schedule.id,
@@ -187,16 +202,29 @@ async function processScheduledCalls() {
         });
 
         // Deduct credit after successful call (only for users who have made calls before)
-        if (!isFirstCall && call.status && !['failed', 'busy', 'no-answer'].includes(call.status)) {
+        console.log("in call deduction section");
+
+        if (
+          !isFirstCall &&
+          call.status &&
+          !["failed", "busy", "no-answer"].includes(call.status)
+        ) {
           try {
             const deductResult = await storage.deductUserCredit(user.id);
             if (deductResult.success) {
-              console.log(`Successfully deducted 1 credit from user ${user.id}. New balance: ${deductResult.newBalance}`);
+              console.log(
+                `Successfully deducted 1 credit from user ${user.id}. New balance: ${deductResult.newBalance}`,
+              );
             } else {
-              console.error(`Failed to deduct credit from user ${user.id}. Current balance: ${deductResult.newBalance}`);
+              console.error(
+                `Failed to deduct credit from user ${user.id}. Current balance: ${deductResult.newBalance}`,
+              );
             }
           } catch (error) {
-            console.error(`Error deducting credit from user ${user.id}:`, error);
+            console.error(
+              `Error deducting credit from user ${user.id}:`,
+              error,
+            );
           }
         }
 
@@ -243,29 +271,25 @@ export function startCleanupScheduler() {
   return cleanupSchedulerJob;
 }
 
-
-
 /**
  * Gracefully stop all schedulers and clean up resources
  * This should be called during application shutdown
  */
 export function stopAllSchedulers() {
   console.log("Stopping all schedulers...");
-  
+
   if (callSchedulerJob) {
     callSchedulerJob.cancel();
     callSchedulerJob = null;
     console.log("Call scheduler stopped");
   }
-  
+
   if (cleanupSchedulerJob) {
     cleanupSchedulerJob.cancel();
     cleanupSchedulerJob = null;
     console.log("Cleanup scheduler stopped");
   }
-  
 
-  
   isSchedulerRunning = false;
   console.log("All schedulers stopped successfully");
 }

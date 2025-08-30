@@ -249,6 +249,10 @@ export default function ScheduleCall() {
     onSuccess: (scheduleData: any) => {
       // Invalidate schedule cache so dashboard refreshes
       queryClient.invalidateQueries({ queryKey: ['/api/schedule'] });
+      // Also invalidate any potential cached individual schedule data
+      queryClient.invalidateQueries({ queryKey: ['/api/schedule', editingScheduleId] });
+      // Force refetch to ensure UI updates immediately
+      queryClient.refetchQueries({ queryKey: ['/api/schedule'] });
       
       toast({
         title: "Schedule saved",
