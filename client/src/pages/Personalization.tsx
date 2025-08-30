@@ -120,7 +120,7 @@ export default function Personalization() {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState(1);
 
-  const [goals, setGoals] = useState<GoalType[]>([GoalType.OTHER]); // Default to custom goal
+  const [goals, setGoals] = useState<GoalType[]>([]);
   const [otherGoal, setOtherGoal] = useState("");
   const [goalDescription, setGoalDescription] = useState("");
 
@@ -153,7 +153,7 @@ export default function Personalization() {
         // Handle legacy single goal data
         setGoals([personalizationData.goal]);
       } else {
-        setGoals([GoalType.OTHER]); // Default to custom goal
+        setGoals([]);
       }
       
       setOtherGoal(personalizationData.otherGoal || "");
@@ -207,8 +207,15 @@ export default function Personalization() {
 
   const handleNextStep = () => {
     if (step === 1) {
-      // Since we default to custom goal, always validate the custom goal input
-      if (!otherGoal.trim()) {
+      if (goals.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Please select at least one goal",
+          description: "Choose one or more goals for waking up early.",
+        });
+        return;
+      }
+      if (goals.includes(GoalType.OTHER) && !otherGoal) {
         toast({
           variant: "destructive",
           title: "Please specify your custom goal",
@@ -469,8 +476,7 @@ export default function Personalization() {
                   Select one or more reasons why you want to get out of bed each morning
                 </p>
                 
-                {/* Goal selection cards are hidden to improve customer engagement */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4" style={{ display: 'none' }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <SelectionCard
                     id="exercise-goal"
                     title="Morning Exercise"
@@ -599,26 +605,28 @@ export default function Personalization() {
                 </div>
               </div>
 
-              {/* Custom goal input - always visible for improved engagement */}
-              <div className="mt-4 mb-4 p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50">
-                <Label htmlFor="other-goal" className="text-base font-medium">Please specify your custom goal</Label>
-                <p className="text-sm text-gray-500 mt-1 mb-2">
-                  Tell us about your unique morning motivation
-                </p>
-                <Input
-                  id="other-goal"
-                  className="mt-1"
-                  value={otherGoal}
-                  onChange={(e) => setOtherGoal(e.target.value)}
-                  placeholder="E.g., Family time, spiritual practice, etc."
-                  maxLength={100}
-                />
-                <div className="flex justify-end mt-1">
-                  <span className="text-xs text-gray-400">
-                    {otherGoal.length}/100
-                  </span>
+              {/* Custom goal input (conditional) */}
+              {goals.includes(GoalType.OTHER) && (
+                <div className="mt-4 mb-4 p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+                  <Label htmlFor="other-goal" className="text-base font-medium">Please specify your custom goal</Label>
+                  <p className="text-sm text-gray-500 mt-1 mb-2">
+                    Tell us about your unique morning motivation
+                  </p>
+                  <Input
+                    id="other-goal"
+                    className="mt-1"
+                    value={otherGoal}
+                    onChange={(e) => setOtherGoal(e.target.value)}
+                    placeholder="E.g., Family time, spiritual practice, etc."
+                    maxLength={100}
+                  />
+                  <div className="flex justify-end mt-1">
+                    <span className="text-xs text-gray-400">
+                      {otherGoal.length}/100
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="border border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
                 <Label htmlFor="goal-description" className="text-base font-medium">

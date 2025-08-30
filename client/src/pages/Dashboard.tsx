@@ -112,7 +112,7 @@ export default function Dashboard() {
   });
 
   const { data: schedules, isLoading: schedulesLoading, error: schedulesError } = useQuery<Schedule[]>({ 
-    queryKey: ["/api/schedules"],
+    queryKey: ["/api/schedule"],
     retry: 1,
     retryDelay: 1000,
     enabled: !!userData?.user
@@ -154,9 +154,9 @@ export default function Dashboard() {
   // Toggle schedule mutation
   const toggleScheduleMutation = useMutation({
     mutationFn: (scheduleId: number) => 
-      apiRequest("PUT", `/api/schedules/${scheduleId}/toggle`),
+      apiRequest("PUT", `/api/schedule/${scheduleId}/toggle`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/schedule"] });
       toast({
         title: "Schedule updated successfully",
         description: "Your wake-up call schedule has been updated.",
