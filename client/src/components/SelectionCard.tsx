@@ -56,7 +56,7 @@ const SelectionCard: React.FC<SelectionCardProps> = ({
         </div>
       )}
 
-      <div className="p-4">
+      <div className="p-3">
         <div className="flex items-start">
           {icon && (
             <div className={cn("mr-3 flex-shrink-0 mt-1", iconColor)}>
@@ -65,7 +65,6 @@ const SelectionCard: React.FC<SelectionCardProps> = ({
           )}
           <div>
             <h3 className="font-medium text-gray-900">{title}</h3>
-            <p className="text-sm text-gray-500 mt-1">{description}</p>
           </div>
         </div>
         
